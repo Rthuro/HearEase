@@ -3,14 +3,15 @@ import Mail from "@/assets/custom_icons/mail.svg"
 import Lock from "@/assets/custom_icons/https.svg"
 import { Input } from "@/components/ui/input"
 import { useNavigate } from "react-router-dom"
-import { userData } from "@/test/user_data"
+import { data } from "@/test/user_data"
 import { toast } from "react-hot-toast"
 import { useState } from "react"
+import useAuthenticationStore from "@/store/useAuthenticationStore"
 
 export function Authentication(){
     const navigate = useNavigate();
     const [ passErr, setPassErr ] = useState(false);
-
+    const { login } = useAuthenticationStore();
 
     const checkInputs = (e) => {
         e.preventDefault();
@@ -19,10 +20,8 @@ export function Authentication(){
         const password = document.getElementById("password").value;
 
 
-        if(email.toLowerCase() == "admin@example.com"){
-            navigate("/Admin");
-        }else{
-            const checkUser  = userData.find(user => user.email === email);
+        if(email && password){
+            const checkUser  = data.find(user => user.email === email);
 
             if(!checkUser){
                 toast.error("User not found");
@@ -30,7 +29,9 @@ export function Authentication(){
                 if(checkUser.password !== password){
                     setPassErr(true);
                 }else{
-                    navigate("/Home");
+                    checkUser.role === "admin" ? login("admin", checkUser) : login("user", checkUser);
+                    navigate(`/${checkUser.role === "admin" ? "Admin" : '@' + 
+                        checkUser.name.replace(" ", "_")}`);
                 }
             }
         }
@@ -49,11 +50,11 @@ export function Authentication(){
             <div className="flex flex-col justify-center items-center gap-3 w-[320px]">
                 <div className="flex items-center relative w-full">
                     <img src={Mail} alt="email icon" className="absolute ml-3"/>
-                    <Input type="email" id="email" placeholder="Enter your email..." className="pl-10" autoComplete="email" />
+                    <Input type="email" id="email" placeholder="Enter your email..." className="pl-10" autoComplete="email" required />
                 </div>
                 <div className="flex items-center relative w-full">
                     <img src={Lock} alt="lock icon" className="absolute ml-3"/>
-                    <Input type="password" id="password" placeholder="Enter your password..." className="pl-10" autoComplete="current-password" />
+                    <Input type="password" id="password" placeholder="Enter your password..." className="pl-10" autoComplete="current-password" required />
                 </div>
                 { passErr && <p className="text-red-600 -mt-1 ml-1 text-sm self-start">Incorrect password</p>}
             </div>
