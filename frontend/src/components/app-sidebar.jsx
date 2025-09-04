@@ -17,11 +17,6 @@ import usePageStore from "@/store/usePageStore";
 // Menu items.
 const first_row = [
   {
-    title: "Dashboard",
-    url: "#",
-    icon: House,
-  },
-  {
     title: "Search Case",
     url: "#",
     icon: FolderSearch,
@@ -34,6 +29,11 @@ const first_row = [
 ]
 
 const second_row = [
+  {
+    title: "Dashboard",
+    url: "#",
+    icon: House,
+  },
     {
     title: "Hearings",
     url: "#",
@@ -62,20 +62,12 @@ const third_row = [
     url: "#",
     icon: ChartNoAxesColumnDecreasing,
   },
-
-]
-
-const fourth_row = [
   {
     title: "Settings",
     url: "#",
     icon: Settings,
-  },
-  {
-    title: "Log out",
-    url: "#",
-    icon: LogOut,
-  },
+  }
+
 ]
 
 
@@ -89,7 +81,7 @@ export function AppSidebar() {
         <SidebarGroup >
             <SidebarGroupContent>
                  <SidebarMenu  className="gap-2">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 mb-4">
                         <img src={HearEaseLogo} alt="HearEase Logo" className="w-[28px] my-2 ml-1" />
                         <p className="text-redBase text-xl ">HearEase</p>
                     </div>
@@ -138,7 +130,7 @@ export function AppSidebar() {
         </SidebarGroup>
         
         <SidebarGroup>
-            <SidebarGroupLabel className="text-black">Case Management</SidebarGroupLabel>
+            <SidebarGroupLabel className="text-black">General</SidebarGroupLabel>
             <SidebarGroupContent>
                 <SidebarMenu>
                 {second_row.map((item) => (
@@ -156,28 +148,10 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-            <SidebarGroupLabel className="text-black">Support Tools</SidebarGroupLabel>
+            <SidebarGroupLabel className="text-black">Others</SidebarGroupLabel>
             <SidebarGroupContent>
                 <SidebarMenu>
                 {third_row.map((item) => (
-                    <SidebarMenuItem key={item.title} className={currentPage === item.title ? " text-black" : " text-zinc-700"}>
-                    <SidebarMenuButton asChild>
-                        <a href={item.url}>
-                        <item.icon />
-                        <span>{item.title}</span>
-                        </a>
-                    </SidebarMenuButton>
-                    </SidebarMenuItem>
-                ))}
-                </SidebarMenu>
-            </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-            <SidebarGroupLabel className="text-black">System Settings</SidebarGroupLabel>
-            <SidebarGroupContent>
-                <SidebarMenu>
-                {fourth_row.map((item) => (
                     <SidebarMenuItem key={item.title} className={currentPage === item.title ? " text-black" : " text-zinc-700"}>
                     <SidebarMenuButton asChild>
                         <a href={item.url}>
