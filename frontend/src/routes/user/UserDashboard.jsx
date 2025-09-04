@@ -1,8 +1,11 @@
+import useAuthenticationStore from "@/store/useAuthenticationStore"
 
 export function UserDashboard() {
+  const { userInfo } = useAuthenticationStore();
+
   return (
     <div>
-      <h1>User Dashboard</h1>
+      <p>Welcome Back, {userInfo?.name}!</p>
     </div>
   )
 }
