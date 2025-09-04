@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 
 const usePageStore = create((set) => ({
-  currentPage: window.location.pathname.includes("") ? "Dashboard" : window.location.pathname.replace("/", ""),
+  currentPage: window.location.pathname.includes("Admin") ? "Dashboard" : "Home",
   
   setCurrentPage: (page) => set({ currentPage: page }),
 }))
