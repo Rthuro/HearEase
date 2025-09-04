@@ -28,7 +28,7 @@ function App() {
             </Route>
             
             {/* User Routes */}
-            <Route path="/User" element={<UserLayout />}>
+            <Route path="/:user" element={<UserLayout />}>
               <Route index  element={<UserDashboard />} />
             </Route>
 
