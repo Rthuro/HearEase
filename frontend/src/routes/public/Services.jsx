@@ -1,5 +1,4 @@
 import file_case_img from "@/assets/imgs/appointment_form.png"
-import trace_case from "@/assets/imgs/trace_case.png"
 import { Link } from "react-router-dom";
 import { ArrowRight, Check } from "lucide-react";
 import { useState } from "react";
@@ -16,15 +15,6 @@ export function Services() {
             btn: "File Now",
             clr: "bg-redBase",
             gradient: "linear-gradient(134deg, #CA5252 50.41%, #FFDEDE 128.6%)"
-        },
-        {
-            link:"/Case",
-            img: trace_case,
-            title: "Check Case Status",
-            descrip: "Track the progress of your barangay case in real time",
-            btn: "Check Status",
-            clr: "bg-green-800",
-            gradient: "linear-gradient(114deg, #00970A 51.28%, #DDFADF 139.87%)"
         }
     ]
     const features = [
