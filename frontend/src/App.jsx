@@ -10,6 +10,8 @@ import { About } from './routes/public/About';
 import { Services } from './routes/public/Services';
 import { CaseStatus } from './routes/public/CaseStatus';
 import { Toaster } from "react-hot-toast";
+import { FileCase } from './components/FileCase';
+import { CaseForm } from './components/CaseForm';
 
 function App() {
 
@@ -30,11 +32,15 @@ function App() {
             {/* User Routes */}
             <Route path="/:user" element={<UserLayout />}>
               <Route index  element={<UserDashboard />} />
+              <Route path="/:user/File-Case" element={<FileCase />} />
+              <Route path="/:user/File-Case/Case-Form" element={<CaseForm />} />
             </Route>
 
             {/* Admin Routes */}
             <Route path="/Admin"  element={<AdminLayout />}>
               <Route index element={<Dashboard />} />
+              <Route path="/Admin/File-Case" element={<FileCase />} />
+              <Route path="/Admin/File-Case/Case-Form" element={<CaseForm />} />
             </Route>
 
           </Routes>
