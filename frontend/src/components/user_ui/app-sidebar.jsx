@@ -13,56 +13,55 @@ import {
 import HearEaseLogo from '@/assets/hearease_logo_s.png'
 import { Link } from "react-router-dom";
 import usePageStore from "@/store/usePageStore";
+import useAuthenticationStore from "@/store/useAuthenticationStore";
  
-// Menu items.
-const first_row = [
-  {
-    title: "File New Case",
-    url: "#",
-    icon: File,
-  },
-]
-
-const second_row = [
-  {
-    title: "Home",
-    url: "#",
-    icon: House,
-  },
-  {
-    title: "Hearings",
-    url: "#",
-    icon: Calendar,
-  },
-  {
-    title: "Pending",
-    url: "#",
-    icon: ClockFading,
-  },
-  {
-    title: "My Case Records",
-    url: "#",
-    icon: FolderOpen,
-  }
-]
-
-
-const third_row = [
-  {
-    title: "Settings",
-    url: "#",
-    icon: Settings,
-  },
-  {
-    title: "Support",
-    url: "#",
-    icon: Info,
-  },
-]
-
-
-
 export function AppSidebar() {
+  const { userInfo } = useAuthenticationStore();
+  // Menu items.
+  const first_row = [
+    {
+      title: "File New Case",
+      url: `@${userInfo?.name.replace(" ", "_")}/File-Case`,
+      icon: File,
+    },
+  ]
+
+  const second_row = [
+    {
+      title: "Home",
+      url: "#",
+      icon: House,
+    },
+    {
+      title: "Hearings",
+      url: "#",
+      icon: Calendar,
+    },
+    {
+      title: "Pending",
+      url: "#",
+      icon: ClockFading,
+    },
+    {
+      title: "My Case Records",
+      url: "#",
+      icon: FolderOpen,
+    }
+  ]
+
+
+  const third_row = [
+    {
+      title: "Settings",
+      url: "#",
+      icon: Settings,
+    },
+    {
+      title: "Support",
+      url: "#",
+      icon: Info,
+    },
+  ]
   const {currentPage } = usePageStore();
 
   return (
@@ -81,7 +80,7 @@ export function AppSidebar() {
                         item.title === "File New Case" ? (
                         <Link
                             key={item.title}
-                            to={`/admin/${item.url}`}
+                            to={`/${item.url}`}
                             className="bg-redBase text-white py-2 rounded-md flex items-center justify-center"
                         >
                             <span className="flex items-center gap-2">
@@ -92,7 +91,7 @@ export function AppSidebar() {
                         ) : (
                         <Link
                             key={item.title}
-                            to={`/admin/${item.url}`}
+                            to={`/${item.url}`}
                         >
                             <SidebarMenuItem className={currentPage === item.title ? " text-black" : " text-zinc-700"}>
                             <SidebarMenuButton asChild>
