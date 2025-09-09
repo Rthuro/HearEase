@@ -22,7 +22,7 @@ function App() {
           <Routes>
             {/* Public Routes */}
             <Route path='/' element={<PublicLayout />}>
-              <Route path="/" element={<HomePage />} />
+              <Route index  element={<HomePage />} />
               <Route path="/About" element={<About />} />
               <Route path="/Services" element={<Services />} />
               <Route path="/Case" element={<CaseStatus />} />
@@ -30,17 +30,17 @@ function App() {
             </Route>
             
             {/* User Routes */}
-            <Route path="/:user" element={<UserLayout />}>
-              <Route index  element={<UserDashboard />} />
-              <Route path="/:user/File-Case" element={<FileCase />} />
-              <Route path="/:user/File-Case/Case-Form" element={<CaseForm />} />
+            <Route   element={<UserLayout />}>
+              <Route path=":user/"  element={<UserDashboard />} />
+              <Route path=":user/File-Case" element={<FileCase />} />
+              <Route path=":user/File-Case/Case-Form" element={<CaseForm />} />
             </Route>
 
             {/* Admin Routes */}
-            <Route path="/Admin"  element={<AdminLayout />}>
+            <Route path="Admin"  element={<AdminLayout />}>
               <Route index element={<Dashboard />} />
-              <Route path="/Admin/File-Case" element={<FileCase />} />
-              <Route path="/Admin/File-Case/Case-Form" element={<CaseForm />} />
+              <Route path="Admin/File-Case" element={<FileCase />} />
+              <Route path="Admin/File-Case/Case-Form" element={<CaseForm />} />
             </Route>
 
           </Routes>
