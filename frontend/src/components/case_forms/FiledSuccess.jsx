@@ -1,0 +1,41 @@
+import success_img from "@/assets/imgs/filed_successfully.png"
+import useAuthenticationStore from "@/store/useAuthenticationStore"
+import { Download } from "lucide-react";
+
+export function FiledSuccess(){
+    const { userRole } = useAuthenticationStore();
+
+    return (
+        <div className={`${userRole != 'admin' ? 'mb-16' : ''}  flex flex-col items-center justify-center  p-6`}>
+            <section className="flex flex-col gap-3 items-center">
+                <img src={success_img} alt="filed successfully" srcset="" className="h-[120px] object-contain" />
+                <p className="text-2xl font-medium">Case Filed Successfully!</p>
+                <p className="text-sm text-zinc-500 text-center max-w-[530px]">
+                    {userRole === 'admin' ?
+                        `The case has been registered and scheduled. You may now download the following documents generated for this case.`
+                        :
+                        `You have successfully filed a case. Please wait for your case status update. We will keep you informed via email.`
+                    }
+                </p>
+            </section>
+            {userRole === 'admin' && (
+                <section className="flex flex-col gap-3 border-t border-zinc-200 items-center pt-4 pb-10 w-full">
+                        <p className="text-xl">
+                            Available Documents for Download
+                        </p>
+                        <div className="flex items-center gap-3">
+                            <button className="flex items-center justify-between p-3 rounded-sm bg-redBase/10 text-redBase text-sm w-56">
+                                Summon Letter
+                                <Download  size={16} />
+                            </button>
+                            <button className="flex items-center justify-between p-3 rounded-sm bg-redBase/10 text-redBase text-sm w-56">
+                                Case Monitoring Sheet
+                                <Download  size={16} />
+                            </button>
+                        </div>
+                </section>
+            )}
+            
+        </div>
+    )
+}
