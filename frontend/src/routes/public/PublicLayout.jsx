@@ -1,25 +1,24 @@
 import Hearease_logo from "@/assets/Hearease_logo_b.svg"
 import { Link, Outlet } from "react-router-dom"
-import { Button } from "@/components/ui/button";
 
 export function PublicLayout() {
 
     const navlink = [
         {
             title: "Home",
-            link: "/"
+            link: ""
         },
         {
             title: "Services",
-            link: "/Services"
+            link: "Services"
         },
         {
             title: "About Us",
-            link: "/About"
+            link: "About"
         },
         {
             title: "Contact Us",
-            link: "/Contact"
+            link: "Contact"
         }
     ]
 
@@ -34,7 +33,7 @@ export function PublicLayout() {
             </div>
             <div className="flex items-center justify-between">
                 {navlink.map((item, index) => (
-                    <Link key={index} to={`${item.link}`} className="hover:text-zinc-600 w-[110px]">
+                    <Link key={index} to={`/${item.link}`} className="hover:text-zinc-600 w-[110px]">
                         {item.title}
                     </Link>
                 ))}
