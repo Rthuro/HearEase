@@ -29,22 +29,22 @@ export function AppSidebar() {
   const second_row = [
     {
       title: "Home",
-      url: "#",
+      url: `@${userInfo?.name.replace(" ", "_")}`,
       icon: House,
     },
     {
       title: "Hearings",
-      url: "#",
+      url: `@${userInfo?.name.replace(" ", "_")}/Hearings`,
       icon: Calendar,
     },
     {
       title: "Pending",
-      url: "#",
+      url: `@${userInfo?.name.replace(" ", "_")}/Pending`,
       icon: ClockFading,
     },
     {
       title: "My Case Records",
-      url: "#",
+      url: `@${userInfo?.name.replace(" ", "_")}/Case-Records`,
       icon: FolderOpen,
     }
   ]
@@ -116,10 +116,12 @@ export function AppSidebar() {
                 {second_row.map((item) => (
                     <SidebarMenuItem key={item.title} className={currentPage === item.title ? " text-black" : " text-zinc-700"}>
                     <SidebarMenuButton asChild>
-                        <a href={item.url}>
-                        <item.icon />
-                        <span>{item.title}</span>
-                        </a>
+                        <Link 
+                        key={item.title}
+                        to={item.url}>
+                          <item.icon />
+                          <span>{item.title}</span>
+                        </Link>
                     </SidebarMenuButton>
                     </SidebarMenuItem>
                 ))}
