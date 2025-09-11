@@ -1,11 +1,14 @@
-import useAuthenticationStore from "@/store/useAuthenticationStore"
-
+import { DashboardNotification } from "@/components/DashboardNotification"
+import { Greetings } from "@/components/Greetings"
 export function UserDashboard() {
-  const { userInfo } = useAuthenticationStore();
 
   return (
-    <div>
-      <p>Welcome Back, {userInfo?.name}!</p>
+    <div className=" grid grid-cols-2 gap-6 p-6">
+      <div className="flex col-span-2 gap-4 mt-6">
+        <Greetings />
+        <DashboardNotification />
+      </div>
+      
     </div>
   )
 }

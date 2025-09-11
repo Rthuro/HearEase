@@ -29,7 +29,7 @@ export function UserLayout() {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <main className="w-full bg-zinc-100">
+      <main className="w-full bg-zinc-100/70">
         <header className="flex items-center justify-between p-3 gap-2 w-full border-b border-zinc-200 bg-white">
           <SidebarTrigger className="!bg-transparent focus-visible:!border-none  focus-visible:!outline-none  hover:!border-none hover:!outline-none !outline-0 !border-0"/>
           <div className="flex items-center gap-1">
