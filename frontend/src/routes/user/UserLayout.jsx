@@ -17,7 +17,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 
 export function UserLayout() {
-  const { userInfo } = useAuthenticationStore();
+  const { userInfo, logout } = useAuthenticationStore();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,6 +25,11 @@ export function UserLayout() {
       navigate("/Login");
     }
   }, [userInfo, navigate]);
+
+  const handleLogout = () => {
+    logout();
+    navigate("/Login");
+  };
 
   return (
     <SidebarProvider>
@@ -38,7 +43,7 @@ export function UserLayout() {
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger>
-                <div className="flex items-center gap-2 cursor-pointer hover:bg-zinc-100 py-1 px-2 rounded-md">
+                <div className="flex items-center gap-2 cursor-pointer  py-1 px-2 ">
                   <Avatar>
                     <AvatarImage src="https://github.com/shadcn.png" />
                     <AvatarFallback>{userInfo?.name.charAt(0)}</AvatarFallback>
@@ -56,7 +61,7 @@ export function UserLayout() {
                   <User2 /> 
                   Profile
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout}>
                   <LogOut /> 
                   Log out
                 </DropdownMenuItem>
