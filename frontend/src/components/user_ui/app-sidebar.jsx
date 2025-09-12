@@ -16,12 +16,12 @@ import usePageStore from "@/store/usePageStore";
 import useAuthenticationStore from "@/store/useAuthenticationStore";
  
 export function AppSidebar() {
-  const { userInfo } = useAuthenticationStore();
+  const { userLinkName } = useAuthenticationStore();
   // Menu items.
   const first_row = [
     {
       title: "File New Case",
-      url: `@${userInfo?.name.replace(" ", "_")}/File-Case`,
+      url: `${userLinkName}/File-Case`,
       icon: File,
     },
   ]
@@ -29,22 +29,22 @@ export function AppSidebar() {
   const second_row = [
     {
       title: "Home",
-      url: `@${userInfo?.name.replace(" ", "_")}`,
+      url: `/${userLinkName}`,
       icon: House,
     },
     {
       title: "Hearings",
-      url: `@${userInfo?.name.replace(" ", "_")}/Hearings`,
+      url: `/${userLinkName}/Hearings`,
       icon: Calendar,
     },
     {
-      title: "Pending",
-      url: `@${userInfo?.name.replace(" ", "_")}/Pending`,
+      title: "Calendar",
+      url: `/${userLinkName}/Calendar`,
       icon: ClockFading,
     },
     {
       title: "My Case Records",
-      url: `@${userInfo?.name.replace(" ", "_")}/Case-Records`,
+      url: `/${userLinkName}/CaseRecords`,
       icon: FolderOpen,
     }
   ]
