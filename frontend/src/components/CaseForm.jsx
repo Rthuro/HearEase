@@ -8,9 +8,10 @@ import { Respondent } from "./case_forms/Respondent";
 import { CaseDetails } from "./case_forms/CaseDetails";
 import { HearingInfo } from "./case_forms/HearingInfo";
 import { FiledSuccess } from "./case_forms/FiledSuccess";
+import { PageSync } from "./PageSync";
 
 export function CaseForm(){
-    const { userRole, userInfo } = useAuthenticationStore();
+    const { userRole, userLinkName } = useAuthenticationStore();
     const navigate = useNavigate();
     const [stepNumber, setStepNumber] = useState(1);
 
@@ -39,7 +40,7 @@ export function CaseForm(){
                 navigate('/Admin/File-Case');
             } else {
                 navigate(
-                    '/@' + userInfo.name.replace(" ", "_") + '/File-Case'
+                    '/' + userLinkName + '/File-Case'
                 );
             }
             return; 
@@ -54,6 +55,8 @@ export function CaseForm(){
 
     return(
         <main className="flex flex-col w-full h-full items-center justify-center gap-3 bg-white">
+            <PageSync page="" />
+            
             <div className=" w-full max-h-max flex items-center justify-center pb-20 border-b border-zinc-200">
                 <div className="flex items-center">
                     {formProgress.map((step) => (
