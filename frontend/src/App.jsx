@@ -12,6 +12,7 @@ import { CaseStatus } from './routes/public/CaseStatus';
 import { Toaster } from "react-hot-toast";
 import { FileCase } from './components/FileCase';
 import { CaseForm } from './components/CaseForm';
+import { Hearings } from './routes/user/Hearings';
 
 function App() {
 
@@ -32,6 +33,7 @@ function App() {
             {/* User Routes */}
             <Route   element={<UserLayout />}>
               <Route path=":user/"  element={<UserDashboard />} />
+              <Route path=":user/Hearings"  element={<Hearings />} />
               <Route path=":user/File-Case" element={<FileCase />} />
               <Route path=":user/File-Case/Case-Form" element={<CaseForm />} />
             </Route>
