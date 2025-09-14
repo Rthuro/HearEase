@@ -93,7 +93,7 @@ export function AppSidebar() {
                             key={item.title}
                             to={`/${item.url}`}
                         >
-                            <SidebarMenuItem className={currentPage === item.title ? " text-black" : " text-zinc-700"}>
+                            <SidebarMenuItem className={currentPage === item.title ? " text-black" : " text-zinc-600"}>
                             <SidebarMenuButton asChild>
                                 <span className="flex items-center gap-2">
                                 <item.icon />
@@ -109,7 +109,7 @@ export function AppSidebar() {
         </SidebarGroup>
         
         <SidebarGroup className="-mt-4">
-            <SidebarGroupLabel className="text-black">Main</SidebarGroupLabel>
+            <SidebarGroupLabel className="text-black">General</SidebarGroupLabel>
             <SidebarGroupContent>
                 <SidebarMenu>
                   
