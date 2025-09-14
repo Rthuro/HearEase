@@ -25,7 +25,7 @@ export function HearingInfo(){
     const [firstHearing] = useState(getFirstHearingDate(scheduledDate));
 
     const [open, setOpen] = useState(false)
-    const [value, setValue] = useState("")
+    const [value, setValue] = useState(null)
 
     return(
          <div className="grid grid-cols-2 gap-4">
@@ -78,8 +78,8 @@ export function HearingInfo(){
                                 <CommandItem
                                 key={lupon.id}
                                 value={lupon.id}
-                                onSelect={(currentValue) => {
-                                    setValue(currentValue === value ? "" : currentValue)
+                                onSelect={() => {
+                                    setValue(lupon.id)
                                     setOpen(false)
                                 }}
                                 >
