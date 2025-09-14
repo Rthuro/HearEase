@@ -13,7 +13,7 @@ export function FileCase(){
 
     const today = dateFormatter(new Date());
     const generateCaseNumber = () => {
-        return nanoid(11);
+        return 'CASE-' + nanoid(10);
     }
     const navigate = useNavigate();
 
