@@ -13,6 +13,8 @@ import { Toaster } from "react-hot-toast";
 import { FileCase } from './components/FileCase';
 import { CaseForm } from './components/CaseForm';
 import { Hearings } from './routes/user/Hearings';
+import { CaseRecords } from './routes/user/CaseRecords';
+import { Calendar } from './routes/user/Calendar';
 
 function App() {
 
@@ -34,6 +36,8 @@ function App() {
             <Route   element={<UserLayout />}>
               <Route path=":user/"  element={<UserDashboard />} />
               <Route path=":user/Hearings"  element={<Hearings />} />
+              <Route path=":user/CaseRecords" element={<CaseRecords />} />
+              <Route path=":user/Calendar" element={<Calendar />} />
               <Route path=":user/File-Case" element={<FileCase />} />
               <Route path=":user/File-Case/Case-Form" element={<CaseForm />} />
             </Route>
