@@ -132,5 +132,54 @@
   body {
     @apply bg-background text-foreground;
   }
+  
 }
 
+
+.fc .fc-prev-button,
+.fc .fc-next-button,
+.fc .fc-prev-button:hover,
+.fc .fc-prev-button:active,
+.fc .fc-prev-button:focus,
+.fc .fc-next-button:hover,
+.fc .fc-next-button:active, 
+.fc .fc-next-button:focus {
+    @apply !bg-white !text-zinc-700 !border !border-zinc-300 hover:!bg-zinc-100 !outline-none !ring-0;
+}
+
+
+
+.fc .fc-dayGridMonth-button,
+.fc .fc-timeGridWeek-button,
+.fc .fc-timeGridDay-button{
+  @apply border border-red-200 text-redBase bg-white ;
+}
+
+/* Optional: change hover and active states */
+.fc .fc-button:hover:not(.fc-prev-button):not(.fc-next-button) {
+  @apply bg-red-100 text-redBase border border-red-200;
+}
+
+.fc .fc-button:disabled {
+  @apply bg-red-200 text-white border border-red-200;
+}
+
+.fc .fc-button:active:not(.fc-prev-button):not(.fc-next-button):not(.fc-today-button),
+.fc .fc-button:focus:not(.fc-prev-button):not(.fc-next-button):not(.fc-today-button) {
+  @apply !bg-redBase !text-white !border !border-redBase !outline-none !ring-0;
+}
+
+.fc .fc-button.fc-button-active:not(.fc-prev-button):not(.fc-next-button):not(.fc-today-button) {
+   @apply !bg-redBase !text-white !border !border-redBase;
+}
+
+.fc .fc-today-button,
+.fc .fc-today-button:hover,
+.fc .fc-today-button:active, 
+.fc .fc-today-button:focus {
+  @apply !border !border-zinc-900 !text-white !bg-zinc-900;
+}
+
+.fc .fc-today-button:disabled {
+  @apply border border-zinc-200 text-white bg-zinc-200;
+}
