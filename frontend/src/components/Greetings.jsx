@@ -1,26 +1,28 @@
 import welcome_img from '@/assets/imgs/greetings.png';
 import useAuthenticationStore from '@/store/useAuthenticationStore';
-import { Arrow } from '@radix-ui/react-dropdown-menu';
 import { FolderClockIcon, CalendarClock, FolderEditIcon,
     FolderSearch2, ArrowRight
  } from 'lucide-react';
+ import { Link } from 'react-router-dom';
 
-const actions = {
-    admin: [
-        { name: 'Check new cases', link: '/Admin/Cases?status=new', icon: FolderClockIcon, 
-            iconClr: 'text-blue-500', },
-        { name: 'Check hearings', link: '/Admin/Hearings', icon: CalendarClock, 
-            iconClr: 'text-green-500', },
-        { name: 'Update cases', link: '/Admin/Cases', icon: FolderEditIcon, 
-            iconClr: 'text-yellow-500', },
-    ],
-    user: [
-        { name: 'Check pending cases', link: '/Pending', icon: FolderSearch2, iconClr: 'text-red-500', },
-        { name: 'View Scheduled Hearings', link: '/Heaings', icon: CalendarClock, iconClr: 'text-pink-500', },
-    ],
-}
+
 export function Greetings() {
-  const { userRole, userInfo } = useAuthenticationStore();
+  const { userRole, userInfo, userLinkName } = useAuthenticationStore();
+
+  const actions = {
+        admin: [
+            { name: 'Check new cases', link: '/Admin/Cases?status=new', icon: FolderClockIcon, 
+                iconClr: 'text-blue-500', },
+            { name: 'Check hearings', link: '/Admin/Hearings', icon: CalendarClock, 
+                iconClr: 'text-green-500', },
+            { name: 'Update cases', link: '/Admin/Cases', icon: FolderEditIcon, 
+                iconClr: 'text-yellow-500', },
+        ],
+        user: [
+            { name: 'Check my calendar', link: `/${userLinkName}/Calendar`, icon: FolderSearch2, iconClr: 'text-red-500', },
+            { name: 'View Scheduled Hearings', link: `/${userLinkName}/Hearings`, icon: CalendarClock, iconClr: 'text-pink-500', },
+        ],
+    }
 
   return (
     <section className='flex flex-col w-2/3 '>
@@ -44,13 +46,13 @@ export function Greetings() {
                     ))
                 ) : (
                     actions.user.map((action, index) => (
-                        <div key={index} className='flex items-center justify-between bg-white p-4 rounded-md w-full shadow-sm hover:shadow-md hover:scale-[1.02] transition-all '>
+                        <Link to={action.link} key={index} className='flex items-center justify-between bg-white p-4 rounded-md w-full shadow-sm hover:shadow-md hover:scale-[1.02] transition-all '>
                             <div className="flex items-center">
                                 <action.icon className={`${action.iconClr} size-4`} />
                                 <p className="ml-2">{action.name}</p>
                             </div>
                             <ArrowRight className={`${action.iconClr} `} size={16} />
-                        </div>
+                        </Link>
                     ))
                 )}
             </div>
