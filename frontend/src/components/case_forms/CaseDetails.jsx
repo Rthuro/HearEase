@@ -5,7 +5,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "../ui/popover"
-import { Check, ChevronsUpDown } from "lucide-react"
+import { Check, ChevronsUpDown, CloudUpload, Trash2, File} from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -146,6 +146,8 @@ export function CaseDetails(){
   const [open, setOpen] = useState(false)
   const [value, setValue] = useState("")
 
+  const filesUploaded = [];
+
     return (
         <div className="grid grid-cols-1 gap-3">
             <p className=" text-center  text-2xl mb-3">Case Details</p>
@@ -208,6 +210,35 @@ export function CaseDetails(){
                 <Label htmlFor="description">Short Description
                 </Label>
                 <Textarea id="description" className="w-full" rows={3} />
+            </div>
+            <div className="flex flex-col gap-2">
+              <p className="font-medium text-lg">Upload Documents</p>
+              <p className="text-sm text-zinc-700">Select file evidence.</p>
+              <Input type="file" id="fileUpload" className="hidden" />
+              <label htmlFor="fileUpload">
+                <div className="flex flex-col justify-center items-center border-2 border-dashed border-zinc-300 rounded-md h-32 cursor-pointer hover:bg-zinc-50 transition">
+                  <CloudUpload className="mb-2 text-zinc-600" />
+                  <p className="text-sm ">Click to upload file</p>
+                </div>
+              </label>
+              <p className="font-medium mt-2">Uploaded Files</p>
+              <div className="flex flex-col gap-1 max-h-40 overflow-y-auto">
+                { filesUploaded.length > 0 ? (
+                  filesUploaded.map((file, index) => (
+                    <div key={index} className="flex items-center justify-between p-2 border border-zinc-300 rounded-md">
+                      <div className="flex items-center gap-1">
+                        <File size={16}/>
+                        <p className="text-sm">{file.name}</p>
+                      </div>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 p-0">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-zinc-600 text-center">No files uploaded.</p>
+                )}
+              </div>
             </div>
         </div>
     )
