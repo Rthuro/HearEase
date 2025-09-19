@@ -4,14 +4,14 @@ import empty_img from '@/assets/imgs/empty.png';
 import useAuthenticationStore from '@/store/useAuthenticationStore';
 
 export function DashboardNotification({notifications}) {
-    const { userRole, userInfo } = useAuthenticationStore();
+    const { userRole, userLinkName } = useAuthenticationStore();
 
     const getUserNotifLink = () => {
         if (userRole === 'admin') {
             return '/admin/notifications';
         }
 
-        return '@' + userInfo.name.replace(" ", "_") + '/notifications';
+        return userLinkName + '/notifications';
     }
 
     const previewNotifications = notifications ? notifications.slice(0, 3) : [];
