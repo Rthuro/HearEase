@@ -7,8 +7,10 @@ import { dateFormatter } from '@/lib/helpers'
 import { useNavigate } from 'react-router-dom'
 import useAuthenticationStore from '@/store/useAuthenticationStore'
 import { PageSync } from './PageSync'
+import { useFormStore } from '@/store/useFormStore'
 
 export function FileCase(){
+    const { setCaseInfo } = useFormStore();
     const { userRole, userLinkName } = useAuthenticationStore();
 
     const today = dateFormatter(new Date());
@@ -16,6 +18,18 @@ export function FileCase(){
         return 'CASE-' + nanoid(10);
     }
     const navigate = useNavigate();
+
+    const handleStartCreating = () => {
+        
+        setCaseInfo({
+            case_number: generateCaseNumber(),
+            date: today,
+            case_status: "pending_approval",
+            hearing_status: "pending_schedule",
+        });
+
+        navigate(userRole === 'admin' ? '/Admin/File-Case/Case-Form' : '/' + userLinkName + '/File-Case/Case-Form');
+    }
 
     return (
         <main className='flex flex-col w-full items-center justify-center gap-6 mt-14 '>
@@ -36,7 +50,7 @@ export function FileCase(){
                 </div>
 
             </div>
-            <Button onClick={userRole === 'admin' ? () => navigate('/Admin/File-Case/Case-Form') : () => navigate('/' + userLinkName + '/File-Case/Case-Form')} 
+            <Button onClick={ handleStartCreating } 
                 className='!bg-redBase hover:bg-red-700 text-white flex items-center justify-between font-normal cursor-pointer '>
                 Start creating
                 <ChevronRight />
