@@ -17,10 +17,12 @@ import {
 } from "@/components/ui/pagination"
 import { Link } from "react-router-dom";
 import useAuthenticationStore from "@/store/useAuthenticationStore";
+import { CaseStatusDisplay } from "../CaseStatusDisplay";
+import { cn } from "@/lib/utils";
+import { getNatureLabel } from "@/lib/helpers";
 
 export function UserHearings({hearings, showPagination}) {
     const { userLinkName } = useAuthenticationStore();
-
 
     return(
         <section className="flex flex-col gap-6">
@@ -32,26 +34,35 @@ export function UserHearings({hearings, showPagination}) {
                                     <TableHead>Nature of Complaint</TableHead>
                                     <TableHead>Hearing Date</TableHead>
                                     <TableHead>Time</TableHead>
+                                    <TableHead>Status</TableHead>
                                     <TableHead>Action</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {hearings.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={5}>
+                                        <TableCell colSpan={6}>
                                             <p className="text-center">No hearings scheduled.</p>
                                         </TableCell>
                                     </TableRow>
                                 ) : (
                                     hearings.map((hearing) => (
-                                        <TableRow key={hearing.case_number} className="text-zinc-700">
-                                            <TableCell>{hearing.case_number}</TableCell>
-                                            <TableCell>{hearing.nature}</TableCell>
-                                            <TableCell>{new Date(hearing.date).toLocaleString()}</TableCell>
-                                            <TableCell>{hearing.time}</TableCell>
-                                            <TableCell>{hearing.status}</TableCell>
+                                        <TableRow key={hearing?.case_number} className="text-zinc-700">
+                                            <TableCell>{hearing?.case_number}</TableCell>
                                             <TableCell>
-                                                <Link to={`/${userLinkName}/Hearings/${hearing.id}`} className="text-redBase bg-red-100 px-3 py-2 rounded-lg text-sm">
+                                                {getNatureLabel(hearing?.nature_of_complaint_code)}
+                                            </TableCell>
+                                            <TableCell>{hearing?.date ?? '-'}
+                                            </TableCell>
+                                            <TableCell>
+                                                {hearing?.time ?? '-'} 
+                                            </TableCell>
+                                            <TableCell>
+                                                <CaseStatusDisplay caseStatus={hearing?.hearing_status}
+                                                />
+                                            </TableCell>
+                                            <TableCell className={cn("py-4")}>
+                                                <Link to={`/${userLinkName}/Hearings/${hearing?.case_number}`} className="text-redBase bg-red-100 px-3 py-2 rounded-lg text-sm">
                                                     Details 
                                                 </Link>
                                             </TableCell>
