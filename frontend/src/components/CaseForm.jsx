@@ -9,8 +9,12 @@ import { CaseDetails } from "./case_forms/CaseDetails";
 import { HearingInfo } from "./case_forms/HearingInfo";
 import { FiledSuccess } from "./case_forms/FiledSuccess";
 import { PageSync } from "./PageSync";
+import { useFormStore } from "@/store/useFormStore";
+import { toast } from "react-hot-toast";
+import { invalidContactNumber } from "@/lib/helpers";
 
 export function CaseForm(){
+    const { formData, addCase } = useFormStore();
     const { userRole, userLinkName } = useAuthenticationStore();
     const navigate = useNavigate();
     const [stepNumber, setStepNumber] = useState(1);
@@ -18,19 +22,23 @@ export function CaseForm(){
     const formProgress = [
         {
             number :1,
-            title: "Complainant Information"
+            title: "Complainant Information",
+            form: "complainant"
         },
         {
             number :2,
-            title: "Respondent Information"
+            title: "Respondent Information",
+            form: "respondent"
         },
         {
             number :3,
-            title: "Case Details"
+            title: "Case Details",
+            form: "caseDetails"
         },
         {
             number :4,
-            title: "Hearing Information"
+            title: "Hearing Information",
+            form: "hearingInfo"
         },
     ]
     
@@ -49,7 +57,36 @@ export function CaseForm(){
         setStepNumber((prev) => prev - 1);
     };
 
+    
+
     const handleNext = () => {
+        const currentFormKey = formProgress.find(step => step.number === stepNumber)?.form;
+
+        if (!currentFormKey) return false;
+
+        const currentFormData = formData[currentFormKey];
+
+        for (const field in currentFormData) {
+            if (currentFormData[field]?.required) {
+                const value = currentFormData[field]?.value;
+                if (value === null || value === undefined || value === '') {
+                    toast.error("Please fill in all required fields.");
+                    return false;
+                }
+
+                if (field === 'contact_number') {
+                    if (invalidContactNumber(value)) {
+                        toast.error("Invalid contact number format.");
+                        return false;
+                    }
+                }
+            }
+        }
+
+        if (stepNumber === 4) {
+            addCase();
+        }
+
         setStepNumber((prev) => prev + 1);
     };
 
