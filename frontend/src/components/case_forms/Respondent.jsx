@@ -8,15 +8,11 @@ import { Calendar } from "../ui/calendar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "../ui/dropdown-menu"
 import { getBarangayNames } from "@/lib/helpers";
 import { getStreets } from "@/lib/helpers";
+import { useFormStore } from "@/store/useFormStore"
 
 export function Respondent() {
-    const [birthDate, setBirthDate] = useState(null);
+    const { setFormData, formData } = useFormStore();
     const [openCalendar, setOpenCalendar] = useState(false);
-    const [sex, setSex] = useState("Male");
-    
-    const [barangay, setBarangay] = useState("Tetuan");
-
-    const [street, setStreet] = useState(getStreets("Tetuan")[0]);
 
     const minDate = new Date("1900-01-01");
     const maxDate = new Date();
@@ -26,18 +22,33 @@ export function Respondent() {
             <div className="grid grid-cols-1 gap-2">
                 <Label htmlFor="firstNameRespondent">First Name
                     <span className="text-redBase">*</span></Label>
-                <Input id="firstNameRespondent" type="text" className="w-72" />
+                <Input id="firstNameRespondent" type="text" className="w-72" 
+                value={formData.respondent.first_name.value}
+                onChange ={ (e) => {
+                    setFormData('respondent', 'first_name', e.target.value);
+                }}
+                required/>
             </div>
             <div className="grid grid-cols-1 gap-2">
                 <Label htmlFor="lastNameRespondent">Last Name
                     <span className="text-redBase">*</span></Label>
-                <Input id="lastNameRespondent" type="text" className="w-72" />
+                <Input id="lastNameRespondent" type="text" className="w-72" 
+                value={formData.respondent.last_name.value}
+                onChange ={ (e) => {
+                    setFormData('respondent', 'last_name', e.target.value);
+                }}
+                required/>
             </div>
 
             <div className="grid grid-cols-1 gap-2">
                 <Label htmlFor="middleNameRespondent">Middle Name
                 </Label>
-                <Input id="middleNameRespondent" type="text" className="w-72" />
+                <Input id="middleNameRespondent" type="text" className="w-72"
+                    value={formData.respondent.middle_name.value}
+                    onChange ={ (e) => {
+                        setFormData('respondent', 'middle_name', e.target.value);
+                    }}
+                />
             </div>
             <div className="grid grid-cols-1 gap-2">
                 <Label htmlFor="birthdayRespondent">Birthday
@@ -49,18 +60,19 @@ export function Respondent() {
                             id="date"
                             className="w-72 justify-between font-normal"
                         >
-                            {birthDate? birthDate.toLocaleDateString() : "Select date"}
+                            {formData.respondent.birth_date.value ? 
+                            formData.respondent.birth_date.value.toLocaleDateString() : "Select date"}
                             <CalendarIcon />
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className=" overflow-hidden p-0 w-72" align="start">
                         <Calendar
                             mode="single"
-                            selected={birthDate}
+                            selected={formData.respondent.birth_date.value}
                             captionLayout="dropdown"
                             disabled={(date) => date > maxDate || date < minDate}
                             onSelect={(date) => {
-                                setBirthDate(date);
+                                setFormData('respondent', 'birth_date', date);
                                 setOpenCalendar(false);
                             }}
                         />
@@ -75,14 +87,15 @@ export function Respondent() {
                 <DropdownMenu id="sexRespondent">
                     <DropdownMenuTrigger asChild>
                         <Button variant="outline">
-                        {sex || "Select"} 
+                        {formData.respondent.sex.value || "Select"} 
                         </Button>
                     </DropdownMenuTrigger>
 
                     <DropdownMenuContent className="w-56">
                         <DropdownMenuRadioGroup
-                        value={sex}
-                        onValueChange={setSex}
+                        value={formData.respondent.sex.value}
+                        onValueChange={(value) => 
+                            setFormData('respondent', 'sex', value)}
                         >
                         <DropdownMenuRadioItem value="Male">Male</DropdownMenuRadioItem>
                         <DropdownMenuRadioItem value="Female">Female</DropdownMenuRadioItem>
@@ -93,7 +106,17 @@ export function Respondent() {
             <div className="grid grid-cols-1 gap-2">
                 <Label htmlFor="contactRespondent">Contact Number
                 </Label>
-                <Input id="contactRespondent" type="text" className="w-72" />
+                <Input id="contactRespondent" type="tel" 
+                    placeholder="09876543210"
+                    className="w-72"
+                    inputMode="numeric"         
+                    pattern="[0-9]*"              
+                    maxLength={11} 
+                    value={formData.respondent.contact_number.value}
+                    onChange={ (e) => {
+                        setFormData('respondent', 'contact_number', e.target.value);
+                    }}
+                 />
             </div>
             
             <div className="grid grid-cols-1 col-span-2 gap-2">
@@ -104,17 +127,22 @@ export function Respondent() {
                         <Label htmlFor="barangayRespondent">Barangay</Label>
                         <DropdownMenu id="barangayRespondent">
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline">{barangay || 'Select'}</Button>
+                                <Button variant="outline">
+                                    { formData.respondent.barangay.value || 'Select'}
+                                </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="w-72">
-                                <DropdownMenuRadioGroup value={barangay} 
+                                <DropdownMenuRadioGroup 
+                                value={formData.respondent.barangay.value} 
                                 onValueChange={(value) => {
-                                    setBarangay(value);
-                                    setStreet(getStreets(value)[0]);
+                                    setFormData('respondent', 'barangay', value);
+                                    setFormData('comprespondentlainant', 'street', getStreets(value)[0]);
                                 }}>
+
                                 {getBarangayNames().map(name => (
                                     <DropdownMenuRadioItem key={name} value={name}>{name}</DropdownMenuRadioItem>
                                 ))}
+
                                 </DropdownMenuRadioGroup>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -123,13 +151,18 @@ export function Respondent() {
                         <Label htmlFor="streetRespondent">Street</Label>
                         <DropdownMenu id="streetRespondent">
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline">{street || 'Select'}</Button>
+                                <Button variant="outline">
+                                    {formData.respondent.street.value || 'Select'}
+                                </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="w-72">
-                                <DropdownMenuRadioGroup value={street} onValueChange={setStreet}>
-                                {getStreets(barangay).map(street => (
+                                <DropdownMenuRadioGroup 
+                                value={formData.respondent.street.value} onValueChange={(value) => setFormData('respondent', 'street', value)}>
+
+                                {getStreets(formData.respondent.barangay.value).map(street => (
                                     <DropdownMenuRadioItem key={street} value={street}>{street}</DropdownMenuRadioItem>
                                 ))}
+
                                 </DropdownMenuRadioGroup>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -137,7 +170,11 @@ export function Respondent() {
                 </div>
                 <div className="grid grid-cols-1 gap-2 mt-2">
                     <Label htmlFor="addInfoRespondent">Additional Information</Label>
-                    <Input id="addInfoRespondent" type="text" className="w-full" />
+                    <Input id="addInfoRespondent" type="text" className="w-full"
+                    value={formData.respondent.additional_info.value}
+                    onChange={(e) => 
+                        setFormData('respondent', 'additional_info', e.target.value)}
+                    />
                 </div>
             </div>
         </div>

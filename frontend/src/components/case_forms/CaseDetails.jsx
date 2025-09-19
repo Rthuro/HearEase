@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/command"
 import { Textarea } from "../ui/textarea";
 import { useState } from "react";
+import { useFormStore } from "@/store/useFormStore";
 
 const natureOfComplaints = [
   {
@@ -143,10 +144,17 @@ const natureOfComplaints = [
 ];
 
 export function CaseDetails(){
+  const { setFormData, formData } = useFormStore();
   const [open, setOpen] = useState(false)
-  const [value, setValue] = useState("")
+  const [uploadedFiles, setUploadedFiles] = useState(formData.caseDetails.documents.value || []);
 
-  const filesUploaded = [];
+  const handleDeleteFile = (fileToDelete) => {
+    const updatedFiles = uploadedFiles.filter(
+      (file) => file.name !== fileToDelete
+    );
+    setUploadedFiles(updatedFiles);
+    setFormData('caseDetails', 'documents', updatedFiles);
+  }
 
     return (
         <div className="grid grid-cols-1 gap-3">
@@ -163,8 +171,8 @@ export function CaseDetails(){
                         variant="outline"
                         className="max-w-max min-w-[400px] justify-between"
                         >
-                        {value
-                            ? natureOfComplaints.find((complaint) => complaint.code === value)?.label
+                        {formData.caseDetails.nature_of_complaint_code.value
+                            ? natureOfComplaints.find((complaint) => complaint.code === formData.caseDetails.nature_of_complaint_code.value)?.label
                             : "Select nature of complaint..."}
                         <ChevronsUpDown className="opacity-50" />
                         </Button>
@@ -180,7 +188,8 @@ export function CaseDetails(){
                                 key={complaint.code}
                                 value={complaint.code}
                                 onSelect={(currentValue) => {
-                                    setValue(currentValue === value ? "" : currentValue)
+                                    setFormData('caseDetails', 'nature_of_complaint_code', currentValue)
+                                    setFormData('caseDetails', 'severity', complaint.severity)
                                     setOpen(false)
                                 }}
                                 >
@@ -188,7 +197,7 @@ export function CaseDetails(){
                                 <Check
                                     className={cn(
                                     "ml-auto",
-                                    value === complaint.code ? "opacity-100" : "opacity-0"
+                                    formData.caseDetails.nature_of_complaint_code.value === complaint.code ? "opacity-100" : "opacity-0"
                                     )}
                                 />
                                 </CommandItem>
@@ -202,19 +211,35 @@ export function CaseDetails(){
             <div className="grid grid-cols-1 gap-2">
                 <Label htmlFor="severity">Severity
                 </Label>
-                <Input id="severity" type="text" className="w-full" disabled value={
-                  value ? natureOfComplaints.find((complaint) => complaint.code === value)?.severity : ""
+                <Input id="severity" type="number" className="w-full" disabled 
+                value={
+                  formData.caseDetails.nature_of_complaint_code.value ? natureOfComplaints.find((complaint) => 
+                    complaint.code === formData.caseDetails.nature_of_complaint_code.value)?.severity : ""
                 } />
             </div>
             <div className="grid grid-cols-1 gap-2">
                 <Label htmlFor="description">Short Description
                 </Label>
-                <Textarea id="description" className="w-full" rows={3} />
+                <Textarea id="description" className="w-full" rows={3} 
+                value={formData.caseDetails.description.value} 
+                onChange={(e) => setFormData('caseDetails', 'description', e.target.value)}
+                />
             </div>
             <div className="flex flex-col gap-2">
               <p className="font-medium text-lg">Upload Documents</p>
               <p className="text-sm text-zinc-700">Select file evidence.</p>
-              <Input type="file" id="fileUpload" className="hidden" />
+              <Input type="file" id="fileUpload" className="hidden" 
+                onChange={(e) => {
+                  const selectedFiles = e.target.files;
+                  if (selectedFiles) {
+                    const fileArray = Array.from(selectedFiles);
+                    setUploadedFiles((prevFiles) => [...prevFiles, ...fileArray]);
+                    setFormData('caseDetails', 'documents', 
+                      [...formData.caseDetails.documents.value, ...fileArray]);
+                  }
+                }} 
+                multiple
+              />
               <label htmlFor="fileUpload">
                 <div className="flex flex-col justify-center items-center border-2 border-dashed border-zinc-300 rounded-md h-32 cursor-pointer hover:bg-zinc-50 transition">
                   <CloudUpload className="mb-2 text-zinc-600" />
@@ -223,14 +248,19 @@ export function CaseDetails(){
               </label>
               <p className="font-medium mt-2">Uploaded Files</p>
               <div className="flex flex-col gap-1 max-h-40 overflow-y-auto">
-                { filesUploaded.length > 0 ? (
-                  filesUploaded.map((file, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 border border-zinc-300 rounded-md">
+                { uploadedFiles.length > 0 ? (
+                  uploadedFiles.map((file, index) => (
+                    <div key={index} className="flex items-center justify-between p-2 border border-zinc-300 rounded-md w-[400px]">
                       <div className="flex items-center gap-1">
                         <File size={16}/>
                         <p className="text-sm">{file.name}</p>
                       </div>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 p-0">
+                      <Button type="button" 
+                      onClick={(e) => {
+                         e.preventDefault();
+                        handleDeleteFile(file.name);
+                      }} 
+                      variant="ghost" size="icon" className="h-6 w-6 p-0">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>

@@ -1,9 +1,10 @@
 import success_img from "@/assets/imgs/filed_successfully.png"
 import useAuthenticationStore from "@/store/useAuthenticationStore"
 import { Download } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export function FiledSuccess(){
-    const { userRole } = useAuthenticationStore();
+    const { userRole, userLinkName } = useAuthenticationStore();
 
     return (
         <div className={`${userRole != 'admin' ? 'mb-16' : ''}  flex flex-col items-center justify-center  p-6`}>
@@ -17,6 +18,10 @@ export function FiledSuccess(){
                         `You have successfully filed a case. Please wait for your case status update. We will keep you informed via email.`
                     }
                 </p>
+                <Link to={`/${userRole === 'admin' ? 'Admin/Dashboard' : userLinkName }`} 
+                className="mt-4 px-4 py-2 bg-redBase text-white rounded-sm">
+                    Go back {userRole === 'admin' ? 'to Dashboard' : 'to Home'}
+                </Link>
             </section>
             {userRole === 'admin' && (
                 <section className="flex flex-col gap-3 border-t border-zinc-200 items-center pt-4 pb-10 w-full">

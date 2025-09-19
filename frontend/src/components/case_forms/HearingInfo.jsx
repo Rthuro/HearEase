@@ -19,13 +19,15 @@ import {
   CommandList,
 } from "@/components/ui/command"
 import { luponMembers } from "@/test/user_data";
+import { useFormStore } from "@/store/useFormStore";
 
 export function HearingInfo(){
+    const { setFormData, formData } = useFormStore();
     const [scheduledDate] = useState(new Date());
     const [firstHearing] = useState(getFirstHearingDate(scheduledDate));
 
     const [open, setOpen] = useState(false)
-    const [value, setValue] = useState(null)
+    // const [value, setValue] = useState(null)
 
     return(
          <div className="grid grid-cols-2 gap-4">
@@ -62,8 +64,8 @@ export function HearingInfo(){
                         variant="outline"
                         className="max-w-max min-w-full justify-between"
                         >
-                        {value
-                            ? luponMembers.find((lupon) => lupon.id === value)?.name
+                        { formData.hearingInfo.lupon_member_id.value
+                            ? luponMembers.find((lupon) => lupon.id === formData.hearingInfo.lupon_member_id.value)?.name
                             : "Select lupon members..."}
                         <ChevronsUpDown className="opacity-50" />
                         </Button>
@@ -79,7 +81,7 @@ export function HearingInfo(){
                                 key={lupon.id}
                                 value={lupon.id}
                                 onSelect={() => {
-                                    setValue(lupon.id)
+                                    setFormData('hearingInfo', 'lupon_member_id', lupon.id);
                                     setOpen(false)
                                 }}
                                 >
@@ -87,7 +89,7 @@ export function HearingInfo(){
                                 <Check
                                     className={cn(
                                     "ml-auto",
-                                    value === lupon.id ? "opacity-100" : "opacity-0"
+                                    formData.hearingInfo.lupon_member_id.value === lupon.id ? "opacity-100" : "opacity-0"
                                     )}
                                 />
                                 </CommandItem>
