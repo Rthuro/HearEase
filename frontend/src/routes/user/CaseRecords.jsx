@@ -125,7 +125,7 @@ export function CaseRecords(){
                                                     <TableCell>{hearing.nature}</TableCell>
                                                     <TableCell>{new Date(hearing.date).toLocaleString()}</TableCell>
                                                     <TableCell>
-                                                        <CaseStatusDisplay caseStatus={hearing.status} />
+                                                        <CaseStatusDisplay caseStatus={hearing.case_status} />
                                                     </TableCell>
                                                     <TableCell className={cn("py-4")}>
                                                         <Link to={`/${userLinkName}/Hearings/${hearing.id}`} className="text-redBase bg-red-50 px-3 py-2 rounded-lg text-xs">

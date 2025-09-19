@@ -12,10 +12,17 @@ import {
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { PageSync } from "@/components/PageSync";
-
+import { useFormStore } from "@/store/useFormStore";
+import { useEffect } from "react";
 
 export function Hearings() {
+    const { getCases } = useFormStore();
     const [status, setStatus] = useState("all");
+    const [cases, setCases] = useState(getCases());
+
+    useEffect(() => {
+        setCases(getCases());
+    }, [getCases]);
 
     return (
         <div className="p-6 flex flex-col gap-2">
@@ -40,6 +47,7 @@ export function Hearings() {
                         <DropdownMenuContent className="w-38">
                             <DropdownMenuRadioGroup value={status} onValueChange={setStatus}>
                             <DropdownMenuRadioItem value="all">All</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="upcoming">Pending</DropdownMenuRadioItem>
                             <DropdownMenuRadioItem value="upcoming">Upcoming</DropdownMenuRadioItem>
                             <DropdownMenuRadioItem value="past">Past</DropdownMenuRadioItem>
                             <DropdownMenuRadioItem value="escalated">Escalated</DropdownMenuRadioItem>
@@ -48,7 +56,7 @@ export function Hearings() {
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
-                <UserHearings hearings={[]} showPagination={true} />
+                <UserHearings hearings={cases} showPagination={true} />
             </section>
         </div>
     );
