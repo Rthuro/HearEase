@@ -1,4 +1,5 @@
 import { barangays } from "./barangays";
+import { natureOfComplaints } from "@/test/data";
 
 export function dateFormatter(date) {
     return date.toLocaleDateString('en-US');
@@ -14,4 +15,13 @@ export function getFirstHearingDate(scheduledDate = new Date()) {
   const date = new Date(scheduledDate);
   date.setDate(date.getDate() + 7); 
   return date;
+}
+
+export function invalidContactNumber(number) {
+    const regex = /^09\d{9}$/;
+    return !regex.test(number);
+}
+
+export function getNatureLabel(code){
+    return natureOfComplaints.find(n => n.code === code )?.label;
 }
