@@ -28,7 +28,7 @@ export function Greetings() {
     <section className='flex flex-col w-2/3 '>
     <div className='flex items-center bg-redBase px-6 py-6 rounded-lg justify-between relative shadow-sm'>
         <div className="flex flex-col gap-2 text-white">
-            <p className="text-3xl font-bold">Hello {userInfo.name}!</p>
+            <p className="text-3xl font-bold">Hello {userInfo?.name}!</p>
             <p>We're glad to see you again 👋.</p>
         </div>
       <img src={welcome_img} alt="Welcome" className='w-[200px] absolute right-6 bottom-4.5' />
