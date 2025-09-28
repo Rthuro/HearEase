@@ -18,12 +18,12 @@ import usePageStore from "@/store/usePageStore";
 const first_row = [
   {
     title: "Search Case",
-    url: "#",
+    url: "Search-Case",
     icon: FolderSearch,
   },
   {
     title: "File New Case",
-    url: "#",
+    url: "File-Case",
     icon: File,
   }
 ]
@@ -36,12 +36,12 @@ const second_row = [
   },
     {
     title: "Hearings",
-    url: "#",
+    url: "Hearings",
     icon: Calendar,
   },
   {
     title: "Case Records",
-    url: "#",
+    url: "CaseRecords",
     icon: FolderOpen,
   }
 ]
@@ -49,22 +49,22 @@ const second_row = [
 const third_row = [
     {
     title: "Generate Documents",
-    url: "#",
+    url: "Generate-Documents",
     icon: FilePen,
   },
   {
     title: "Lupon Management",
-    url: "#",
+    url: "Lupon-Management",
     icon: UserRound,
   },
   {
     title: "Reports",
-    url: "#",
+    url: "Reports",
     icon: ChartNoAxesColumnDecreasing,
   },
   {
     title: "Settings",
-    url: "#",
+    url: "Settings",
     icon: Settings,
   }
 
@@ -90,7 +90,7 @@ export function AppSidebar() {
                         item.title === "File New Case" ? (
                         <Link
                             key={item.title}
-                            to={`/admin/${item.url}`}
+                            to={`/Admin/${item.url}`}
                             className="bg-redBase text-white py-2 rounded-md flex items-center justify-center"
                         >
                             <span className="flex items-center gap-2">
@@ -101,7 +101,7 @@ export function AppSidebar() {
                         ) : item.title === "Search Case" ? (
                         <Link
                             key={item.title}
-                            to={`/admin/${item.url}`}
+                            to={`/Admin/${item.url}`}
                             className="border border-redBase/10 text-redBase bg-red-50 py-2 rounded-md flex items-center justify-center "
                         >
                             <span className="flex items-center gap-2">
@@ -112,7 +112,7 @@ export function AppSidebar() {
                         ) : (
                         <Link
                             key={item.title}
-                            to={`/admin/${item.url}`}
+                            to={`/Admin/${item.url}`}
                         >
                             <SidebarMenuItem className={currentPage === item.title ? " text-black" : " text-zinc-700"}>
                             <SidebarMenuButton asChild>
@@ -136,10 +136,10 @@ export function AppSidebar() {
                 {second_row.map((item) => (
                     <SidebarMenuItem key={item.title} className={currentPage === item.title ? " text-black" : " text-zinc-700"}>
                     <SidebarMenuButton asChild>
-                        <a href={item.url}>
+                        <Link key={item.title} to={`/Admin/${item.url}`}>
                         <item.icon />
                         <span>{item.title}</span>
-                        </a>
+                        </Link>
                     </SidebarMenuButton>
                     </SidebarMenuItem>
                 ))}
@@ -154,10 +154,10 @@ export function AppSidebar() {
                 {third_row.map((item) => (
                     <SidebarMenuItem key={item.title} className={currentPage === item.title ? " text-black" : " text-zinc-700"}>
                     <SidebarMenuButton asChild>
-                        <a href={item.url}>
-                        <item.icon />
-                        <span>{item.title}</span>
-                        </a>
+                        <Link key={item.title} to={`/Admin/${item.url}`}>
+                          <item.icon />
+                          <span>{item.title}</span>
+                        </Link>
                     </SidebarMenuButton>
                     </SidebarMenuItem>
                 ))}
