@@ -30,7 +30,7 @@ export function Authentication(){
                     setPassErr(true);
                 }else{
                     checkUser.role === "admin" ? login("admin", checkUser) : login("user", checkUser);
-                    navigate(`/${checkUser.role === "admin" ? "Admin" : '@' + 
+                    navigate(`/${checkUser.role === "admin" ? "Admin" : 'u/@' + 
                         checkUser.name.replace(" ", "_")}`);
                 }
             }

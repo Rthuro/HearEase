@@ -37,7 +37,7 @@ import { useEffect } from "react";
 import { cases } from "@/test/data";
 
 export function CaseRecords(){
-    const { userLinkName } = useAuthenticationStore();
+    const { userInfo, userLinkName } = useAuthenticationStore();
     const [status, setStatus] = useState("all");
 
     // Table view: 1 - row, 2 - box
@@ -52,6 +52,8 @@ export function CaseRecords(){
             status === "all" ? cases : cases.filter(c => c.status === status)
         );
     }, [status]);
+
+    const navigateTo = userInfo?.role === 'user' ? userLinkName : 'Admin';
 
     return (
         <div className="p-6 flex flex-col gap-2">
@@ -128,7 +130,7 @@ export function CaseRecords(){
                                                         <CaseStatusDisplay caseStatus={hearing.case_status} />
                                                     </TableCell>
                                                     <TableCell className={cn("py-4")}>
-                                                        <Link to={`/${userLinkName}/Hearings/${hearing.id}`} className="text-redBase bg-red-50 px-3 py-2 rounded-lg text-xs">
+                                                        <Link to={`/${navigateTo}/Case/${hearing.id}`} className="text-redBase bg-red-50 px-3 py-2 rounded-lg text-xs">
                                                             Details 
                                                         </Link>
                                                     </TableCell>
@@ -144,7 +146,7 @@ export function CaseRecords(){
                         <div className="flex items-center flex-wrap gap-3 ">
                             {filteredCases.length > 0 ? (
                                     filteredCases.map((hearing) => (
-                                        <Link to={`/${userLinkName}/Hearings/${hearing.case_number}`} key={hearing.case_number} className="border border-zinc-200 rounded-lg p-4 w-60 hover:shadow-md transition-shadow">
+                                        <Link to={`/${navigateTo}/Case/${hearing.case_number}`} key={hearing.case_number} className="border border-zinc-200 rounded-lg p-4 w-60 hover:shadow-md transition-shadow">
                                             <CaseStatusDisplay caseStatus={hearing.status} />
                                             <img src={folder_img} alt="folder" className="mx-auto mb-2"/>
                                             <p className="font-medium text-sm mb-1 text-center">{hearing.case_number}</p>

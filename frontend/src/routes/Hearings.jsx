@@ -1,4 +1,4 @@
-import { UserHearings } from "@/components/user_ui/UserHearings";
+import { TableHearings } from "@/components/TableHearings";
 import { Input } from "@/components/ui/input";
 import { Search } from 'lucide-react'
 import { Button } from "@/components/ui/button";
@@ -12,17 +12,21 @@ import {
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { PageSync } from "@/components/PageSync";
-import { useFormStore } from "@/store/useFormStore";
+import { useCaseStore } from "@/store/useCaseStore";
 import { useEffect } from "react";
+import useAuthenticationStore from "@/store/useAuthenticationStore";
 
 export function Hearings() {
-    const { getCases } = useFormStore();
+    const { getCases } = useCaseStore();
     const [status, setStatus] = useState("all");
     const [cases, setCases] = useState(getCases());
 
     useEffect(() => {
         setCases(getCases());
     }, [getCases]);
+
+    const { userInfo, userLinkName } = useAuthenticationStore();
+    const navigateTo = userInfo?.role === 'user' ? userLinkName : 'Admin';
 
     return (
         <div className="p-6 flex flex-col gap-2">
@@ -56,7 +60,7 @@ export function Hearings() {
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
-                <UserHearings hearings={cases} showPagination={true} />
+                <TableHearings hearings={cases} showPagination={true} navigateTo={navigateTo} />
             </section>
         </div>
     );
