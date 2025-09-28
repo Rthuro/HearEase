@@ -29,22 +29,22 @@ export function AppSidebar() {
   const second_row = [
     {
       title: "Home",
-      url: `/${userLinkName}`,
+      url: `${userLinkName}`,
       icon: House,
     },
     {
       title: "Hearings",
-      url: `/${userLinkName}/Hearings`,
+      url: `${userLinkName}/Hearings`,
       icon: Calendar,
     },
     {
       title: "Calendar",
-      url: `/${userLinkName}/Calendar`,
+      url: `${userLinkName}/Calendar`,
       icon: ClockFading,
     },
     {
       title: "My Case Records",
-      url: `/${userLinkName}/CaseRecords`,
+      url: `${userLinkName}/CaseRecords`,
       icon: FolderOpen,
     }
   ]
@@ -80,7 +80,7 @@ export function AppSidebar() {
                         item.title === "File New Case" ? (
                         <Link
                             key={item.title}
-                            to={`/${item.url}`}
+                            to={`${item.url}`}
                             className="bg-redBase text-white py-2 rounded-md flex items-center justify-center"
                         >
                             <span className="flex items-center gap-2">
@@ -91,7 +91,7 @@ export function AppSidebar() {
                         ) : (
                         <Link
                             key={item.title}
-                            to={`/${item.url}`}
+                            to={`${item.url}`}
                         >
                             <SidebarMenuItem className={currentPage === item.title ? " text-black" : " text-zinc-600"}>
                             <SidebarMenuButton asChild>
