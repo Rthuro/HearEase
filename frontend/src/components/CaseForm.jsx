@@ -9,12 +9,12 @@ import { CaseDetails } from "./case_forms/CaseDetails";
 import { HearingInfo } from "./case_forms/HearingInfo";
 import { FiledSuccess } from "./case_forms/FiledSuccess";
 import { PageSync } from "./PageSync";
-import { useFormStore } from "@/store/useFormStore";
+import { useCaseStore } from "@/store/useCaseStore";
 import { toast } from "react-hot-toast";
 import { invalidContactNumber } from "@/lib/helpers";
 
 export function CaseForm(){
-    const { formData, addCase } = useFormStore();
+    const { formData, addCase } = useCaseStore();
     const { userRole, userLinkName } = useAuthenticationStore();
     const navigate = useNavigate();
     const [stepNumber, setStepNumber] = useState(1);
