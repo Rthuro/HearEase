@@ -7,10 +7,10 @@ import { dateFormatter } from '@/lib/helpers'
 import { useNavigate } from 'react-router-dom'
 import useAuthenticationStore from '@/store/useAuthenticationStore'
 import { PageSync } from './PageSync'
-import { useFormStore } from '@/store/useFormStore'
+import { useCaseStore } from '@/store/useCaseStore'
 
 export function FileCase(){
-    const { setCaseInfo } = useFormStore();
+    const { setCaseInfo } = useCaseStore();
     const { userRole, userLinkName } = useAuthenticationStore();
 
     const today = dateFormatter(new Date());
