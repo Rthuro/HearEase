@@ -3,7 +3,7 @@ import useAuthenticationStore from "./useAuthenticationStore";
 
 const { userInfo } = useAuthenticationStore.getState();
 
-export const useFormStore = create((set, get) => ({
+export const useCaseStore = create((set, get) => ({
     case : {
         case_number: "",
         date: "",
@@ -152,7 +152,9 @@ export const useFormStore = create((set, get) => ({
             nature_of_complaint_code: newCase.caseDetails.nature_of_complaint_code.value,
             severity: newCase.caseDetails.severity.value,
             description: newCase.caseDetails.description.value,
-            documents: newCase.caseDetails.documents.value,
+            documents: Array.isArray(newCase.caseDetails.documents.value)
+            ? [...newCase.caseDetails.documents.value]
+            : [],
             predicted_number: newCase.hearingInfo.predicted_number.value,
             first_hearing_date: newCase.hearingInfo.first_hearing_date.value,
             time: newCase.hearingInfo.time.value,
@@ -186,6 +188,13 @@ export const useFormStore = create((set, get) => ({
     getCases : () => {
         const storedCases = localStorage.getItem('cases');
         const userCases = storedCases ? JSON.parse(storedCases) : [];
-        return userCases.filter(c => c.user_id === userInfo.id);
+
+        return userInfo?.role === 'admin' ? userCases : userCases.filter(c => c.user_id === userInfo?.id);
+    },
+
+    getCaseByNumber: (caseNumber) => {
+        const storedCases = localStorage.getItem('cases');
+        const userCases = storedCases ? JSON.parse(storedCases) : [];
+        return userCases.find(c => c.case_number === caseNumber && c.user_id === userInfo?.id);
     }
 }))
