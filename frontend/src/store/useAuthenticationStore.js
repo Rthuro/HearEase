@@ -5,7 +5,7 @@ const useAuthenticationStore = create((set) => ({
     userRole: null, 
     userInfo: null, 
     userLinkName: null,
-    login: (role, info) => set({ isAuthenticated: true, userRole: role, userInfo: info, userLinkName: '@' + info.name.replace(" ", "_") }),
+    login: (role, info) => set({ isAuthenticated: true, userRole: role, userInfo: info, userLinkName: 'u/@' + info.name.replace(" ", "_") }),
     logout: () => set({ isAuthenticated: false, userRole: null, userInfo: null, userLinkName: null }),
 
 }));
