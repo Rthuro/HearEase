@@ -12,9 +12,11 @@ import { CaseStatus } from './routes/public/CaseStatus';
 import { Toaster } from "react-hot-toast";
 import { FileCase } from './components/FileCase';
 import { CaseForm } from './components/CaseForm';
-import { Hearings } from './routes/user/Hearings';
-import { CaseRecords } from './routes/user/CaseRecords';
+import { Hearings } from './routes/Hearings';
+import { CaseRecords } from './routes/CaseRecords';
 import { Calendar } from './routes/user/Calendar';
+import { Case } from './routes/Case';
+import { NotFound } from './routes/NotFound';
 
 function App() {
 
@@ -34,20 +36,26 @@ function App() {
             
             {/* User Routes */}
             <Route   element={<UserLayout />}>
-              <Route path=":user/"  element={<UserDashboard />} />
-              <Route path=":user/Hearings"  element={<Hearings />} />
-              <Route path=":user/CaseRecords" element={<CaseRecords />} />
-              <Route path=":user/Calendar" element={<Calendar />} />
-              <Route path=":user/File-Case" element={<FileCase />} />
-              <Route path=":user/File-Case/Case-Form" element={<CaseForm />} />
+              <Route path="u/:user/"  element={<UserDashboard />} />
+              <Route path="u/:user/Hearings"  element={<Hearings />} />
+              <Route path="u/:user/CaseRecords" element={<CaseRecords />} />
+              <Route path="u/:user/Calendar" element={<Calendar />} />
+              <Route path="u/:user/File-Case" element={<FileCase />} />
+              <Route path="u/:user/File-Case/Case-Form" element={<CaseForm />} />
+              <Route path="u/:user/Case/:case_number" element={<Case />} />
             </Route>
 
             {/* Admin Routes */}
-            <Route path="Admin"  element={<AdminLayout />}>
-              <Route index element={<Dashboard />} />
+            <Route  element={<AdminLayout />}>
+              <Route path='Admin/' element={<Dashboard />} />
               <Route path="Admin/File-Case" element={<FileCase />} />
               <Route path="Admin/File-Case/Case-Form" element={<CaseForm />} />
+              <Route path="Admin/Case/:case_number" element={<Case />} />
+              <Route path="Admin/Hearings"  element={<Hearings />} />
+              <Route path="Admin/CaseRecords" element={<CaseRecords />} />
             </Route>
+
+            <Route path="*" element={<NotFound />} />
 
           </Routes>
         </Router>
