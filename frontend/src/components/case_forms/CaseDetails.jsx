@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/command"
 import { Textarea } from "../ui/textarea";
 import { useState } from "react";
-import { useFormStore } from "@/store/useFormStore";
+import { useCaseStore } from "@/store/useCaseStore";
 
 const natureOfComplaints = [
   {
@@ -144,7 +144,7 @@ const natureOfComplaints = [
 ];
 
 export function CaseDetails(){
-  const { setFormData, formData } = useFormStore();
+  const { setFormData, formData } = useCaseStore();
   const [open, setOpen] = useState(false)
   const [uploadedFiles, setUploadedFiles] = useState(formData.caseDetails.documents.value || []);
 

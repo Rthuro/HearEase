@@ -8,10 +8,10 @@ import { Calendar } from "../ui/calendar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "../ui/dropdown-menu"
 import { getBarangayNames } from "@/lib/helpers";
 import { getStreets } from "@/lib/helpers";
-import { useFormStore } from "@/store/useFormStore"
+import { useCaseStore } from "@/store/useCaseStore"
 
 export function Complainant() {
-    const { setFormData, formData } = useFormStore();
+    const { setFormData, formData } = useCaseStore();
     const [openCalendar, setOpenCalendar] = useState(false);
 
     // const [sex, setSex] = useState("Male");

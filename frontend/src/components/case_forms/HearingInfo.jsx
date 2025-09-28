@@ -19,10 +19,10 @@ import {
   CommandList,
 } from "@/components/ui/command"
 import { luponMembers } from "@/test/user_data";
-import { useFormStore } from "@/store/useFormStore";
+import { useCaseStore } from "@/store/useCaseStore";
 
 export function HearingInfo(){
-    const { setFormData, formData } = useFormStore();
+    const { setFormData, formData } = useCaseStore();
     const [scheduledDate] = useState(new Date());
     const [firstHearing] = useState(getFirstHearingDate(scheduledDate));
 
