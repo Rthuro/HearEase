@@ -55,12 +55,56 @@ export function CaseRecords(){
 
     const navigateTo = userInfo?.role === 'user' ? userLinkName : 'Admin';
 
+    const whiteStyle = "bg-white shadow-sm";
+    const redStyle = "bg-redBase text-white";
+
+    const adminCards = [
+        {
+            title: "Total Active Cases",
+            count: cases.length,
+            style: whiteStyle,
+            numClr: "text-redBase"
+        },
+        {
+            title: "Resolved Cases",
+            count: cases.filter(c => c.status === 'resolved').length,
+            style: whiteStyle,
+            numClr: "text-redBase"
+
+        },{
+            title: "Total Escalated Cases",
+            count: cases.filter(c => c.status === 'escalated').length,
+            style: redStyle,
+        }
+    ];
+
     return (
         <div className="p-6 flex flex-col gap-2">
             <PageSync page="My Case Records" />
-            <h1 className="text-2xl font-bold">My Case Records</h1>
-            <p>You have <span className="font-medium text-redBase">0</span> cases.</p>
-             <section className="flex flex-col gap-3 mt-3 bg-white border border-zinc-200 rounded-lg p-6">
+
+            {userInfo?.role === 'user' && (
+                <div className="flex flex-col gap-2">
+                    <h1 className="text-2xl font-bold">My Case Records</h1>
+                    <p>You have <span className="font-medium text-redBase">{filteredCases.length}</span> cases.</p>
+                </div>
+            )}
+
+            {userInfo?.role === 'admin' && (
+                <div className="flex flex-col gap-2">
+                    <h1 className="text-2xl font-bold">Case Records</h1>    
+                    <div className="grid grid-cols-4 gap-4">
+                        {adminCards.map((card) => (
+                            <div key={card.title} className={`p-4 rounded-lg flex flex-col justify-center items-start ${card.style}`}>
+                                <p className={`font-medium text-xl ${card?.numClr}`}>{card.count}</p>
+                                <p className="text-sm">{card.title}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            
+            <section className="flex flex-col gap-3 mt-3 bg-white border border-zinc-200 rounded-lg p-6">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center">
                         <Search className="text-zinc-400 ml-3" size={16} />
