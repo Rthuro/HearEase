@@ -6,7 +6,7 @@ export function NotFound() {
     const user = userInfo?.role === 'user' ? userLinkName : 'Admin';
     const navigate = useNavigate();
 
-    const navigateToHome = () => {
+    const goBack = () => {
         navigate(`/${user}`);
     };
 
@@ -15,8 +15,8 @@ export function NotFound() {
             <h1 className="text-6xl font-bold text-red-600">404</h1>
             <p className="text-2xl mt-4">Page Not Found</p>
             <p className="text-gray-600 mt-2">The page you are looking for does not exist.</p>
-            <Link to={navigateToHome()} className="text-red-600 hover:underline mt-2">
-                Go back to Home
+            <Link to={goBack()} className="text-red-600 hover:underline mt-2">
+                Go back
             </Link>
         </div>
     );
