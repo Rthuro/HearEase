@@ -14,8 +14,10 @@ import { FileCase } from './components/FileCase';
 import { CaseForm } from './components/CaseForm';
 import { Hearings } from './routes/Hearings';
 import { CaseRecords } from './routes/CaseRecords';
-import { Calendar } from './routes/user/Calendar';
+import { Calendar } from './routes/Calendar';
 import { Case } from './routes/Case';
+import { GenerateDocument } from './routes/admin/pages/GenerateDocu';
+import { LuponManagement } from './routes/admin/pages/LuponManagement';
 import { NotFound } from './routes/NotFound';
 
 function App() {
@@ -49,10 +51,13 @@ function App() {
             <Route  element={<AdminLayout />}>
               <Route path='Admin/' element={<Dashboard />} />
               <Route path="Admin/File-Case" element={<FileCase />} />
+              <Route path="Admin/Calendar" element={<Calendar />} />
               <Route path="Admin/File-Case/Case-Form" element={<CaseForm />} />
               <Route path="Admin/Case/:case_number" element={<Case />} />
               <Route path="Admin/Hearings"  element={<Hearings />} />
               <Route path="Admin/CaseRecords" element={<CaseRecords />} />
+              <Route path="Admin/Generate-Documents" element={<GenerateDocument />} />
+              <Route path="Admin/Lupon-Management" element={<LuponManagement />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
