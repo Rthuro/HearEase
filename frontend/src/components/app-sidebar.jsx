@@ -1,4 +1,4 @@
-import { Calendar, House, ChartNoAxesColumnDecreasing, UserRound, FilePen, File, FolderOpen, Settings, LogOut, FolderSearch, Folder } from "lucide-react"
+import { Calendar, House, ChartNoAxesColumnDecreasing, UserRound, FilePen, File, FolderOpen, Settings,  FolderSearch, CalendarDays } from "lucide-react"
  
 import {
   Sidebar,
@@ -38,6 +38,11 @@ const second_row = [
     title: "Hearings",
     url: "Hearings",
     icon: Calendar,
+  },
+  {
+    title: "Calendar",
+    url: "Calendar",
+    icon: CalendarDays,
   },
   {
     title: "Case Records",
@@ -134,7 +139,7 @@ export function AppSidebar() {
             <SidebarGroupContent>
                 <SidebarMenu>
                 {second_row.map((item) => (
-                    <SidebarMenuItem key={item.title} className={currentPage === item.title ? " text-black" : " text-zinc-700"}>
+                    <SidebarMenuItem key={item.title} className={currentPage.includes(item.title) ? " text-black" : " text-zinc-700"}>
                     <SidebarMenuButton asChild>
                         <Link key={item.title} to={`/Admin/${item.url}`}>
                         <item.icon />
