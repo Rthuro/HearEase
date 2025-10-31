@@ -34,24 +34,30 @@ import { CaseStatusDisplay } from "@/components/CaseStatusDisplay";
 import { Link } from "react-router-dom";
 import folder_img from '@/assets/folder.png'
 import { useEffect } from "react";
-import { cases } from "@/test/data";
+// import { cases } from "@/test/data";
+import { useCaseStore } from "@/store/useCaseStore";
+
 
 export function CaseRecords(){
+    const { cases, fetchCases, caseTypes, fetchCaseTypes } = useCaseStore();
     const { userInfo, userLinkName } = useAuthenticationStore();
     const [status, setStatus] = useState("all");
 
     // Table view: 1 - row, 2 - box
-    const [view, setView] = useState(2);
-    
-
+    const [view, setView] = useState(1);
     const [filteredCases, setFilteredCases] = useState(cases);
 
+    useEffect( ()=>{
+        fetchCaseTypes()
+        fetchCases()
+    },[fetchCases, fetchCaseTypes])
+    
     // Update filteredCases when status changes
     useEffect(() => {
         setFilteredCases(
-            status === "all" ? cases : cases.filter(c => c.status === status)
+            status === "all" ? cases : cases.filter(c => c.case_status === status)
         );
-    }, [status]);
+    }, [status, cases]);
 
     const navigateTo = userInfo?.role === 'user' ? userLinkName : 'Admin';
 
@@ -133,7 +139,9 @@ export function CaseRecords(){
                                     setStatus(s);
                                 }}>
                                 <DropdownMenuRadioItem value="all">All</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="pending">pending</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="filed">Filed</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="pending">Pending Approval</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="Approved">Approved</DropdownMenuRadioItem>
                                 <DropdownMenuRadioItem value="in_progress">In progress</DropdownMenuRadioItem>
                                 <DropdownMenuRadioItem value="resolved">Resolved</DropdownMenuRadioItem>
                                 <DropdownMenuRadioItem value="escalated">Escalated</DropdownMenuRadioItem>
@@ -152,7 +160,8 @@ export function CaseRecords(){
                                         <TableRow>
                                             <TableHead>Case #</TableHead>
                                             <TableHead>Nature of Complaint</TableHead>
-                                            <TableHead>Hearing Date</TableHead>
+                                            <TableHead>Settlement</TableHead>
+                                            <TableHead>Date Filed</TableHead>
                                             <TableHead>Status</TableHead>
                                             <TableHead>Action</TableHead>
                                         </TableRow>
@@ -165,16 +174,17 @@ export function CaseRecords(){
                                                 </TableCell>
                                             </TableRow>
                                         ) : (
-                                            filteredCases.map((hearing) => (
-                                                <TableRow key={hearing.case_number} className={cn("text-zinc-700")}>
-                                                    <TableCell>{hearing.case_number}</TableCell>
-                                                    <TableCell>{hearing.nature}</TableCell>
-                                                    <TableCell>{new Date(hearing.date).toLocaleString()}</TableCell>
+                                            filteredCases.map((c) => (
+                                                <TableRow key={c.id} className={cn("text-zinc-700")}>
+                                                    <TableCell>{c.id}</TableCell>
+                                                    <TableCell>{c.case_type.case_name}</TableCell>
+                                                    <TableCell>{c.settlement_type.settlement_name}</TableCell>
+                                                    <TableCell>{new Date(c.date_filed).toLocaleString()}</TableCell>
                                                     <TableCell>
-                                                        <CaseStatusDisplay caseStatus={hearing.case_status} />
+                                                        <CaseStatusDisplay caseStatus={c.case_status} />
                                                     </TableCell>
                                                     <TableCell className={cn("py-4")}>
-                                                        <Link to={`/${navigateTo}/Case/${hearing.id}`} className="text-redBase bg-red-50 px-3 py-2 rounded-lg text-xs">
+                                                        <Link to={`/${navigateTo}/Case/${c.id}`} className="text-redBase bg-red-50 px-3 py-2 rounded-lg text-xs">
                                                             Details 
                                                         </Link>
                                                     </TableCell>
@@ -189,12 +199,13 @@ export function CaseRecords(){
                     {view == 2 && (
                         <div className="flex items-center flex-wrap gap-3 ">
                             {filteredCases.length > 0 ? (
-                                    filteredCases.map((hearing) => (
-                                        <Link to={`/${navigateTo}/Case/${hearing.case_number}`} key={hearing.case_number} className="border border-zinc-200 rounded-lg p-4 w-60 hover:shadow-md transition-shadow">
-                                            <CaseStatusDisplay caseStatus={hearing.status} />
+                                    filteredCases.map((c) => (
+                                        <Link to={`/${navigateTo}/Case/${c.id}`} key={c.id} className="border border-zinc-200 rounded-lg p-4 w-60 hover:shadow-md transition-shadow">
+                                            <CaseStatusDisplay caseStatus={c.case_status} />
                                             <img src={folder_img} alt="folder" className="mx-auto mb-2"/>
-                                            <p className="font-medium text-sm mb-1 text-center">{hearing.case_number}</p>
-                                            <p className="text-sm text-zinc-600 mb-1 text-center">{hearing.nature}
+                                            <p className="font-medium text-sm mb-1 text-center">{c.id}</p>
+                                            <p className="text-sm text-zinc-600 mb-1 text-center">
+                                                {c.case_type.case_name}
                                             </p>
                                         </Link>
                                     )
