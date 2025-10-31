@@ -24,6 +24,12 @@ export function Header({userInfo}){
         navigate("/Login");
     };
 
+    const profileLink = () => {
+      const stored = localStorage.getItem("authData");
+      const data = stored ? JSON.parse(stored) : null;
+      navigate(data?.userRole === "admin" ? "/Admin/Profile" : `/${data?.userLinkName}/Profile`);
+    }
+
     return (
         <header className="flex items-center justify-between p-3 gap-2 w-full border-b border-zinc-200 bg-white">
           <SidebarTrigger className="!bg-transparent focus-visible:!border-none  focus-visible:!outline-none  hover:!border-none hover:!outline-none !outline-0 !border-0"/>
@@ -36,7 +42,7 @@ export function Header({userInfo}){
                 <div className="flex items-center gap-2 cursor-pointer  py-1 px-2 ">
                   <Avatar>
                     <AvatarImage src="https://github.com/shadcn.png" />
-                    <AvatarFallback>{userInfo?.name.charAt(0)}</AvatarFallback>
+                    <AvatarFallback>{userInfo?.email.charAt(0)}</AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col items-start">
                     <p className="font-medium text-sm">{userInfo?.name}</p>
@@ -47,7 +53,7 @@ export function Header({userInfo}){
               <DropdownMenuContent className="w-48" sideOffset={4} >
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={profileLink}>
                   <User2 /> 
                   Profile
                 </DropdownMenuItem>
