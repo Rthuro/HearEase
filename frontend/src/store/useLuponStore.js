@@ -1,0 +1,119 @@
+import { create } from "zustand";
+import axios from "axios";
+import toast from "react-hot-toast";
+
+const API_BASE_URL = "http://127.0.0.1:8000/api/lupon-members"; 
+
+export const getLuponMembers = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching Lupon members:", error);
+    toast.error("Failed to fetch Lupon members.");
+    throw error;
+  }
+};
+
+// POST (add Lupon member)
+export const addLuponMember = async (memberData) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/`, memberData);
+    toast.success("Lupon member added successfully!");
+    return response.data;
+  } catch (error) {
+    console.error("Error adding Lupon member:", error);
+    toast.error("Failed to add Lupon member.");
+    throw error;
+  }
+};
+
+export const useLuponStore = create((set, get) => ({
+  members: [],
+  loading: false,
+
+  formData: {
+    first_name: { value: "", required: true },
+    last_name: { value: "", required: true },
+    middle_name: { value: "", required: false },
+    birth_date: { value: null, required: true },
+    sex: { value: "", required: true },
+    contact_number: { value: "", required: true },
+    barangay: { value: "Tetuan", required: true },
+    street: { value: "", required: true },
+    additional_info: { value: "", required: false },
+    sched: { value: [], required: false },
+  },
+
+  // Fetch Lupon Members
+  fetchMembers: async () => {
+    set({ loading: true });
+    try {
+      const data = await getLuponMembers();
+      set({ members: data });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  // Add Lupon Member and refresh list
+  addMember: async () => {
+    const { formData } = get();
+    const memberData = {
+        first_name: formData.first_name.value,
+        last_name: formData.last_name.value,
+        middle_name: formData.middle_name.value || undefined,
+        birth_date: formData.birth_date.value.toISOString().split("T")[0],
+        sex: formData.sex.value,
+        contact_number: formData.contact_number.value,
+        barangay: formData.barangay.value,
+        street: formData.street.value,
+        additional_info: formData.additional_info.value,
+        sched: formData.sched.value || [],
+        role: "admin"
+    };
+
+
+    try {
+        const newMember = await addLuponMember(memberData);
+        set((state) => ({ members: [...state.members, newMember] }));
+        get().resetFormData();
+    } catch (error) {
+        console.error("Add member error:", error.response?.data || error.message);
+    }
+},
+
+
+  // Update specific form field
+  setFormData: (field, value) => {
+    set((state) => ({
+      formData: {
+        ...state.formData,
+        [field]: {
+          ...state.formData[field],
+          value,
+        },
+      },
+    }));
+  },
+
+  // ✅ Reset form
+  resetFormData: () => {
+    set({
+      formData: {
+        first_name: { value: "", required: true },
+        last_name: { value: "", required: true },
+        middle_name: { value: "", required: false },
+        birth_date: { value: null, required: true },
+        sex: { value: "", required: true },
+        contact_number: { value: "", required: true },
+        barangay: { value: "Tetuan", required: true },
+        street: { value: "", required: true },
+        additional_info: { value: "", required: false },
+        sched: { value: [], required: false },
+      },
+    });
+  },
+}));
