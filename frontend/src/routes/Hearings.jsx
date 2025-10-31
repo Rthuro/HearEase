@@ -17,13 +17,17 @@ import { useEffect } from "react";
 import useAuthenticationStore from "@/store/useAuthenticationStore";
 
 export function Hearings() {
-    const { getCases } = useCaseStore();
+    const { fetchCases, cases } = useCaseStore();
     const [status, setStatus] = useState("all");
-    const [cases, setCases] = useState(getCases());
+    const [filteredCases, setFilteredCases] = useState(cases);
 
     useEffect(() => {
-        setCases(getCases());
-    }, [getCases]);
+        fetchCases();
+    }, [fetchCases]);
+
+    useEffect(() => {
+        setFilteredCases(cases);
+    }, [cases]);
 
     const { userInfo, userLinkName } = useAuthenticationStore();
     const navigateTo = userInfo?.role === 'user' ? userLinkName : 'Admin';
@@ -60,7 +64,7 @@ export function Hearings() {
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
-                <TableHearings hearings={cases} showPagination={true} navigateTo={navigateTo} />
+                <TableHearings hearingsList={filteredCases} showPagination={true} navigateTo={navigateTo} />
             </section>
         </div>
     );
