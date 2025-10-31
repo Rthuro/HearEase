@@ -2,18 +2,28 @@ import { DashboardNotification } from "@/components/DashboardNotification"
 import { Greetings } from "@/components/Greetings"
 import { RecentCaseRecords } from "@/components/RecentCaseRecords"
 import useAuthenticationStore from "@/store/useAuthenticationStore"
-import { useCaseStore } from "@/store/useCaseStore"
+import { useCaseStore } from "@/store/useCaseStore";
 import { Link } from "react-router-dom"
 import { PageSync } from "@/components/PageSync"
 import { TableHearings } from "@/components/TableHearings"
-
+import { useEffect } from "react";
+import useHearingStore from "@/store/useHearingStore";
 
 export function Dashboard() {
   const { userInfo, userLinkName } = useAuthenticationStore();
-  const { getCases } = useCaseStore();
-  const formatCases = getCases().splice(0,5);
+  const { cases, fetchCases } = useCaseStore();
+  const { fetchHearings } = useHearingStore();
+
+  useEffect(() => {
+    fetchCases();
+    fetchHearings();
+  }, [fetchCases, fetchHearings]);
+
+  const formatCases = cases;
   
   const user = userInfo?.role === 'user' ? userLinkName : 'Admin';
+  
+  console.log(cases)
   return (
     <div className="flex flex-col gap-6 p-6">
       <PageSync page="Dashboard" />
@@ -29,7 +39,7 @@ export function Dashboard() {
             View all
           </Link>
         </div>
-        <TableHearings hearings={formatCases} showPagination={false} />
+        <TableHearings hearingsList={formatCases} showPagination={false} navigateTo={user} />
       </div>
 
       <div className="flex flex-col  gap-4 bg-white border border-zinc-200 rounded-lg p-6">
@@ -39,7 +49,7 @@ export function Dashboard() {
               View all
             </Link>
           </div>
-          <RecentCaseRecords cases={formatCases} user={user} />
+          <RecentCaseRecords cases={cases} user={user} />
       </div>
     
     </div>
