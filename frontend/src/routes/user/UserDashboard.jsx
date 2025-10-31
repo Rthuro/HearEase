@@ -7,11 +7,19 @@ import { PageSync } from "@/components/PageSync"
 // import { cases } from "@/test/data"
 import { useCaseStore } from "@/store/useCaseStore"
 import { RecentCaseRecords } from "@/components/RecentCaseRecords"
+import { useEffect } from "react"
+import useHearingStore from "@/store/useHearingStore"
 
 export function UserDashboard() {
   const { userInfo, userLinkName } = useAuthenticationStore();
-  const { getCases } = useCaseStore();
-  const formatCases = getCases().splice(0,5);
+  const { fetchCases, cases} = useCaseStore();
+  const { fetchHearings } = useHearingStore();
+
+  useEffect(() => {
+    fetchCases();
+    fetchHearings();
+  }, [fetchCases, fetchHearings]);
+
 
   const user = userInfo?.role === 'user' ? userLinkName : 'Admin';
 
@@ -30,7 +38,7 @@ export function UserDashboard() {
             View all
           </Link>
         </div>
-        <TableHearings hearings={formatCases} showPagination={false} />
+        <TableHearings hearingsList={cases} showPagination={false} navigateTo={user} />
       </div>
       <div className="flex flex-col  gap-4 bg-white border border-zinc-200 rounded-lg p-6">
           <div className="flex items-center justify-between">
@@ -39,7 +47,7 @@ export function UserDashboard() {
               View all
             </Link>
           </div>
-          <RecentCaseRecords cases={formatCases} user={user} />
+          <RecentCaseRecords cases={cases} user={user} />
       </div>
     </div>
   )
