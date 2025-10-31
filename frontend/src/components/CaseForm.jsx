@@ -12,12 +12,21 @@ import { PageSync } from "./PageSync";
 import { useCaseStore } from "@/store/useCaseStore";
 import { toast } from "react-hot-toast";
 import { invalidContactNumber } from "@/lib/helpers";
+import { useEffect } from "react";
 
 export function CaseForm(){
-    const { formData, addCase } = useCaseStore();
+    const { formData, addCaseData, fetchCaseTypes, fetchSettlementTypes } = useCaseStore();
+
+    useEffect(() => {
+        fetchCaseTypes();
+        fetchSettlementTypes();
+    }, [fetchCaseTypes, fetchSettlementTypes]);
+
     const { userRole, userLinkName } = useAuthenticationStore();
     const navigate = useNavigate();
     const [stepNumber, setStepNumber] = useState(1);
+
+    
 
     const formProgress = [
         {
@@ -71,20 +80,27 @@ export function CaseForm(){
                 const value = currentFormData[field]?.value;
                 if (value === null || value === undefined || value === '') {
                     toast.error("Please fill in all required fields.");
-                    return false;
+                    return;
                 }
 
                 if (field === 'contact_number') {
                     if (invalidContactNumber(value)) {
                         toast.error("Invalid contact number format.");
-                        return false;
+                        return;
                     }
                 }
             }
         }
 
         if (stepNumber === 4) {
-            addCase();
+            const res = addCaseData();
+            if (res) {
+                setStepNumber((prev) => prev + 1);
+                return;
+            } else {
+                setStepNumber(4); 
+                return;
+            }
         }
 
         setStepNumber((prev) => prev + 1);
