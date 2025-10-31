@@ -3,26 +3,63 @@ import { useCaseStore } from "@/store/useCaseStore";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { luponMembers } from "@/test/user_data";
-import { natureOfComplaints } from "@/test/data";
+// import { natureOfComplaints } from "@/test/data";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { PageSync } from "@/components/PageSync";
 import { CaseStatusDisplay } from "@/components/CaseStatusDisplay";
 import { ChevronLeft } from "lucide-react";
+import { useEffect } from "react";
+import useHearingStore from "@/store/useHearingStore";
+import { useRetrieveUsersStore } from "@/store/useRetrieveUsersStore";
 
 export function Case() {
     const { case_number } = useParams();
-    const { getCaseByNumber } = useCaseStore();
-    const caseInfo = getCaseByNumber(case_number);
+    const { cases } = useCaseStore();
+    const { hearings } = useHearingStore();
+    const { complainantsUsers, fetchComplainants} = useRetrieveUsersStore();
+
+    useEffect(() => {
+        fetchComplainants()
+    }, [])
+
+    
+
+    const findHearingCase = hearings.filter( hearing => hearing.case == case_number);
+
+    const caseInfo = cases.find( c => c.id == case_number);
+    console.log(caseInfo)
+
+    const caseCoComplainants = [];
+
+    caseInfo?.co_complainants_ids?.map( (c) => {
+        caseCoComplainants.push(complainantsUsers.find( co_c => co_c.id == c))
+    })
+
+    const formatCoComplainants = () => {
+        const newFormat = []
+        caseCoComplainants.map( (co_c) => 
+            newFormat.push(
+                {
+                    full_name: `${co_c?.first_name} ${co_c?.middle_name ? co_c?.middle_name + ' ' : ''}${co_c?.last_name}`,
+                    contact_number: co_c?.contact_number,
+                }
+            )
+        )
+        return newFormat;
+    } 
+
     const navigate = useNavigate();
+    
 
     if(!caseInfo){
         navigate(-1);
         return null;
     }
 
+
     const lupon = luponMembers.find(member => member.id === caseInfo?.lupon_member_id);
-    const natureOfComplaint = natureOfComplaints.find(noc => noc.code === caseInfo?.nature_of_complaint_code);
+    
 
     const formatedBday = (dateString) => {
         if(!dateString) return '-';
@@ -56,11 +93,14 @@ export function Case() {
                 },
                 {
                     label:"Nature of Complaint",
-                    value: natureOfComplaint?.label || '-'
+                    value: caseInfo.case_type.case_name || '-'
+                },{
+                    label:"Settlement",
+                    value: caseInfo.settlement_type.settlement_name || '-'
                 },
                 {
                     label:"Severity",
-                    value: caseInfo?.severity || '-'
+                    value: caseInfo?.case_type.severity || '-'
                 },
                 {
                     label:"Description",
@@ -77,23 +117,23 @@ export function Case() {
             details: [
                 {
                     label: "Full Name",
-                    value: `${caseInfo?.c_first_name} ${caseInfo?.c_middle_name ? caseInfo?.c_middle_name + ' ' : ''}${caseInfo?.c_last_name}`
+                    value: `${caseInfo?.complainant_user?.first_name} ${caseInfo?.complainant_user?.middle_name ? caseInfo?.complainant_user?.middle_name + ' ' : ''}${caseInfo?.complainant_user?.last_name}`
                 },
                 {
                     label: "Gender",
-                    value: caseInfo?.c_sex || '-'
+                    value: caseInfo?.complainant_user?.sex || '-'
                 },
                 {
                     label: "Birth Date",
-                    value: formatedBday(caseInfo?.c_birth_date)
+                    value: formatedBday(caseInfo?.complainant_user?.birth_date)
                 },
                 {
                     label: "Contact",
-                    value: caseInfo?.c_contact_number || '-'
+                    value: caseInfo?.complainant_user?.contact_number || '-'
                 },
                 {  
                     label: "Address",
-                    value: `${caseInfo?.c_street}, ${caseInfo?.c_barangay}${caseInfo?.c_additional_info ? ', ' + caseInfo?.c_additional_info  : ''}`
+                    value: `${caseInfo?.complainant_user?.street}, ${caseInfo?.complainant_user?.barangay}${caseInfo?.complainant_user?.additional_info ? ', ' + caseInfo?.complainant_user?.additional_info : ''}`
                 },
             ]
         },
@@ -102,30 +142,31 @@ export function Case() {
             details: [
                 {
                     label: "Full Name",
-                    value: `${caseInfo?.r_first_name} ${caseInfo?.r_middle_name ? caseInfo?.r_middle_name + ' ' : ''}${caseInfo?.r_last_name}`
+                    value: `${caseInfo?.respondent_user?.first_name} ${caseInfo?.respondent_user?.middle_name ? caseInfo?.respondent_user?.middle_name + ' ' : ''}${caseInfo?.respondent_user?.last_name}`
                 },
                 {
                     label: "Gender",
-                    value: caseInfo?.r_sex || '-'
+                    value: caseInfo?.respondent_user?.sex || '-'
                 },
                 {
                     label: "Birth Date",
-                    value: formatedBday(caseInfo?.c_birth_date)
+                    value: formatedBday(caseInfo?.respondent_user?.birth_date)
                 },
                 {
                     label: "Contact",
-                    value: caseInfo?.r_contact_number || '-'
+                    value: caseInfo?.respondent_user?.contact_number || '-'
                 },
                 {  
                     label: "Address",
-                    value: `${caseInfo?.r_street}, ${caseInfo?.r_barangay}${caseInfo?.r_additional_info ? ', ' + caseInfo?.r_additional_info  : ''}`
+                    value: `${caseInfo?.respondent_user?.street}, ${caseInfo?.respondent_user?.barangay}${caseInfo?.respondent_user?.additional_info ? ', ' + caseInfo?.respondent_user?.additional_info : ''}`
                 },
             ]
         }
     ];
 
+    
     return (
-        <div className="flex flex-col gap-4 p-6 bg-white">
+        <div className="flex flex-col gap-4 p-6 ">
             <PageSync page="" />
 
             <div className="flex items-center justify-between">
@@ -137,11 +178,9 @@ export function Case() {
                 </div>
                 <Button variant="outline">Edit Case</Button>
             </div>
-
-            <Separator />
             
             {caseDetails.map((section) => (
-                <div key={section.section} className="flex flex-col gap-4">
+                <div key={section.section} className="flex flex-col gap-4 bg-white p-4 rounded-md border shadow-2xs">
                     {section.section === "Case Information" &&                     
                     <h2 className="text-lg font-medium">{section.section}</h2>
                     }
@@ -150,60 +189,94 @@ export function Case() {
                     <h2 className=" w-fit px-2 text-lg font-medium bg-blue-50 text-blue-500">{section.section}</h2>
                     }
 
+
                     {section.section === "Respondent Information" &&                     
                     <h2 className=" w-fit px-2 text-lg font-medium bg-orange-50 text-orange-500">{section.section}</h2>
                     }
 
                     <div className="grid grid-cols-4 gap-4">
-                        {section.details.map((detail) => (
-                            <div key={detail.label} 
-                            className={`flex flex-col gap-1 
-                            ${detail.label === 'Description' ? 'col-span-2' : ''}
-                            ${detail.label === 'Documents' ? 'col-span-4' : ''}`}>
-                                <Label className={cn("text-zinc-600 font-normal text-xs")}>
-                                    {detail.label}
-                                </Label>
-                                {detail.label === 'Status'? <CaseStatusDisplay caseStatus={detail.value} /> : 
-                                detail.label === 'Documents'? 
-                                    <div>
-                                        { detail.value && detail.value.length > 0 ? (
-                                            detail.value.map((doc, index) => {
-                                                const file = doc?.url || doc?.path || ""; // adjust based on your actual API
+                            {section.details.map((detail) => (
+                                <div key={detail.label} 
+                                className={`flex flex-col gap-1 
+                                ${detail.label === 'Description' ? 'col-span-2' : ''}
+                                ${detail.label === 'Documents' ? 'col-span-4' : ''}
+                                `}
+                                >
+                                    <Label className={cn("text-zinc-600 font-normal text-xs")}>
+                                        {detail.label}
+                                    </Label>
+                                    {detail.label === 'Status'? <CaseStatusDisplay caseStatus={detail.value} /> : 
+                                    detail.label === 'Documents'? 
+                                        <div>
+                                            { detail.value && detail.value.length > 0 ? (
+                                                detail.value.map((doc, index) => {
+                                                    const file = doc?.url || doc?.path || ""; // adjust based on your actual API
 
-                                                if (!file) {
-                                                    return <p>No documents submitted</p>;
-                                                }
+                                                    if (!file) {
+                                                        return <p>No documents submitted</p>;
+                                                    }
 
-                                                return file.match(/\.(jpg|jpeg|png|gif)$/i) ? (
-                                                <img
-                                                    key={index}
-                                                    src={file}
-                                                    alt={`Document ${index + 1}`}
-                                                    className="max-w-xs mb-2 border"
-                                                />
-                                                ) : (
-                                                <a
-                                                    key={index}
-                                                    href={file}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-redBase underline"
-                                                >
-                                                    Document {index + 1}
-                                                </a>
-                                                );
-                                            })
-                                        ) : (
-                                        <p>-</p>
-                                        )}
-                                    </div> 
-                                    : 
-                                    <p>{detail.value}</p> }
+                                                    return file.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                                                    <img
+                                                        key={index}
+                                                        src={file}
+                                                        alt={`Document ${index + 1}`}
+                                                        className="max-w-xs mb-2 border"
+                                                    />
+                                                    ) : (
+                                                    <a
+                                                        key={index}
+                                                        href={file}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-redBase underline"
+                                                    >
+                                                        Document {index + 1}
+                                                    </a>
+                                                    );
+                                                })
+                                            ) : (
+                                            <p>-</p>
+                                            )}
+                                        </div> 
+                                        : 
+                                        <p>{detail.value}</p>
+                                    }
+                                </div>
+                            ))}
+                    </div> 
+
+                    { section.section === "Complainant Information" && caseCoComplainants.length > 0 &&                     
+                        (
+                            <div className="flex flex-col">
+                                <h2 className="font-medium mb-2 text-zinc-700">Co-Complainants</h2>
+                                    {formatCoComplainants().map( c => (
+                                        <div key={c} 
+                                        className="ml-2 grid grid-cols-2 gap-4 "
+                                        >
+                                            <div
+                                            className="flex flex-col gap-1 "
+                                            >
+                                                <Label className={cn("text-zinc-600 font-normal text-xs")}>
+                                                Full Name
+                                                </Label>
+                                                <p>{c.full_name}</p>
+                                            </div>
+                                            <div
+                                            className="flex flex-col gap-1 "
+                                            >
+                                                <Label className={cn("text-zinc-600 font-normal text-xs")}>
+                                                    Contact
+                                                </Label>
+                                                <p>{c.contact_number}</p>
+                                            </div>
+                                        </div>
+                                        
+                                    ))}
                             </div>
-                        ))}
-                    </div>
-
-                    <Separator />
+                        )
+                    }
+                   
 
                 </div>
             ))}
