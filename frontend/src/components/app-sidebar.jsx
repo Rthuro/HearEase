@@ -16,11 +16,11 @@ import usePageStore from "@/store/usePageStore";
  
 // Menu items.
 const first_row = [
-  {
-    title: "Search Case",
-    url: "Search-Case",
-    icon: FolderSearch,
-  },
+  // {
+  //   title: "Search Case",
+  //   url: "Search-Case",
+  //   icon: FolderSearch,
+  // },
   {
     title: "File New Case",
     url: "File-Case",
