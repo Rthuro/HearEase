@@ -18,9 +18,15 @@ import {
 import { Link } from "react-router-dom";
 import { CaseStatusDisplay } from "./CaseStatusDisplay";
 import { cn } from "@/lib/utils";
-import { getNatureLabel } from "@/lib/helpers";
+import useHearingStore from "@/store/useHearingStore";
 
-export function TableHearings({hearings, showPagination, navigateTo}) {
+export function TableHearings({hearingsList, showPagination, navigateTo}) {
+    const { hearings } = useHearingStore();
+
+    const findHearingCase = (case_id) => {
+        const filteredHearing = hearings.find( hearing => hearing.case == case_id);
+        return filteredHearing
+    }
 
     return(
         <section className="flex flex-col gap-6">
@@ -37,30 +43,31 @@ export function TableHearings({hearings, showPagination, navigateTo}) {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {hearings.length === 0 ? (
+                                {hearingsList.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={6}>
                                             <p className="text-center">No hearings scheduled.</p>
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    hearings.map((hearing) => (
-                                        <TableRow key={hearing?.case_number} className="text-zinc-700">
-                                            <TableCell>{hearing?.case_number}</TableCell>
+                                    hearingsList.map((hearing) => (
+                                        <TableRow key={hearing?.id} className="text-zinc-700">
+                                            <TableCell>{hearing?.id}</TableCell>
                                             <TableCell>
-                                                {getNatureLabel(hearing?.nature_of_complaint_code)}
-                                            </TableCell>
-                                            <TableCell>{hearing?.date ?? '-'}
+                                                {hearing?.case_type?.case_name ?? '-'}
                                             </TableCell>
                                             <TableCell>
-                                                {hearing?.time ?? '-'} 
+                                                {findHearingCase(hearing?.id)?.hearing_date ?? '-'}
                                             </TableCell>
                                             <TableCell>
-                                                <CaseStatusDisplay caseStatus={hearing?.hearing_status}
+                                                {findHearingCase(hearing?.id)?.time ?? '-'} 
+                                            </TableCell>
+                                            <TableCell>
+                                                <CaseStatusDisplay caseStatus={findHearingCase(hearing?.id)?.hearing_status}
                                                 />
                                             </TableCell>
                                             <TableCell className={cn("py-4")}>
-                                                <Link to={`${navigateTo}/Case/${hearing?.case_number}`} className="text-redBase bg-red-100 px-3 py-2 rounded-lg text-sm">
+                                                <Link to={`/${navigateTo}/Case/${hearing?.id}`} className="text-redBase bg-red-100 px-3 py-2 rounded-lg text-sm">
                                                     Details 
                                                 </Link>
                                             </TableCell>
@@ -71,7 +78,7 @@ export function TableHearings({hearings, showPagination, navigateTo}) {
                         </Table>
                 </div>
 
-                {showPagination && hearings.length > 0 && (
+                {showPagination && hearingsList.length > 0 && (
                     <Pagination>
                         <PaginationContent>
                             <PaginationItem>
