@@ -23,7 +23,7 @@ export function PublicLayout() {
     ]
 
   return (
-    <main className="flex flex-col  w-lvw ">
+    <main className="flex flex-col ">
         <nav className=" flex justify-between w-full p-4 mb-10">
             <div className="flex items-center gap-2 w-[200px]">
                 <img src={Hearease_logo} alt="Logo" className="h-8" />
