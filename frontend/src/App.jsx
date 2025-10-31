@@ -19,8 +19,30 @@ import { Case } from './routes/Case';
 import { GenerateDocument } from './routes/admin/pages/GenerateDocu';
 import { LuponManagement } from './routes/admin/pages/LuponManagement';
 import { NotFound } from './routes/NotFound';
+import { useEffect } from "react";
+import  useAuthenticationStore  from "./store/useAuthenticationStore";
+import { SignUp } from './routes/SignUp';
+import { useCaseStore } from './store/useCaseStore';
+import useHearingStore from './store/useHearingStore';
+import { Profile } from './routes/Profile';
 
 function App() {
+  const { initializeAuth } = useAuthenticationStore();
+  const { fetchCases, cases} = useCaseStore();
+  const { fetchHearings, hearings } = useHearingStore();
+
+  useEffect(() => {
+    fetchCases();
+    fetchHearings();
+  }, [fetchCases, fetchHearings]);
+
+  console.log("Hearings:", hearings)
+  console.log("Cases:", cases)
+
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
+
 
   return (
     <>
@@ -34,6 +56,7 @@ function App() {
               <Route path="/Services" element={<Services />} />
               <Route path="/Case" element={<CaseStatus />} />
               <Route path="/Login" element={<Authentication />} />
+              <Route path="/SignUp" element={<SignUp />} />
             </Route>
             
             {/* User Routes */}
@@ -45,6 +68,7 @@ function App() {
               <Route path="u/:user/File-Case" element={<FileCase />} />
               <Route path="u/:user/File-Case/Case-Form" element={<CaseForm />} />
               <Route path="u/:user/Case/:case_number" element={<Case />} />
+              <Route path="u/:user/Profile" element={<Profile />} />
             </Route>
 
             {/* Admin Routes */}
@@ -58,6 +82,7 @@ function App() {
               <Route path="Admin/CaseRecords" element={<CaseRecords />} />
               <Route path="Admin/Generate-Documents" element={<GenerateDocument />} />
               <Route path="Admin/Lupon-Management" element={<LuponManagement />} />
+              <Route path="Admin/Profile" element={<Profile />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
