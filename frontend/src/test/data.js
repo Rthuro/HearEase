@@ -27,9 +27,17 @@ export const cases = [
 
 export const hearingEvents = [
   {
-    title: "Case #BRGY-2025-001 Hearing",
+    title: "",
     start: "2025-09-19T09:00:00",
     end: "2025-09-19T10:00:00",
+  },{
+    title: "",
+    start: "2025-09-19T10:00:00",
+    end: "2025-09-19T11:00:00",
+  }, {
+    title: "",
+    start: "2025-09-19T13:00:00",
+    end: "2025-09-19T14:00:00",
   },
   {
     title: "Case #BRGY-2025-002 Hearing",
