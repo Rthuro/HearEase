@@ -1,0 +1,102 @@
+from django.core.management.base import BaseCommand
+from ...models import Barangay, Street
+
+BARANGAYS = [
+    {
+        "name": "Pasonanca",
+        "streets": [
+            "Anastacid Lane",
+            "Island Drive",
+            "Lantawan Drive",
+            "Lower Cabatangan Road",
+            "Palmeras Drive",
+            "Pasonanca Road",
+            "Rosa Drive",
+            "Upper Cabatangan Road",
+            "Villa Rio Drive",
+        ],
+    },
+    {
+        "name": "Tetuan",
+        "streets": [
+            "1st Lane",
+            "1st Street",
+            "2nd Street",
+            "5th Street",
+            "6th Street",
+            "April Drive",
+            "Aurora Drive",
+            "B. Candido Street",
+            "Barrios Lane",
+            "Bucoy Drive",
+            "Cabato Road",
+            "Cadena De Amor Street",
+            "Callejon Drive",
+            "Crispin Atilano Street",
+            "Doctor J. Estrada Street",
+            "Don A. V. Toribio Street",
+            "E.S. Buenbrazo Drive",
+            "Gardenia Drive",
+            "Governor Camins Avenue",
+            "Guiwan Old Hi-Way",
+            "H. Vicente Drive",
+            "Josefina Drive",
+            "Joseling Buco Drive",
+            "July Drive",
+            "Jumbo Drive",
+            "Locson Drive",
+            "M. Natividad Street",
+            "March Drive",
+            "May Drive",
+            "Mormon Drive",
+            "Resurreccion Drive",
+        ],
+    },
+    {
+        "name": "Tumaga",
+        "streets": [
+            "DBP Compound",
+            "Doctor G. Brillantes Drive",
+            "Dulaca Drive",
+            "Earth Street",
+            "Governor Ramos Avenue",
+            "Gumamela Street",
+            "Hector Suarez Avenue",
+            "Ilang-Ilang Street",
+            "Jolliroy Drive",
+            "Pluto Street",
+            "Sampaguita Street",
+            "Sunshine Drive",
+            "Tuamga-Lunzuran Road",
+            "Uranus Street",
+            "Villa Rio Drive",
+            "Yvanoff Drive",
+            "Zamboanga City Bypass Road",
+        ],
+    },
+    {
+        "name": "Baliwasan",
+        "streets": [
+            "Acacia Drive",
+            "Baliwasan Chico Road",
+            "Baliwasan Grande Road",
+            "Baliwasan Seaside Road",
+            "Clipper Heights Drive",
+            "PierPortAccessRoad",
+            "Raja Muda Mandi Street",
+            "San Jose Street",
+        ],
+    },
+]
+
+
+class Command(BaseCommand):
+    help = "Seeds default barangays and streets"
+
+    def handle(self, *args, **options):
+        for b in BARANGAYS:
+            barangay, created = Barangay.objects.get_or_create(name=b["name"])
+            for street_name in b["streets"]:
+                Street.objects.get_or_create(barangay=barangay, name=street_name)
+
+        self.stdout.write(self.style.SUCCESS("Barangays and streets seeded successfully!"))
