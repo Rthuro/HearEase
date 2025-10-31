@@ -5,7 +5,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "../ui/popover"
-import { Check, ChevronsUpDown, CloudUpload, Trash2, File} from "lucide-react"
+import { Check, ChevronsUpDown, CloudUpload, Trash2, File, ChevronDown} from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -16,6 +16,14 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Textarea } from "../ui/textarea";
 import { useState } from "react";
 import { useCaseStore } from "@/store/useCaseStore";
@@ -144,7 +152,7 @@ const natureOfComplaints = [
 ];
 
 export function CaseDetails(){
-  const { setFormData, formData } = useCaseStore();
+  const { setFormData, formData, settlementTypes, caseTypes } = useCaseStore();
   const [open, setOpen] = useState(false)
   const [uploadedFiles, setUploadedFiles] = useState(formData.caseDetails.documents.value || []);
 
@@ -164,58 +172,87 @@ export function CaseDetails(){
                     <span className="text-redBase">*</span>
                 </Label>
                 <Popover open={open} onOpenChange={setOpen}>
-                    <PopoverTrigger asChild>
-                        <Button
-                        role="combobox"
-                        aria-expanded={open}
-                        variant="outline"
-                        className="max-w-max min-w-[400px] justify-between"
-                        >
-                        {formData.caseDetails.nature_of_complaint_code.value
-                            ? natureOfComplaints.find((complaint) => complaint.code === formData.caseDetails.nature_of_complaint_code.value)?.label
-                            : "Select nature of complaint..."}
-                        <ChevronsUpDown className="opacity-50" />
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[400px] p-0">
-                        <Command>
-                        <CommandInput placeholder="Search nature of complaint..." className="h-9" />
-                        <CommandList>
-                            <CommandEmpty>No nature of complaint found.</CommandEmpty>
-                            <CommandGroup>
-                            {natureOfComplaints.map((complaint) => (
-                                <CommandItem
-                                key={complaint.code}
-                                value={complaint.code}
-                                onSelect={(currentValue) => {
-                                    setFormData('caseDetails', 'nature_of_complaint_code', currentValue)
-                                    setFormData('caseDetails', 'severity', complaint.severity)
-                                    setOpen(false)
-                                }}
-                                >
-                                {complaint.label}
-                                <Check
-                                    className={cn(
-                                    "ml-auto",
-                                    formData.caseDetails.nature_of_complaint_code.value === complaint.code ? "opacity-100" : "opacity-0"
-                                    )}
-                                />
-                                </CommandItem>
-                            ))}
-                            </CommandGroup>
-                        </CommandList>
-                        </Command>
-                    </PopoverContent>
-                </Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    role="combobox"
+                    aria-expanded={open}
+                    variant="outline"
+                    className="max-w-max min-w-[400px] justify-between"
+                  >
+                    {caseTypes.find(
+                      (type) => type.id === formData.caseDetails.nature_of_complaint_code.value
+                    )?.case_name || "Select nature of complaint..."}
+                    <ChevronsUpDown className="opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+
+                <PopoverContent className="w-[400px] p-0">
+                  <Command>
+                    <CommandInput placeholder="Search nature of complaint..." className="h-9" />
+                    <CommandList>
+                      <CommandEmpty>No nature of complaint found.</CommandEmpty>
+                      <CommandGroup>
+                        {caseTypes.map((complaint) => (
+                          <CommandItem
+                            key={complaint.id}
+                            // 👇 value here should match what you want displayed
+                            value={complaint.case_name}
+                            onSelect={() => {
+                              // ✅ Make sure to store ID, not display name
+                              setFormData("caseDetails", "nature_of_complaint_code", complaint.id);
+                              setFormData("caseDetails", "severity", complaint.severity);
+                              setOpen(false);
+                            }}
+                          >
+                            {complaint.case_name}
+                            <Check
+                              className={cn(
+                                "ml-auto",
+                                formData.caseDetails.nature_of_complaint_code.value === complaint.id
+                                  ? "opacity-100"
+                                  : "opacity-0"
+                              )}
+                            />
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="grid grid-cols-1 gap-2">
                 <Label htmlFor="severity">Severity
                 </Label>
                 <Input id="severity" type="number" className="w-full" disabled 
                 value={
-                  formData.caseDetails.nature_of_complaint_code.value ? natureOfComplaints.find((complaint) => 
-                    complaint.code === formData.caseDetails.nature_of_complaint_code.value)?.severity : ""
+                  caseTypes.find(
+                      (type) => type.id === formData.caseDetails.nature_of_complaint_code.value
+                    )?.severity || ""
                 } />
+            </div>
+             <div className="grid grid-cols-1 gap-2">
+                <Label htmlFor="settlement">Settlement Type </Label>
+                <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className={cn('justify-between')}>
+                                {settlementTypes.find((type) => type.id === formData.caseDetails.settlement.value)?.settlement_name || "Select settlement type"}
+                                <ChevronDown className="ml-2 h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-38">
+                            <DropdownMenuRadioGroup value={formData.caseDetails.settlement.value} 
+                            onValueChange={ (value) => 
+                              setFormData('caseDetails', 'settlement', value)
+                              }>
+                                {settlementTypes.map((type) => (
+                                  <DropdownMenuRadioItem key={type.id} value={type.id}>
+                                    {type.settlement_name}
+                                  </DropdownMenuRadioItem>
+                                ))}
+                            </DropdownMenuRadioGroup>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
             </div>
             <div className="grid grid-cols-1 gap-2">
                 <Label htmlFor="description">Short Description

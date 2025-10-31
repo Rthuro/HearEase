@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { Input } from "../ui/input"
 import { Label } from "../ui/label"
-import { CalendarIcon } from "lucide-react"
+import { CalendarIcon, Plus, Minus } from "lucide-react"
 import { Button } from "../ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
 import { Calendar } from "../ui/calendar"
@@ -9,17 +9,53 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenu
 import { getBarangayNames } from "@/lib/helpers";
 import { getStreets } from "@/lib/helpers";
 import { useCaseStore } from "@/store/useCaseStore"
+import { useEffect } from "react"
+import { Dialog, DialogDescription, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog"
+import { Separator } from "../ui/separator"
+import { cn } from "@/lib/utils"
+ 
 
 export function Complainant() {
-    const { setFormData, formData } = useCaseStore();
+    const { setFormData, formData, setComplainantInfo, co_complainants, set_coComplainants } = useCaseStore();
     const [openCalendar, setOpenCalendar] = useState(false);
+    const [complainants, setComplainants] = useState(co_complainants.length > 0 ? co_complainants : []);
 
-    // const [sex, setSex] = useState("Male");
-    // const [barangay, setBarangay] = useState("Tetuan");
-    // const [street, setStreet] = useState(getStreets("Tetuan")[0]);
+    useEffect(() => {
+        setComplainantInfo()
+    }, [])
+    
+
+    const addCoComplainant = () => {
+        setComplainants((prev) => [
+            ...prev,
+            {
+                first_name: "",
+                last_name: "",
+                middle_name: "",
+                contact_number: "",
+            },
+        ]);
+        set_coComplainants(complainants);
+    };
+    
+    const updateCoComplainant = (index, field, value) => {
+        const updatedComplainants = complainants?.map((data, i) =>
+            i === index ? { ...data, [field]: value } : data
+        );
+        set_coComplainants(updatedComplainants);
+        setComplainants(updatedComplainants);
+    };
+
+    const removeCoComplainants = (index) => {
+        const updated =  complainants.filter((_, i) => i !== index);
+        set_coComplainants(updated);
+        setComplainants(updated);
+    };
 
     const minDate = new Date("1900-01-01");
     const maxDate = new Date();
+
+
     return (
         <div className="grid grid-cols-2 gap-3">
             
@@ -37,6 +73,16 @@ export function Complainant() {
                 />
             </div>
             <div className="grid grid-cols-1 gap-2">
+                <Label htmlFor="middleNameComplainant">Middle Name
+                </Label>
+                <Input id="middleNameComplainant" type="text" className="w-72"
+                value={formData.complainant.middle_name.value} 
+                onChange ={ (e) => {
+                    setFormData('complainant', 'middle_name', e.target.value);
+                }}
+                />
+            </div>
+            <div className="grid grid-cols-1 gap-2">
                 <Label htmlFor="lastNameComplainant">Last Name
                     <span className="text-redBase">*</span>
                 </Label>
@@ -48,16 +94,7 @@ export function Complainant() {
                 required/>
             </div>
 
-            <div className="grid grid-cols-1 gap-2">
-                <Label htmlFor="middleNameComplainant">Middle Name
-                </Label>
-                <Input id="middleNameComplainant" type="text" className="w-72"
-                value={formData.complainant.middle_name.value} 
-                onChange ={ (e) => {
-                    setFormData('complainant', 'middle_name', e.target.value);
-                }}
-                />
-            </div>
+            
             <div className="grid grid-cols-1 gap-2">
                 <Label htmlFor="birthdayComplainant">
                     Birthday
@@ -71,7 +108,7 @@ export function Complainant() {
                             className="w-72 justify-between font-normal"
                         >
                             {formData.complainant.birth_date.value ? 
-                            formData.complainant.birth_date.value.toLocaleDateString() : "Select date"}
+                            formData.complainant.birth_date.value : "Select date"}
                             <CalendarIcon />
                         </Button>
                     </PopoverTrigger>
@@ -133,11 +170,13 @@ export function Complainant() {
             
             <div className="grid grid-cols-1 col-span-2 gap-2">
                 <Label htmlFor="address">Address
-                    <span className="text-redBase">*</span>
                 </Label>
                 <div className="grid grid-cols-2 gap-3">
                     <div className="grid grid-cols-1 gap-2">
-                        <Label htmlFor="barangayComplainant">Barangay</Label>
+                        <Label htmlFor="barangayComplainant">
+                            Barangay
+                            <span className="text-redBase">*</span>
+                        </Label>
                         <DropdownMenu id="barangayComplainant">
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline">
@@ -162,7 +201,10 @@ export function Complainant() {
                         </DropdownMenu>
                     </div>
                     <div className="grid grid-cols-1 gap-2">
-                        <Label htmlFor="streetComplainant">Street</Label>
+                        <Label htmlFor="streetComplainant">
+                            Street
+                            <span className="text-redBase">*</span>
+                        </Label>
                         <DropdownMenu id="streetComplainant">
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline">
@@ -194,6 +236,82 @@ export function Complainant() {
                     />
                 </div>
             </div>
+            
+            <Separator className="col-span-2 my-2"/>
+
+            <div className="grid grid-cols-1 col-span-2 gap-2">
+                <p className="font-medium ">Add Co-Complainants
+                </p>
+                { complainants.length <= 0 && (
+                    <Button type="button" variant="default" className={cn("bg-redBase hover:bg-redBase/95")} onClick={addCoComplainant} >
+                        <Plus size={16} />
+                        Add Complainant
+                    </Button>
+                )}
+
+                {complainants.length > 0 && complainants?.map( (complainant, index) => (
+                    <div key={index} className="grid grid-cols-2 gap-4 border p-4 rounded-md">
+                        <div className="grid grid-cols-1 gap-2">
+                            <Label htmlFor="first_name">First Name
+                                <span className="text-redBase">*</span></Label>
+                            <Input id="first_name" type="text" className="w-72" 
+                            value={complainant.first_name}
+                            onChange ={ (e) => {
+                                updateCoComplainant( index, 'first_name', e.target.value);
+                            }}
+                            required/>
+                        </div>
+                        <div className="grid grid-cols-1 gap-2">
+                            <Label htmlFor="middle_name">Middle Name
+                            </Label>
+                            <Input id="middle_name" type="text" className="w-72"
+                                value={complainant.middle_name}
+                                onChange ={ (e) => {
+                                    updateCoComplainant(index, 'middle_name', e.target.value);
+                                }}
+                            />
+                        </div>
+                        <div className="grid grid-cols-1 gap-2">
+                            <Label htmlFor="last_name">Last Name
+                                <span className="text-redBase">*</span></Label>
+                            <Input id="last_name" type="text" className="w-72" 
+                            value={complainant.last_name}
+                            onChange ={ (e) => {
+                                updateCoComplainant(index, 'last_name', e.target.value);
+                            }}
+                            required/>
+                        </div>        
+                        
+                        <div className="grid grid-cols-1 gap-2">
+                            <Label htmlFor="contact">Contact Number
+                            </Label>
+                            <Input id="contact" type="tel" 
+                                placeholder="09876543210"
+                                className="w-72"
+                                inputMode="numeric"         
+                                pattern="[0-9]*"              
+                                maxLength={11} 
+                                value={complainant.contact_number}
+                                onChange={ (e) => {
+                                    updateCoComplainant(index, 'contact_number', e.target.value);
+                                }}
+                            />
+                        </div>
+
+                        <div className="flex gap-2">
+                            <Button type="button" variant="outline" onClick={addCoComplainant} >
+                                <Plus size={16} />
+                                Add Another Complainant
+                            </Button>
+                            <Button type="button" variant="destructive" onClick={() => removeCoComplainants(index)} >
+                                <Minus size={16} />
+                            </Button>
+                        </div>
+                    </div>
+                ) )}
+            </div>
+
+            
         </div>
     )
 }

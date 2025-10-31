@@ -30,6 +30,16 @@ export function Respondent() {
                 required/>
             </div>
             <div className="grid grid-cols-1 gap-2">
+                <Label htmlFor="middleNameRespondent">Middle Name
+                </Label>
+                <Input id="middleNameRespondent" type="text" className="w-72"
+                    value={formData.respondent.middle_name.value}
+                    onChange ={ (e) => {
+                        setFormData('respondent', 'middle_name', e.target.value);
+                    }}
+                />
+            </div>
+            <div className="grid grid-cols-1 gap-2">
                 <Label htmlFor="lastNameRespondent">Last Name
                     <span className="text-redBase">*</span></Label>
                 <Input id="lastNameRespondent" type="text" className="w-72" 
@@ -40,16 +50,7 @@ export function Respondent() {
                 required/>
             </div>
 
-            <div className="grid grid-cols-1 gap-2">
-                <Label htmlFor="middleNameRespondent">Middle Name
-                </Label>
-                <Input id="middleNameRespondent" type="text" className="w-72"
-                    value={formData.respondent.middle_name.value}
-                    onChange ={ (e) => {
-                        setFormData('respondent', 'middle_name', e.target.value);
-                    }}
-                />
-            </div>
+            
             <div className="grid grid-cols-1 gap-2">
                 <Label htmlFor="birthdayRespondent">Birthday
                 </Label>

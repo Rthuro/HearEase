@@ -20,9 +20,17 @@ import {
 } from "@/components/ui/command"
 import { luponMembers } from "@/test/user_data";
 import { useCaseStore } from "@/store/useCaseStore";
+import { useLuponStore } from "@/store/useLuponStore";
+import { useEffect } from "react";
 
 export function HearingInfo(){
     const { setFormData, formData } = useCaseStore();
+    const { members, fetchMembers } = useLuponStore();
+
+    useEffect(() => {
+        fetchMembers();
+    }, [fetchMembers]);
+
     const [scheduledDate] = useState(new Date());
     const [firstHearing] = useState(getFirstHearingDate(scheduledDate));
 
@@ -64,8 +72,7 @@ export function HearingInfo(){
                         variant="outline"
                         className="max-w-max min-w-full justify-between"
                         >
-                        { formData.hearingInfo.lupon_member_id.value
-                            ? luponMembers.find((lupon) => lupon.id === formData.hearingInfo.lupon_member_id.value)?.name
+                        { formData.hearingInfo.lupon_member_id.value ?   (members.find((lupon) => lupon.id === formData.hearingInfo.lupon_member_id.value)?.first_name + " " + members.find((lupon) => lupon.id === formData.hearingInfo.lupon_member_id.value)?.last_name)
                             : "Select lupon members..."}
                         <ChevronsUpDown className="opacity-50" />
                         </Button>
@@ -76,7 +83,7 @@ export function HearingInfo(){
                         <CommandList>
                             <CommandEmpty>No lupon members found.</CommandEmpty>
                             <CommandGroup>
-                            {luponMembers.map((lupon) => (
+                            {members.map((lupon) => (
                                 <CommandItem
                                 key={lupon.id}
                                 value={lupon.id}
@@ -85,7 +92,7 @@ export function HearingInfo(){
                                     setOpen(false)
                                 }}
                                 >
-                                {lupon.name}
+                                {lupon.first_name} {lupon.last_name}
                                 <Check
                                     className={cn(
                                     "ml-auto",
