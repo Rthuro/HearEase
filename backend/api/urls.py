@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from users import views as UserViews
 from addresses import views as AddressViews
 from lupon_members import views as LuponViews
@@ -24,6 +24,9 @@ urlpatterns = [
     path('hearing-cases/', HearingViews.HearingCaseView.as_view(), name='hearing-case-list'),
 
     path('document-templates/', DocumentViews.DocumentTemplateListCreateView.as_view(), name='document-template-list-create'),
-    path('templates/<str:template_name>/generate/', DocumentViews.GenerateDocumentView.as_view(), name='generate-document'),
+    path('templates/<int:pk>/generate/', DocumentViews.GenerateDocumentView.as_view(), name='generate-document'),
     path('generated-documents/', DocumentViews.GeneratedDocumentListView.as_view(), name='generated-documents'),
-]
+
+    path("", include("case_documents.urls")),
+
+] 
