@@ -23,11 +23,11 @@ class DocumentTemplateListCreateView(APIView):
 
 class GenerateDocumentView(APIView):
     """Generate a document from a template and context data"""
-    def post(self, request, template_name):
+    def post(self, request, pk):
         try:
-            template = DocumentTemplate.objects.get(template_type=template_name)
+            template_data = DocumentTemplate.objects.get(id=pk)
         except DocumentTemplate.DoesNotExist:
-            return Response({'error': 'Template not found: ' + str(template)}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Template not found: ' + str(pk)}, status=status.HTTP_404_NOT_FOUND)
 
         serializer = GenerateDocumentSerializer(data=request.data)
         if not serializer.is_valid():
@@ -35,12 +35,13 @@ class GenerateDocumentView(APIView):
 
         data = serializer.validated_data['data']
 
-        django_template = Template(template.html_content)
+        django_template = Template(template_data.html_content)
+        css_template = template_data.css_styles
         context = Context(data)
         generated_html = django_template.render(context)
 
         generated_doc = GeneratedDocument.objects.create(
-            template=template,
+            template=template_data,
             case_number=data.get('case_number', 'N/A'),
             generated_data=data,
             generated_html=generated_html
@@ -49,7 +50,7 @@ class GenerateDocumentView(APIView):
         return Response({
             'id': generated_doc.id,
             'html': generated_html,
-            'css': template.css_styles
+            'css': css_template
         }, status=status.HTTP_201_CREATED)
 
 
