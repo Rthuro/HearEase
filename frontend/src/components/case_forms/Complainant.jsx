@@ -100,29 +100,32 @@ export function Complainant() {
                     Birthday
                     <span className="text-redBase">*</span>
                 </Label>
-                <Popover open={openCalendar}  onOpenChange={setOpenCalendar} id="birthdayComplainant" >
+                <Popover open={openCalendar} onOpenChange={setOpenCalendar} id="birthdayComplainant">
                     <PopoverTrigger asChild>
-                        <Button
-                            variant="outline"
-                            id="date"
-                            className="w-72 justify-between font-normal"
-                        >
-                            {formData.complainant.birth_date.value ? 
-                            formData.complainant.birth_date.value : "Select date"}
-                            <CalendarIcon />
-                        </Button>
+                    <Button
+                        variant="outline"
+                        id="date"
+                        className="w-72 justify-between font-normal"
+                    >
+                        {formData.complainant.birth_date.value
+                        // Bug: in admin formData.complainant.birth_date.value.toLocaleDateString() is working but not in user
+                        ? formData.complainant.birth_date.value
+                        : "Select date"}
+                        <CalendarIcon />
+                    </Button>
                     </PopoverTrigger>
-                    <PopoverContent className=" overflow-hidden p-0 w-72" align="start">
-                        <Calendar
-                            mode="single"
-                            selected={formData.complainant.birth_date.value ?? undefined}
-                            captionLayout="dropdown"
-                            disabled={(date) => date > maxDate || date < minDate}
-                            onSelect={(date) => {
-                                setOpenCalendar(false);
-                                setFormData('complainant', 'birth_date', date);
-                            }}
-                        />
+
+                    <PopoverContent className="overflow-hidden p-0 w-72" align="start">
+                    <Calendar
+                        mode="single"
+                        selected={formData.complainant.birth_date.value ?? undefined}
+                        captionLayout="dropdown"
+                        disabled={(date) => date > maxDate || date < minDate}
+                        onSelect={(date) => {
+                        setOpenCalendar(false);
+                        setFormData('complainant', 'birth_date', date);
+                        }}
+                    />
                     </PopoverContent>
                 </Popover>
             </div>
