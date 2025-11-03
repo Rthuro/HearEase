@@ -25,16 +25,19 @@ import { SignUp } from './routes/SignUp';
 import { useCaseStore } from './store/useCaseStore';
 import useHearingStore from './store/useHearingStore';
 import { Profile } from './routes/Profile';
+import { useLuponStore } from './store/useLuponStore';
 
 function App() {
   const { initializeAuth } = useAuthenticationStore();
   const { fetchCases, cases} = useCaseStore();
   const { fetchHearings, hearings } = useHearingStore();
+  const { fetchMembers } = useLuponStore();
 
   useEffect(() => {
     fetchCases();
     fetchHearings();
-  }, [fetchCases, fetchHearings]);
+    fetchMembers();
+  }, [fetchCases, fetchHearings, fetchMembers]);
 
   console.log("Hearings:", hearings)
   console.log("Cases:", cases)
