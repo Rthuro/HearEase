@@ -3,32 +3,67 @@ import { useCaseStore } from "@/store/useCaseStore";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { luponMembers } from "@/test/user_data";
-// import { natureOfComplaints } from "@/test/data";
-import { Separator } from "@/components/ui/separator";
+import summon_letter from "@/assets/imgs/summon_letter.png"
+import case_monitoring from "@/assets/imgs/case_monitoring.png"
+import file_court from "@/assets/imgs/case_monitoring.png"
+import no_show_notice from "@/assets/imgs/no_show_notice.png"
+import cancellation_notice from "@/assets/imgs/cancellation_notice.png"
 import { cn } from "@/lib/utils";
 import { PageSync } from "@/components/PageSync";
 import { CaseStatusDisplay } from "@/components/CaseStatusDisplay";
-import { ChevronLeft } from "lucide-react";
-import { useEffect } from "react";
+import { ChevronLeft, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import useHearingStore from "@/store/useHearingStore";
 import { useRetrieveUsersStore } from "@/store/useRetrieveUsersStore";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Link } from "react-router-dom";
+import axios from 'axios';
+import useCaseDocumentsStore from "@/store/useCaseDocumentStore";
+import { FileText } from "lucide-react";
+
+
+const API_BASE_URL = 'http://127.0.0.1:8000/api';
+const BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 export function Case() {
     const { case_number } = useParams();
     const { cases } = useCaseStore();
     const { hearings } = useHearingStore();
     const { complainantsUsers, fetchComplainants} = useRetrieveUsersStore();
+    const [templates, setTemplates] = useState([]);
+    const { case_documents, fetchCaseDocuments } = useCaseDocumentsStore();
+    const [ viewImg, setViewImg ] = useState(null);
+
+    const stored = localStorage.getItem("authData");
+    const data = JSON.parse(stored);
+    const userRole = data.userRole;
 
     useEffect(() => {
-        fetchComplainants()
-    }, [])
+        fetchComplainants();
+        fetchTemplates();
+        fetchCaseDocuments(case_number);
+    }, [case_number])
 
+    const fetchTemplates = async () => {
+        try {
+        const response = await axios.get(`${API_BASE_URL}/document-templates/`);
+        setTemplates(response.data);
+        } catch (error) {
+        console.error('Error fetching templates:', error);
+        }
+    };
     
 
     const findHearingCase = hearings.filter( hearing => hearing.case == case_number);
 
     const caseInfo = cases.find( c => c.id == case_number);
-    console.log(caseInfo)
 
     const caseCoComplainants = [];
 
@@ -108,7 +143,7 @@ export function Case() {
                 },
                 {
                     label:"Documents",
-                    value: caseInfo?.documents
+                    value: case_documents
                 }
             ]
         },
@@ -164,6 +199,44 @@ export function Case() {
         }
     ];
 
+    const generate = {
+        user: [
+            {
+                code: 'monitoring',
+                title: "Case Monitoring Sheet",
+                img: case_monitoring,
+                template_id: templates.find( t => t.template_type === 'monitoring')?.id,
+            }
+        ],
+        admin:[
+             {
+                code: 'summon',
+                title: "Summon Letter",
+                img: summon_letter,
+                template_id: templates.find( t => t.template_type === 'summon')?.id,
+            },{
+                code: 'monitoring',
+                title: "Case Monitoring Sheet",
+                img: case_monitoring,
+                template_id: templates.find( t => t.template_type === 'monitoring')?.id,
+            },{
+                code: 'cancellation',
+                title: "Cancellation Notice",
+                img: cancellation_notice,
+                template_id: templates.find( t => t.template_type === 'cancellation')?.id,
+            },{
+                code: 'file_court',
+                title: "File Court Certification",
+                img: file_court,
+                template_id: templates.find( t => t.template_type === 'court')?.id,
+            },{
+                code: 'no-show',
+                title: "No Show Notice",
+                img: no_show_notice,
+                template_id: templates.find( t => t.template_type === 'no-show')?.id,
+            }
+        ]
+    }
     
     return (
         <div className="flex flex-col gap-4 p-6 ">
@@ -207,32 +280,47 @@ export function Case() {
                                     </Label>
                                     {detail.label === 'Status'? <CaseStatusDisplay caseStatus={detail.value} /> : 
                                     detail.label === 'Documents'? 
-                                        <div>
+                                        <div className="flex gap-2">
                                             { detail.value && detail.value.length > 0 ? (
                                                 detail.value.map((doc, index) => {
-                                                    const file = doc?.url || doc?.path || ""; // adjust based on your actual API
-
+                                                    // const file = doc?.file ? `${BASE_URL}${doc.file}` : "";
+                                                    const file = doc?.file
+                                                        ? doc.file.startsWith("http")
+                                                            ? doc.file
+                                                            : `${BASE_URL}${doc.file}`
+                                                        : "";
+                                                        
+                                                    console.log("Document file:", file);
                                                     if (!file) {
-                                                        return <p>No documents submitted</p>;
+                                                        return <p key={index}>No documents submitted</p>;
                                                     }
 
                                                     return file.match(/\.(jpg|jpeg|png|gif)$/i) ? (
-                                                    <img
-                                                        key={index}
-                                                        src={file}
-                                                        alt={`Document ${index + 1}`}
-                                                        className="max-w-xs mb-2 border"
-                                                    />
+                                                        <Button variant="outline" key={index} onClick={(e) => {
+                                                            e.preventDefault();
+                                                            setViewImg(file);
+                                                        }}>
+                                                            <img
+                                                            src={file}
+                                                            alt={`Document ${index + 1}`}
+                                                            className="h-full object-contain"
+                                                            />
+                                                        </Button>
+                                                        
                                                     ) : (
-                                                    <a
+                                                        <Button
+                                                        type="link"
                                                         key={index}
-                                                        href={file}
-                                                        target="_blank"
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            window.open(file, '_blank');
+                                                        }} variant="outline"
                                                         rel="noopener noreferrer"
-                                                        className="text-redBase underline"
-                                                    >
-                                                        Document {index + 1}
-                                                    </a>
+                                                        className="border  py-2 px-4 rounded-lg flex items-center gap-2"
+                                                        >
+                                                            <FileText  />
+                                                            {doc.title || `Document ${index + 1}`}
+                                                        </Button>
                                                     );
                                                 })
                                             ) : (
@@ -245,6 +333,15 @@ export function Case() {
                                 </div>
                             ))}
                     </div> 
+
+                    { viewImg && (
+                        <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50"
+                        onClick={() => setViewImg(null)}
+                        >
+                            <X className="text-white absolute top-4 right-4 cursor-pointer" onClick={ () => setViewImg(null)} />
+                            <img src={viewImg} alt="Document View" className=" h-1/2 rounded-md shadow-lg" />
+                        </div>
+                    )}
 
                     { section.section === "Complainant Information" && caseCoComplainants.length > 0 &&                     
                         (
@@ -281,9 +378,71 @@ export function Case() {
                 </div>
             ))}
 
-            <h2 className="text-xl font-semibold">Hearings</h2>
+            <div className="flex flex-col gap-4 bg-white p-4 rounded-md shadow-2xs border">
+                <h2 className="text-xl font-semibold">Hearing Attendance</h2>
+                <div className="border rounded-lg overflow-hidden">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                            <TableHead className="text-left px-4 py-2">Hearing #</TableHead>
+                            <TableHead className="text-left px-4 py-2">Date</TableHead>
+                            <TableHead className="text-left px-4 py-2">Time</TableHead>
+                            <TableHead className="text-left px-4 py-2">Complainant</TableHead>
+                            <TableHead className="text-left px-4 py-2">Respondent</TableHead>
+                            <TableHead className="text-left px-4 py-2">Status</TableHead>
+                            <TableHead className="px-4 py-2"></TableHead>
+                            </TableRow>
+                        </TableHeader>
 
+                        <TableBody>
+                            {findHearingCase.length > 0 ? (
+                            findHearingCase.map((hearing, index) => (
+                                <TableRow key={hearing.id} className="border-t">
+                                <TableCell className="px-4 py-2">{index + 1}</TableCell>
+                                <TableCell className="px-4 py-2">{hearing.hearing_date}</TableCell>
+                                <TableCell className="px-4 py-2">{hearing.time}</TableCell>
+                                <TableCell className="px-4 py-2">hearing attendance</TableCell>
+                                <TableCell className="px-4 py-2">hearing attendance</TableCell>
+                                <TableCell className="px-4 py-2"> <CaseStatusDisplay caseStatus={hearing.hearing_status} /></TableCell>
+                                <TableCell className={cn("py-4")}>
+                                    <Link className="text-redBase bg-red-100 px-3 py-2 rounded-lg text-sm">
+                                    Details
+                                    </Link>
+                                </TableCell>
+                                </TableRow>
+                            ))
+                            ) : (
+                            <TableRow>
+                                <TableCell className="px-4 py-2" colSpan={8}>
+                                No hearing attendance found.
+                                </TableCell>
+                            </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
+            </div>
 
+            <div className="flex flex-col gap-3 bg-white p-4 rounded-md shadow-2xs border">
+                <h2 className="text-xl font-medium">Generate Documents</h2>
+                <div className="flex flex-wrap gap-4 ">
+                    { userRole === 'admin' ? (
+                        generate.admin.map( doc => (
+                            <button type="button" key={doc.title} className="shadow-sm border bg-white rounded-xl flex flex-col gap-6 items-center justify-center p-6 w-[250px] ">
+                                <img src={doc.img} className="h-[150px]" />
+                                <p className="text-redBase">{doc.title}</p>
+                            </button>
+                        ))
+                    ): (
+                        generate.user.map( doc => (
+                            <button type="button" key={doc.title} className="shadow-sm border bg-white rounded-xl flex flex-col gap-6 items-center justify-center p-6 w-[250px] " >
+                                <img src={doc.img} className="h-[150px]" />
+                                <p className="text-redBase">{doc.title}</p>
+                            </button>
+                        ))
+                    )}
+                </div>
+            </div>
         </div>
     );
 }
