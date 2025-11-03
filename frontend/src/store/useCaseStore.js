@@ -298,19 +298,46 @@ export const useCaseStore = create((set, get) => ({
                 lupon_member: formData.hearingInfo.lupon_member_id.value,
             },
         };
-    
+
+        const case_documents = formData.caseDetails.documents.value;
     
         try {
             const newCase = await addCase(caseData);
             set((state) => ({ cases: [...state.cases, newCase] }));
-            get().resetFormData();
 
             if(newCase === null) {
                 toast.error("Failed to file case.");
                 return false;
             }
 
+            if (case_documents && case_documents.length > 0) {
+                for (const case_doc of case_documents) {
+                    const case_document_formData = new FormData();
+                    case_document_formData.append("case", newCase.id);
+                    case_document_formData.append("title", case_doc.name);
+                    case_document_formData.append("file", case_doc);
+
+                    try {
+                        const res = await axios.post(
+                        "http://127.0.0.1:8000/api/case-documents/",
+                        case_document_formData,
+                            {
+                                headers: {
+                                "Content-Type": "multipart/form-data",
+                                },
+                            }
+                        );
+                        console.log("Uploaded successfully:", res.data);
+                    } catch (error) {
+                        console.error("Upload failed:", error);
+                    }
+                }
+            }
+
+
             toast.success("Case filed successfully!");
+            get().resetFormData();
+
             return true;
         } catch (error) {
             console.error("Add case error:", error.response?.data || error.message);
@@ -322,6 +349,13 @@ export const useCaseStore = create((set, get) => ({
 
     setComplainantInfo: async () => {
         try {
+        const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+        const user_data = JSON.parse(stored);
+        
+        if(user_data.userRole !== 'user') {
+            return;
+        }
+
         const data = await getUser(); 
         const user = data.user;
 
