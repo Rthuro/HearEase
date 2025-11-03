@@ -7,6 +7,7 @@ class DocumentTemplate(models.Model):
         ('monitoring', 'Case Monitoring Sheet'),
         ('appointment', 'Appointment Form'),
         ('cancellation', 'Cancellation Notice'),
+        ('court', 'Court Certification'),
     ]
     
     name = models.CharField(max_length=200)

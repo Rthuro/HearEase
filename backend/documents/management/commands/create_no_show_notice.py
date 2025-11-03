@@ -2,11 +2,11 @@ from django.core.management.base import BaseCommand
 from documents.models import DocumentTemplate
 
 class Command(BaseCommand):
-    help = 'Create summon letter template'
+    help = 'Create no-show notice'
     
     def handle(self, *args, **kwargs):
         html_content = '''
-            <div class="document-container">
+             <div class="document-container">
                 <div class="document-header">
                     <p style="text-align: center; margin: 0; line-height: 1.5;">
                         <strong>Republic of the Philippines</strong><br>
@@ -17,47 +17,25 @@ class Command(BaseCommand):
                 </div>
                 
                 <div class="document-body">
-                    <p><strong>Date:</strong> {{ date_filed }}</p>
+                    <p><strong>Date:</strong> {{ date }}</p>
+                    <p><strong>Case Number:</strong> {{ case_number }}</p>
+                    <p><strong>To:</strong> {{ name }}</p>
+                    <p><strong>Address:</strong> {{ address }}</p>
                     
-                    <p>
-                        <strong>To:</strong> {{ respondent_name }}<br>
-                        <strong>Address:</strong> {{ respondent_address }}
-                    </p>
-                    
-                    <p><strong>Subject: Summon to Appear for Barangay Hearing</strong></p>
+                    <p style="margin-top: 12px; margin-bottom: 24px;"><strong>Subject: Notice of No-Show Status</strong></p>
                     
                     <p style="text-indent: 40px; text-align: justify;">
-                        You are hereby summoned to appear before the Barangay Lupon Tagapamayapa of Tetuan, 
-                        Zamboanga City, in connection with a complaint filed by:
+                        This letter is to inform you that you have failed to attend three (3) consecutive hearings scheduled by the Barangay Lupon Tagapamayapa.
                     </p>
-                    
-                    <p style="margin-left: 40px;">
-                        <strong>Complainant:</strong> {{ complainant_name }}<br>
-                        <strong>Nature of Complaint:</strong> {{ nature_of_complaint }}<br>
-                        <strong>Case Number:</strong> {{ case_number }}
-                    </p>
-                    
-                    <p><strong>You are required to attend the hearing on:</strong></p>
-                    
-                    <p style="margin-left: 40px;">
-                        <strong>Date:</strong> {{ hearing_date }}<br>
-                        <strong>Time:</strong> {{ time }}<br>
-                        <strong>Venue:</strong> Barangay Tetuan Hall<br>
-                        <strong>Assigned Lupon Member:</strong> {{ lupon_member }}
-                    </p>
-                    
                     <p style="text-indent: 40px; text-align: justify;">
-                        Failure to appear in three (3) consecutive hearings will result in marking the case as a 
-                        <strong>No-show</strong>. Non-resolution after six (6) hearings will lead to the issuance 
-                        of a <strong>Certification to File in Court</strong>.
-                    </p>
+                       In line with Barangay Justice System protocols, your case is now marked as a <strong>No-show</strong>, and may be archived or escalated depending on the Barangay’s discretion.</p>
                     
-                    <p>Please be guided accordingly.</p>
+                
                     
                     <p style="margin-top: 40px;">Sincerely,</p>
                     
                     <div class="signature-section">
-                        <p style="margin-top: 60px; border-top: 2px solid #000; width: 250px; text-align: center;">
+                        <p style="border-top: 2px solid #000; width: 250px; text-align: center;">
                             <strong>{{ punong_barangay }}</strong><br>
                             Punong Barangay<br>
                             Barangay Tetuan, Zamboanga City
@@ -111,12 +89,12 @@ class Command(BaseCommand):
         '''
         
         DocumentTemplate.objects.update_or_create(
-            template_type='summon',
+            template_type='no-show',
             defaults={
-                'name': 'Summon Letter Template',
+                'name': 'No-Show Notice',
                 'html_content': html_content,
                 'css_styles': css_styles
             }
         )
-        
-        self.stdout.write(self.style.SUCCESS('Summon letter template created successfully'))
+
+        self.stdout.write(self.style.SUCCESS('No-Show Notice created successfully'))
