@@ -35,7 +35,7 @@ export function Dashboard() {
       <div className="flex flex-col gap-4 bg-white border border-zinc-200 rounded-lg p-6">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-medium">Upcoming Hearings</h2>
-          <Link to={`Admin/Hearings`} className="text-redBase text-sm font-medium">
+          <Link to={`/Admin/Hearings`} className="text-redBase text-sm font-medium">
             View all
           </Link>
         </div>
@@ -45,7 +45,7 @@ export function Dashboard() {
       <div className="flex flex-col  gap-4 bg-white border border-zinc-200 rounded-lg p-6">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-medium">Case Records</h2>
-            <Link to={`Admin/CaseRecords`} className="text-redBase text-sm font-medium">
+            <Link to={`/Admin/CaseRecords`} className="text-redBase text-sm font-medium">
               View all
             </Link>
           </div>
