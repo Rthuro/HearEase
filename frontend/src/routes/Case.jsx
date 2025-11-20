@@ -2,7 +2,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useCaseStore } from "@/store/useCaseStore";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { luponMembers } from "@/test/user_data";
 import summon_letter from "@/assets/imgs/summon_letter.png"
 import case_monitoring from "@/assets/imgs/case_monitoring.png"
 import file_court from "@/assets/imgs/case_monitoring.png"
@@ -11,7 +10,7 @@ import cancellation_notice from "@/assets/imgs/cancellation_notice.png"
 import { cn } from "@/lib/utils";
 import { PageSync } from "@/components/PageSync";
 import { CaseStatusDisplay } from "@/components/CaseStatusDisplay";
-import { ChevronLeft, X } from "lucide-react";
+import { ChevronLeft, X,Check, Edit, ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import useHearingStore from "@/store/useHearingStore";
 import { useRetrieveUsersStore } from "@/store/useRetrieveUsersStore";
@@ -24,22 +23,27 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Link } from "react-router-dom";
-import axios from 'axios';
 import useCaseDocumentsStore from "@/store/useCaseDocumentStore";
 import { FileText } from "lucide-react";
+import { useGenerateDocumentStore } from "@/store/useGenerateDocumentStore";
+import { EditCaseInfo } from "@/components/EditCaseInfo";
+import { CaseCancellationModal } from "@/components/CaseCancellationModal";
+import { useLuponStore } from "@/store/useLuponStore";
 
-
-const API_BASE_URL = 'http://127.0.0.1:8000/api';
 const BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 export function Case() {
     const { case_number } = useParams();
-    const { cases } = useCaseStore();
+    const { cases, updateCaseStatus } = useCaseStore();
     const { hearings } = useHearingStore();
     const { complainantsUsers, fetchComplainants} = useRetrieveUsersStore();
-    const [templates, setTemplates] = useState([]);
+    const [template, setTemplate] = useState({});
     const { case_documents, fetchCaseDocuments } = useCaseDocumentsStore();
     const [ viewImg, setViewImg ] = useState(null);
+    const { templates, fetchTemplates, generateDocument } = useGenerateDocumentStore();
+    const { members } = useLuponStore();
+    const [ noShowModal, setNoShowModal ] = useState(false);
+    const [ noShowUserData, setNoShowUserData ] = useState({});
 
     const stored = localStorage.getItem("authData");
     const data = JSON.parse(stored);
@@ -51,17 +55,9 @@ export function Case() {
         fetchCaseDocuments(case_number);
     }, [case_number])
 
-    const fetchTemplates = async () => {
-        try {
-        const response = await axios.get(`${API_BASE_URL}/document-templates/`);
-        setTemplates(response.data);
-        } catch (error) {
-        console.error('Error fetching templates:', error);
-        }
-    };
-    
-
     const findHearingCase = hearings.filter( hearing => hearing.case == case_number);
+
+    const lupon = members.find(member => member.id === findHearingCase[0]?.lupon_member);
 
     const caseInfo = cases.find( c => c.id == case_number);
 
@@ -93,7 +89,6 @@ export function Case() {
     }
 
 
-    const lupon = luponMembers.find(member => member.id === caseInfo?.lupon_member_id);
     
 
     const formatedBday = (dateString) => {
@@ -120,7 +115,7 @@ export function Case() {
                 },
                 {
                     label: "Assigned Lupon",
-                    value: lupon?.name || '-'
+                    value: lupon?.first_name + " " + (lupon?.middle_name ? lupon?.middle_name + " " : "") + lupon?.last_name || '-'
                 },
                 {
                     label:"Predicted Hearings",
@@ -237,9 +232,18 @@ export function Case() {
             }
         ]
     }
+
+     const handleTemplateSelect = async (case_data, template_name, template_id) => {
+        try {
+            await generateDocument(case_data, template_name, template_id);
+        } catch (error) {
+            console.log(error);
+        }
+    }
+    
     
     return (
-        <div className="flex flex-col gap-4 p-6 ">
+        <div className="relative flex flex-col gap-4 p-6 ">
             <PageSync page="" />
 
             <div className="flex items-center justify-between">
@@ -247,25 +251,48 @@ export function Case() {
                     <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
                         <ChevronLeft />
                     </Button>
-                    <h1 className="text-xl font-medium text-redBase">{caseInfo?.case_number}</h1>
                 </div>
-                <Button variant="outline">Edit Case</Button>
+                { userRole == 'admin' && caseInfo.case_status == 'pending_approval' && (
+                    <div className="flex gap-2">
+                        <CaseCancellationModal caseInfo={caseInfo}  />
+                        <Button variant="default" className={cn("bg-redBase")}
+                        onClick={() => {
+                            updateCaseStatus({
+                                id: caseInfo.id,
+                                case_status: "approved",
+                            },"approved");
+                        }}>
+                            <Check />
+                            Approve Case
+                        </Button>
+                    </div>
+                )}
             </div>
+
+            {userRole == 'user' && caseInfo.case_status == 'rejected' && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-md flex flex-col gap-1">
+                    <p className="font-medium text-lg text-redBase">
+                        Your case appointment has been rejected.
+                    </p>
+                    <p className="text-redBase">
+                        Rejected section: {caseInfo.rejection_section == "case_details" ? "Case Details" : caseInfo.rejection_section == "complainant_info" ? "Complainant Information" : "Respondent Information"}
+                    </p>
+                    <p className="text-redBase">
+                        Reason: {caseInfo.remarks}
+                    </p>
+                    <EditCaseInfo section={caseInfo.rejection_section == "case_details" ? "case" : caseInfo.rejection_section == "complainant_info" ? "complainant" : "respondent"} 
+                        caseInfo={caseInfo} forResubmission={true} />
+                </div>
+            )}
             
             {caseDetails.map((section) => (
                 <div key={section.section} className="flex flex-col gap-4 bg-white p-4 rounded-md border shadow-2xs">
-                    {section.section === "Case Information" &&                     
-                    <h2 className="text-lg font-medium">{section.section}</h2>
-                    }
-
-                    {section.section === "Complainant Information" &&                     
-                    <h2 className=" w-fit px-2 text-lg font-medium bg-blue-50 text-blue-500">{section.section}</h2>
-                    }
-
-
-                    {section.section === "Respondent Information" &&                     
-                    <h2 className=" w-fit px-2 text-lg font-medium bg-orange-50 text-orange-500">{section.section}</h2>
-                    }
+            
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-lg font-medium">{section.section}</h2>
+                        <EditCaseInfo section={section.section == "Case Information" ? "case" : section.section == "Complainant Information" ? "complainant" : "respondent"} 
+                        caseInfo={caseInfo} forResubmission={false} />
+                    </div>
 
                     <div className="grid grid-cols-4 gap-4">
                             {section.details.map((detail) => (
@@ -283,7 +310,7 @@ export function Case() {
                                         <div className="flex gap-2">
                                             { detail.value && detail.value.length > 0 ? (
                                                 detail.value.map((doc, index) => {
-                                                    // const file = doc?.file ? `${BASE_URL}${doc.file}` : "";
+                                                
                                                     const file = doc?.file
                                                         ? doc.file.startsWith("http")
                                                             ? doc.file
@@ -405,7 +432,9 @@ export function Case() {
                                 <TableCell className="px-4 py-2">hearing attendance</TableCell>
                                 <TableCell className="px-4 py-2"> <CaseStatusDisplay caseStatus={hearing.hearing_status} /></TableCell>
                                 <TableCell className={cn("py-4")}>
-                                    <Link className="text-redBase bg-red-100 px-3 py-2 rounded-lg text-sm">
+                                    <Link
+                                    to = { userRole === 'admin' ? `/Admin/Hearing/${hearing.id}` : `/u/${data.id}/Hearing/${hearing.id}`}
+                                    className="text-redBase bg-red-100 px-3 py-2 rounded-lg text-sm">
                                     Details
                                     </Link>
                                 </TableCell>
@@ -425,24 +454,62 @@ export function Case() {
 
             <div className="flex flex-col gap-3 bg-white p-4 rounded-md shadow-2xs border">
                 <h2 className="text-xl font-medium">Generate Documents</h2>
-                <div className="flex flex-wrap gap-4 ">
+                <div className="grid grid-cols-5 gap-3 ">
                     { userRole === 'admin' ? (
                         generate.admin.map( doc => (
-                            <button type="button" key={doc.title} className="shadow-sm border bg-white rounded-xl flex flex-col gap-6 items-center justify-center p-6 w-[250px] ">
-                                <img src={doc.img} className="h-[150px]" />
-                                <p className="text-redBase">{doc.title}</p>
+                            <button type="button" key={doc.title}
+                             className="shadow-sm border bg-white rounded-xl flex flex-col gap-6 items-center justify-center p-3  "
+                             onClick={ () => {
+                                        if (doc.code === 'no-show'){
+                                            setNoShowModal(true);
+                                            setNoShowUserData(caseInfo);
+                                            setTemplate(doc);
+                                            return;
+                                        }
+                                    
+                                        handleTemplateSelect(caseInfo, doc.code, doc.template_id)
+                                    }}>
+                                <img src={doc.img} className="h-[50%] object-contain" />
+                                <p className="text-redBase text-sm">{doc.title}</p>
                             </button>
                         ))
                     ): (
                         generate.user.map( doc => (
-                            <button type="button" key={doc.title} className="shadow-sm border bg-white rounded-xl flex flex-col gap-6 items-center justify-center p-6 w-[250px] " >
-                                <img src={doc.img} className="h-[150px]" />
-                                <p className="text-redBase">{doc.title}</p>
+                            <button type="button" key={doc.title} 
+                            className="shadow-sm border bg-white rounded-xl flex flex-col gap-6 items-center justify-center p-3 " 
+                            onClick={ () => handleTemplateSelect(caseInfo, doc.code, doc.template_id)}>
+                                <img src={doc.img} className="h-[50%] object-contain" />
+                                <p className="text-redBase text-sm">{doc.title}</p>
                             </button>
                         ))
                     )}
                 </div>
             </div>
+
+            { noShowModal && (
+                <div className="fixed bg-black/80 z-10 top-0 right-0 bottom-0 left-0  flex flex-col items-center justify-center">
+                    <div className="bg-white p-6 rounded-lg shadow-lg w-[400px] border flex flex-col gap-3">
+                        <button className="self-end -mt-3 -mr-3" onClick={ () => setNoShowModal(false) }><X className="h-5" /></button>
+                        <p>Select if no show notice is for complainant or respondent.</p>
+                        <div className="flex flex-col gap-2">
+                            <Button variant="default" className="bg-redBase hover:bg-redBase/80" onClick={ () => {
+                                handleTemplateSelect({ data: noShowUserData, user: "c" }, template.code, template.template_id);
+                                setNoShowModal(false);
+                            } }>
+                                Complainant
+                            </Button>
+
+                            <Button variant="default" className="bg-redBase hover:bg-redBase/80"  onClick={ () => {
+                                handleTemplateSelect({ data: noShowUserData, user: "r" }, template.code, template.template_id);
+                                setNoShowModal(false);
+                            } }>
+                                Respondent
+                            </Button>
+                        </div>
+                        
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
