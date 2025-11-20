@@ -1,4 +1,5 @@
 from django.db import models
+from users.models import User
 
 class Complainant(models.Model):
     SEX_CHOICES = [
@@ -16,7 +17,7 @@ class Complainant(models.Model):
     barangay = models.CharField(max_length=100, default="Tetuan")
     street = models.CharField(max_length=100, blank=True, null=True)
     additional_info = models.TextField(blank=True, null=True)
-
+    account = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
