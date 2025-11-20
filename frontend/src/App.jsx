@@ -26,6 +26,8 @@ import { useCaseStore } from './store/useCaseStore';
 import useHearingStore from './store/useHearingStore';
 import { Profile } from './routes/Profile';
 import { useLuponStore } from './store/useLuponStore';
+import { Settings } from './routes/Settings';
+import Hearing from './routes/Hearing';
 
 function App() {
   const { initializeAuth } = useAuthenticationStore();
@@ -39,7 +41,7 @@ function App() {
     fetchMembers();
   }, [fetchCases, fetchHearings, fetchMembers]);
 
-  console.log("Hearings:", hearings)
+  // console.log("Hearings:", hearings)
   console.log("Cases:", cases)
 
   useEffect(() => {
@@ -72,6 +74,8 @@ function App() {
               <Route path="u/:user/File-Case/Case-Form" element={<CaseForm />} />
               <Route path="u/:user/Case/:case_number" element={<Case />} />
               <Route path="u/:user/Profile" element={<Profile />} />
+              <Route path="u/:user/Settings" element={<Settings />} />
+              <Route path="u/:user/Hearing/:hearing_id" element={<Hearing />} />
             </Route>
 
             {/* Admin Routes */}
@@ -86,6 +90,8 @@ function App() {
               <Route path="Admin/Generate-Documents" element={<GenerateDocument />} />
               <Route path="Admin/Lupon-Management" element={<LuponManagement />} />
               <Route path="Admin/Profile" element={<Profile />} />
+              <Route path="Admin/Settings" element={<Settings />} />
+              <Route path="Admin/Hearing/:hearing_id" element={<Hearing />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
