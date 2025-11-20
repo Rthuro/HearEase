@@ -9,16 +9,47 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenu
 import { getBarangayNames } from "@/lib/helpers";
 import { getStreets } from "@/lib/helpers";
 import { useCaseStore } from "@/store/useCaseStore"
+import { RetrieveRespondentsPopover } from "./retrieve-respondents-popover"
 
 export function Respondent() {
-    const { setFormData, formData } = useCaseStore();
+    const { setFormData, formData, co_respondents, set_coRespondents } = useCaseStore();
     const [openCalendar, setOpenCalendar] = useState(false);
+    const [respondents, setRespondents] = useState(co_respondents.length > 0 ? co_respondents : []);
+
+
+    const addCoRespondents = () => {
+        setRespondents((prev) => [
+            ...prev,
+            {
+                first_name: "",
+                last_name: "",
+                middle_name: "",
+                contact_number: "",
+            },
+        ]);
+        set_coRespondents(respondents);
+    };
+    
+    const updateCoRespondents = (index, field, value) => {
+        const updateRespondents = respondents?.map((data, i) =>
+            i === index ? { ...data, [field]: value } : data
+        );
+        set_coRespondents(updateRespondents);
+        setRespondents(updateRespondents);
+    };
+
+    const removeCoComplainants = (index) => {
+        const updated =  respondents.filter((_, i) => i !== index);
+        set_coComplainants(updated);
+        setComplainants(updated);
+    };
 
     const minDate = new Date("1900-01-01");
     const maxDate = new Date();
     return (
         <div className="grid grid-cols-2 gap-3">
             <p className="col-span-2 text-center text-2xl mb-3">Respondent Information</p>
+            <RetrieveRespondentsPopover/>
             <div className="grid grid-cols-1 gap-2">
                 <Label htmlFor="firstNameRespondent">First Name
                     <span className="text-redBase">*</span></Label>

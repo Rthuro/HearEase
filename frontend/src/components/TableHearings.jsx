@@ -24,8 +24,9 @@ export function TableHearings({hearingsList, showPagination, navigateTo}) {
     const { hearings } = useHearingStore();
 
     const findHearingCase = (case_id) => {
-        const filteredHearing = hearings.find( hearing => hearing.case == case_id);
-        return filteredHearing
+        if (!hearings || !Array.isArray(hearings)) return null;
+
+        return hearings.find(hearing => hearing.case === case_id);
     }
 
     return(

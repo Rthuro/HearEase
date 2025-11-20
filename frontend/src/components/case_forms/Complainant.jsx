@@ -10,10 +10,10 @@ import { getBarangayNames } from "@/lib/helpers";
 import { getStreets } from "@/lib/helpers";
 import { useCaseStore } from "@/store/useCaseStore"
 import { useEffect } from "react"
-import { Dialog, DialogDescription, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog"
 import { Separator } from "../ui/separator"
 import { cn } from "@/lib/utils"
- 
+import { dateFormatter } from "@/lib/helpers"
+import { RetrieveUserPopover } from "./retrieve-users-popover"
 
 export function Complainant() {
     const { setFormData, formData, setComplainantInfo, co_complainants, set_coComplainants } = useCaseStore();
@@ -55,11 +55,18 @@ export function Complainant() {
     const minDate = new Date("1900-01-01");
     const maxDate = new Date();
 
+    // For admin to search complainant with account
+    const stored = localStorage.getItem("authData");
+    const storedData = stored ? JSON.parse(stored) : null;
+
 
     return (
         <div className="grid grid-cols-2 gap-3">
             
             <p className="col-span-2 text-center text-2xl mb-3">Complainant Information</p>
+            {storedData.userRole === 'admin' && (
+                <RetrieveUserPopover/>
+            )}
             <div className="grid grid-cols-1 gap-2">
                 <Label htmlFor="firstNameComplainant">First Name
                     <span className="text-redBase">*</span>
@@ -108,8 +115,7 @@ export function Complainant() {
                         className="w-72 justify-between font-normal"
                     >
                         {formData.complainant.birth_date.value
-                        // Bug: in admin formData.complainant.birth_date.value.toLocaleDateString() is working but not in user
-                        ? formData.complainant.birth_date.value
+                        ? dateFormatter(formData.complainant.birth_date.value)
                         : "Select date"}
                         <CalendarIcon />
                     </Button>

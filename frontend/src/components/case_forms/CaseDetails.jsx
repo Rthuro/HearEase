@@ -72,10 +72,8 @@ export function CaseDetails(){
                         {caseTypes.map((complaint) => (
                           <CommandItem
                             key={complaint.id}
-                            // 👇 value here should match what you want displayed
                             value={complaint.case_name}
                             onSelect={() => {
-                              // ✅ Make sure to store ID, not display name
                               setFormData("caseDetails", "nature_of_complaint_code", complaint.id);
                               setFormData("caseDetails", "severity", complaint.severity);
                               setOpen(false);
@@ -109,7 +107,9 @@ export function CaseDetails(){
                 } />
             </div>
              <div className="grid grid-cols-1 gap-2">
-                <Label htmlFor="settlement">Settlement Type </Label>
+                <Label htmlFor="settlement">Settlement Type 
+                    <span className="text-redBase">*</span>
+                </Label>
                 <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline" className={cn('justify-between')}>
@@ -133,6 +133,7 @@ export function CaseDetails(){
             </div>
             <div className="grid grid-cols-1 gap-2">
                 <Label htmlFor="description">Short Description
+                    <span className="text-redBase">*</span>
                 </Label>
                 <Textarea id="description" className="w-full" rows={3} 
                 value={formData.caseDetails.description.value} 

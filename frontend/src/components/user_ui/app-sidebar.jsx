@@ -53,7 +53,7 @@ export function AppSidebar() {
   const third_row = [
     {
       title: "Settings",
-      url: "#",
+      url: `${userLinkName}/Settings`,
       icon: Settings,
     },
     {
@@ -136,10 +136,12 @@ export function AppSidebar() {
                 {third_row.map((item) => (
                     <SidebarMenuItem key={item.title} className={currentPage === item.title ? " text-black" : " text-zinc-700"}>
                     <SidebarMenuButton asChild>
-                        <a href={item.url}>
-                        <item.icon />
-                        <span>{item.title}</span>
-                        </a>
+                        <Link 
+                        key={item.title}
+                        to={item.url}>
+                          <item.icon />
+                          <span>{item.title}</span>
+                        </Link>
                     </SidebarMenuButton>
                     </SidebarMenuItem>
                 ))}

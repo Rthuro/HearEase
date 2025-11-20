@@ -18,7 +18,6 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command"
-import { luponMembers } from "@/test/user_data";
 import { useCaseStore } from "@/store/useCaseStore";
 import { useLuponStore } from "@/store/useLuponStore";
 import { useEffect } from "react";
