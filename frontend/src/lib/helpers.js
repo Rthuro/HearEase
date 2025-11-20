@@ -2,7 +2,8 @@ import { barangays } from "./barangays";
 import { natureOfComplaints } from "@/test/data";
 
 export function dateFormatter(date) {
-    return date.toLocaleDateString('en-US');
+    const d = new Date(date);
+    return d.toLocaleDateString('en-US');
 }
 
 export const getBarangayNames = () => barangays.map(b => b.name);
