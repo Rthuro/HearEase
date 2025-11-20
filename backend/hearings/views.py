@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from .models import Hearing
 from cases.models import Case
+from complainants.models import Complainant
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
@@ -14,12 +15,15 @@ User = get_user_model()
 class HearingView(APIView):
     def get(self, request):
         role = request.query_params.get("role")
-        user = request.query_params.get("email")
-
-        user_id = User.objects.filter(username=user).first().id
+        first_name = request.query_params.get("first_name")
+        last_name = request.query_params.get("last_name")
 
         if role == "user":
-            cases = Case.objects.filter(complainant_user_id=user_id)
+            try:
+                user_id = Complainant.objects.filter(first_name=first_name, last_name=last_name).first().id
+                cases = Case.objects.filter(complainant_user_id=user_id)
+            except AttributeError:
+                cases = Case.objects.none()
         else:
             cases = Case.objects.all()
         
@@ -42,3 +46,18 @@ class HearingCaseView(APIView):
         if not hearings.exists():
             return Response({"error": "No hearings found for this case."}, status=status.HTTP_200_OK)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def put(self, request, pk):
+        try:
+            hearing = Hearing.objects.get(pk=pk)
+        except Hearing.DoesNotExist:
+            return Response({"error": "Hearing not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = HearingSerializer(hearing, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            hearing = serializer.save()
+            response_data = HearingSerializer(hearing).data
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

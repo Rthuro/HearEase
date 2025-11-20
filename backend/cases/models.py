@@ -25,7 +25,6 @@ class SettlementType(models.Model):
 class Case(models.Model):
 
     CASE_STATUS_CHOICES = [
-        ("filed", "Filed"),
         ("pending_approval", "Pending Approval"),
         ("approved", "Approved"),
         ("in_progress", "In Progress"),
@@ -33,6 +32,13 @@ class Case(models.Model):
         ("escalated", "Escalated"),
         ("rejected", "Rejected"),
         ("cancelled", "Cancelled"),
+    ]
+
+    REJECTION_SECTION = [
+        ("none", "None"),
+        ("case_details", "Case Details"),
+        ("complainant_info", "Complainant Information"),
+        ("respondent_info", "Respondent Information")
     ]
 
     case_type = models.ForeignKey(
@@ -43,7 +49,7 @@ class Case(models.Model):
     )
     
     complainant_user = models.ForeignKey(
-        User, on_delete=models.CASCADE
+        Complainant, on_delete=models.CASCADE
     )
     respondent_user = models.ForeignKey(
         Respondent, on_delete=models.CASCADE
@@ -52,13 +58,23 @@ class Case(models.Model):
     case_status = models.CharField(
         max_length=20,
         choices=CASE_STATUS_CHOICES,
-        default="filed"
+        default="pending_approval",
     )
 
+    id = models.CharField(primary_key=True, max_length=36)
     description = models.TextField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     date_filed = models.DateTimeField(auto_now_add=True)
     co_complainants_ids = models.JSONField(blank=True, null=True)
+    predicted_hearings = models.IntegerField(blank=True, null=True)
+    remarks = models.TextField(blank=True, null=True)
+    rejection_section = models.CharField(
+        max_length=30,
+        choices=REJECTION_SECTION,
+        blank=True,
+        null=True,
+        default="none",
+    )
 
 
     def __str__(self):

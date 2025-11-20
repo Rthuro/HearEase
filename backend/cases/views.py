@@ -1,3 +1,5 @@
+from unittest import case
+from urllib import request
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -29,15 +31,8 @@ class SettlementTypeListView(APIView):
 class CaseView(APIView):
     def post(self, request):
         data = request.data.copy()
-
-        # 1️⃣ Get the complainant user (use logged-in user if authenticated)
-        # user = request.user if request.user.is_authenticated else None
-        # complainant_id = data.get("complainant_user") or (user.id if user else None)
-        complainant_data = data.get("complainant_user") 
-        
-        # if not complainant_id:
-        #     return Response({"error": "Complainant (user) is required."}, status=status.HTTP_400_BAD_REQUEST)
-        check_user = User.objects.filter(username=complainant_data.get("email")).first()
+        complainant_data = data.get("complainant_user")
+        check_user = Complainant.objects.filter(first_name=complainant_data.get("first_name"), last_name=complainant_data.get("last_name")).first()
 
         if check_user:
             complainant_id = check_user.id
@@ -65,9 +60,6 @@ class CaseView(APIView):
         # Extract respondent data
         respondent_data = data.get("respondent")
 
-        # if not respondent_data:
-        #     return Response({"error": "Respondent information is required."}, status=status.HTTP_400_BAD_REQUEST)
-
         # Try to find an existing respondent by name or contact number
         respondent = Respondent.objects.filter(
             first_name__iexact=respondent_data.get("first_name"),
@@ -85,12 +77,16 @@ class CaseView(APIView):
             respondent = Respondent.objects.create(**respondent_data)
 
         case_data = {
+            "id": data.get("id"),
             "case_type_id": data.get("case_type"),
             "settlement_type_id": data.get("settlement_type"),
             "complainant_user_id": complainant_id,
             "respondent_user_id": respondent.id,
             "description": data.get("description"),
-            "co_complainants_ids": co_complainants_ids
+            "co_complainants_ids": co_complainants_ids,
+            "remarks": data.get("remarks"),
+            "predicted_hearings": data.get("predicted_hearings"),
+            "case_status": "pending_approval",
         }
 
         new_case = Case.objects.create(**case_data)
@@ -107,7 +103,7 @@ class CaseView(APIView):
                 hearing_status=hearing_info.get("hearing_status", "pending_schedule"),
             )
 
-        # 6️⃣ Serialize and return
+        # Serialize and return
         serializer = CaseSerializer(new_case)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -124,13 +120,28 @@ class CaseView(APIView):
 
         serializer = CaseSerializer(cases, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def put(self, request, pk=None):
+        try:
+            case = Case.objects.get(pk=pk)
+        except Case.DoesNotExist:
+            return Response({"error": "Case not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = CaseSerializer(case, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class CaseListView(APIView):
     def post(self, request):
         role = request.data.get("role")
-        email = request.data.get("email")
+        first_name = request.data.get("first_name")
+        last_name = request.data.get("last_name")
 
-        user_id = User.objects.filter(username=email).first()
+        user_id = Complainant.objects.filter(first_name=first_name, last_name=last_name).first()
 
         if role == "user":
             cases = Case.objects.filter(complainant_user_id=user_id)
@@ -139,7 +150,33 @@ class CaseListView(APIView):
 
         serializer = CaseSerializer(cases, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+class CaseDeleteView(APIView):
+    def delete(self, request):
+        case_id = request.data.get("case_id")
 
+        try:
+            case = Case.objects.get(id=case_id)
+            case.delete()
+            return Response({"message": "Case deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+        except Case.DoesNotExist:
+            return Response({"error": "Case not found"}, status=status.HTTP_404_NOT_FOUND)
+
+class UpdateCaseInfoView(APIView):
+    def put(self, request, pk):
+        try:
+            case = Case.objects.get(pk=pk)
+        except Case.DoesNotExist:
+            return Response({"error": "Case not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = CaseSerializer(case, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            case = serializer.save()
+            response_data = CaseSerializer(case).data
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 

@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='documenttemplate',
             name='template_type',
-            field=models.CharField(choices=[('summon', 'Summon Letter'), ('no-show', 'No-Show Letter'), ('monitoring', 'Case Monitoring Sheet'), ('appointment', 'Appointment Form'), ('cancellation', 'Cancellation Notice'), ('court', 'Court Certification')], max_length=50),
+            field=models.CharField(choices=[('summon', 'Summon Letter'), ('no-show', 'No-Show Letter'), ('monitoring', 'Case Monitoring Sheet'), ('cancellation', 'Cancellation Notice'), ('court', 'Court Certification')], max_length=50),
         ),
     ]

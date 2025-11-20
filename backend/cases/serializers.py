@@ -1,5 +1,5 @@
 from respondents.serializers import RespondentSerializer
-from users.serializers import UserInfoSerializer
+from complainants.serializers import ComplainantSerializer
 from rest_framework import serializers
 from .models import Case, CaseType, SettlementType
 
@@ -16,7 +16,7 @@ class SettlementTypeSerializer(serializers.ModelSerializer):
 class CaseSerializer(serializers.ModelSerializer):
     case_type = CaseTypeSerializer(read_only=True)
     settlement_type = SettlementTypeSerializer(read_only=True)
-    complainant_user = UserInfoSerializer(read_only=True)
+    complainant_user = ComplainantSerializer(read_only=True)
     respondent_user = RespondentSerializer(read_only=True)
 
     class Meta:

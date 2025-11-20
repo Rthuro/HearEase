@@ -5,7 +5,6 @@ class DocumentTemplate(models.Model):
         ('summon', 'Summon Letter'),
         ('no-show', 'No-Show Letter'),
         ('monitoring', 'Case Monitoring Sheet'),
-        ('appointment', 'Appointment Form'),
         ('cancellation', 'Cancellation Notice'),
         ('court', 'Court Certification'),
     ]

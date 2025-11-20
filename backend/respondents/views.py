@@ -23,3 +23,20 @@ class RespondentView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class UpdateRespondentView(APIView):
+    def put(self, request, pk):
+        try:
+            respondent = Respondent.objects.get(pk=pk)
+        except Respondent.DoesNotExist:
+            return Response({"error": "Respondent not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = RespondentSerializer(respondent, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            respondent = serializer.save()
+            response_data = RespondentSerializer(respondent).data
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+        

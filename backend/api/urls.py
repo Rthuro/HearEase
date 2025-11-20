@@ -6,19 +6,31 @@ from cases import views as CaseViews
 from hearings import views as HearingViews
 from complainants import views as ComplainantsViews
 from documents import views as DocumentViews
+from respondents import views as RespondentViews
 
 urlpatterns = [
     path("register/", UserViews.RegisterView.as_view(), name="register"),
     path('check-email/', UserViews.CheckEmailView.as_view(), name='check-email'),
     path('find-user/', UserViews.FindUserView.as_view(), name='find-user'),
+    path('update-user/<int:pk>/', UserViews.UpdateUserView.as_view(), name='update-user'),
+
     path('complainants/', ComplainantsViews.ComplainantView.as_view(), name='complainants-list'),
+    path('update-complainant/<int:pk>/', ComplainantsViews.updateComplainantView.as_view(), name='update-complainant'),
+
+    path('respondents/', RespondentView.RespondentView.as_view(), name='respondents');
+    path('update-respondent/<int:pk>/', RespondentViews.UpdateRespondentView.as_view(), name='update-respondent'),
+
     path('login/', UserViews.LoginView.as_view(), name='login'),
     path('barangays/', AddressViews.BarangayListView.as_view(), name='barangay-list'),
     path('streets/', AddressViews.StreetListView.as_view(), name='street-list'),
     path('lupon-members/', LuponViews.LuponMemberView.as_view(), name='lupon-member-list'),
+
     path('cases/', CaseViews.CaseView.as_view(), name='create-case'),
     path('case-list/', CaseViews.CaseListView.as_view(), name='case-list'),
     path('case-types/', CaseViews.CaseTypeListView.as_view(), name='case-type-list'),
+    path('delete-case/', CaseViews.CaseDeleteView.as_view(), name='delete-case'),
+    path('update-case/<str:pk>/', CaseViews.UpdateCaseInfoView.as_view(), name='update-case'),
+
     path('settlement-types/', CaseViews.SettlementTypeListView.as_view(), name='settlement-type-list'),
     path('hearings/', HearingViews.HearingView.as_view(), name='all-hearing-list'),
     path('hearing-cases/', HearingViews.HearingCaseView.as_view(), name='hearing-case-list'),

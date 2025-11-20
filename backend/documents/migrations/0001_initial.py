@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('name', models.CharField(max_length=200)),
-                ('template_type', models.CharField(choices=[('summon', 'Summon Letter'), ('no-show', 'No-Show Letter'), ('monitoring', 'Case Monitoring Sheet'), ('appointment', 'Appointment Form'), ('cancellation', 'Cancellation Notice')], max_length=50)),
+                ('template_type', models.CharField(choices=[('summon', 'Summon Letter'), ('no-show', 'No-Show Letter'), ('monitoring', 'Case Monitoring Sheet'), ('cancellation', 'Cancellation Notice')], max_length=50)),
                 ('html_content', models.TextField()),
                 ('css_styles', models.TextField(blank=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),

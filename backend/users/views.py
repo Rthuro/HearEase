@@ -60,3 +60,22 @@ class FindUserView(APIView):
         if user.exists():
             return Response({"user": UserInfoSerializer(user.first()).data})
         return Response({"error": "User do not exist"}, status=status.HTTP_400_BAD_REQUEST)
+    def get(self, request):
+        users = User.objects.all().exclude(role='admin')
+        serializer = UserInfoSerializer(users, many=True)
+        return Response({"users": serializer.data}, status=status.HTTP_200_OK)
+
+class UpdateUserView(APIView):
+    def put(self, request, pk=None):
+        try:
+            user = User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = UserInfoSerializer(user, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
