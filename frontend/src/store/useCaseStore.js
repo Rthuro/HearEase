@@ -1,9 +1,11 @@
 import { create } from "zustand";
-import useAuthenticationStore from "./useAuthenticationStore";
+// import useAuthenticationStore from "./useAuthenticationStore";
 import axios from "axios";
 import toast from "react-hot-toast";
+import useHearingStore from "./useHearingStore";
 
-const { userInfo, userRole } = useAuthenticationStore.getState();
+const { fetchHearings } = useHearingStore.getState();
+// const { userInfo, userRole } = useAuthenticationStore.getState();
 const API_URL = "http://127.0.0.1:8000/api";
 const LOCAL_STORAGE_KEY = "authData";
 
@@ -34,11 +36,13 @@ export const getCases = async () => {
     const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
     const data = JSON.parse(stored);
 
-//   const response = await axios.get(`${API_URL}/cases/`,{
-  const response = await axios.post(`${API_URL}/case-list/`,{
-    role: data.userRole,
-    email: data.userInfo.email
-  });
+    const userData = await getUser();
+
+    const response = await axios.post(`${API_URL}/case-list/`,{
+        role: data.userRole,
+        first_name: userData.user.first_name,
+        last_name: userData.user.last_name
+    });
   return response.data;
 };
 
@@ -51,6 +55,10 @@ export const getUser = async () => {
   return response.data;
 };
 
+export const fetchRespondent = async (respondent_id) => {
+    const response = await axios.get(`${API_URL}/update-respondent/${respondent_id}/`);
+    return response.data;
+}
 
 export const useCaseStore = create((set, get) => ({
     cases: [],
@@ -69,6 +77,10 @@ export const useCaseStore = create((set, get) => ({
     co_complainants: [],
     set_coComplainants: (updatedComplainants) =>{
         set({co_complainants: updatedComplainants})
+    },
+    co_respondents: [],
+    set_coRespondents: (updatedRespondents) =>{
+        set({co_respondents: updatedRespondents})
     },
 
     formData: {
@@ -177,100 +189,18 @@ export const useCaseStore = create((set, get) => ({
         })
     },
 
-    // addCase: async () => {
-    //     // e.preventDefault();
-
-    //     const newCase = get().formData;
-
-    //     const formatCase = {
-    //         user_id: userInfo?.id,
-    //         case_number: get().case.case_number,
-    //         date: get().case.date,
-    //         case_status: get().case.case_status,
-    //         hearing_status: get().case.hearing_status,
-
-    //         c_first_name: newCase.complainant.first_name.value,
-    //         c_last_name: newCase.complainant.last_name.value,
-    //         c_middle_name: newCase.complainant.middle_name.value,
-    //         c_birth_date: newCase.complainant.birth_date.value,
-    //         c_sex: newCase.complainant.sex.value,
-    //         c_contact_number: newCase.complainant.contact_number.value,
-    //         c_barangay: newCase.complainant.barangay.value,
-    //         c_street: newCase.complainant.street.value,
-    //         c_additional_info: newCase.complainant.additional_info.value,
-
-    //         r_first_name: newCase.respondent.first_name.value,
-    //         r_last_name: newCase.respondent.last_name.value,
-    //         r_middle_name: newCase.respondent.middle_name.value,
-    //         r_birth_date: newCase.respondent.birth_date.value,
-    //         r_sex: newCase.respondent.sex.value,
-    //         r_contact_number: newCase.respondent.contact_number.value,
-    //         r_barangay: newCase.respondent.barangay.value,
-    //         r_street: newCase.respondent.street.value,
-    //         r_additional_info: newCase.respondent.additional_info.value,
-
-    //         nature_of_complaint_code: newCase.caseDetails.nature_of_complaint_code.value,
-    //         severity: newCase.caseDetails.severity.value,
-    //         description: newCase.caseDetails.description.value,
-    //         settlement: newCase.caseDetails.settlement.value,
-    //         documents: Array.isArray(newCase.caseDetails.documents.value)
-    //         ? [...newCase.caseDetails.documents.value]
-    //         : [],
-    //         predicted_number: newCase.hearingInfo.predicted_number.value,
-    //         first_hearing_date: newCase.hearingInfo.first_hearing_date.value,
-    //         time: newCase.hearingInfo.time.value,
-    //         lupon_member_id: newCase.hearingInfo.lupon_member_id.value,
-    //     };
-
-    //     try{
-    //         const checkLocalCases = localStorage.getItem('cases');
-    //         let cases = [];
-
-    //         if (checkLocalCases) {
-    //             cases = JSON.parse(checkLocalCases);
-    //         }
-
-    //         if (cases.length > 0) {
-    //             const newCases = [...cases, formatCase];
-    //             localStorage.setItem('cases', JSON.stringify(newCases));
-    //         } else {
-    //             cases.push( formatCase );
-    //             localStorage.setItem('cases', JSON.stringify(cases));
-    //         }
-
-    //         get().resetFormData();
-    //         get().resetCase();
-
-    //     } catch (error) {
-    //         console.error('Error adding case:', error);
-    //     }
-    // },
-
-    // getCases : () => {
-    //     const storedCases = localStorage.getItem('cases');
-    //     const userCases = storedCases ? JSON.parse(storedCases) : [];
-
-    //     return userInfo?.role === 'admin' ? userCases : userCases.filter(c => c.user_id === userInfo?.id);
-    // },
-
-    // getCaseByNumber: (caseNumber) => {
-    //     const storedCases = localStorage.getItem('cases');
-    //     const userCases = storedCases ? JSON.parse(storedCases) : [];
-    //     return userCases.find(c => c.case_number === caseNumber && c.user_id === userInfo?.id);
-    // },
-
     addCaseData: async () => {
         const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
         const data = JSON.parse(stored);
 
         const { formData, co_complainants } = get();
         const caseData = {
+            id: get().case.case_number,
             complainant_user: {
-                email: data.userInfo.email,
                 first_name: formData.complainant.first_name.value,
                 last_name: formData.complainant.last_name.value,
                 middle_name: formData.complainant.middle_name.value || undefined,
-                birth_date: formData.complainant.birth_date.value ? formData.complainant.birth_date.value : null,
+                birth_date: formData.complainant.birth_date.value ? new Date(formData.complainant.birth_date.value).toISOString().split("T")[0] : null,
                 sex: formData.complainant.sex.value,
                 contact_number: formData.respondent.contact_number.value,
                 barangay: formData.respondent.barangay.value,
@@ -282,7 +212,7 @@ export const useCaseStore = create((set, get) => ({
                 first_name: formData.respondent.first_name.value,
                 last_name: formData.respondent.last_name.value,
                 middle_name: formData.respondent.middle_name.value || undefined,
-                birth_date: formData.respondent.birth_date.value ? formData.respondent.birth_date.value.toISOString().split("T")[0] : null,
+                birth_date: formData.respondent.birth_date.value ?  new Date(formData.respondent.birth_date.value).toISOString().split("T")[0] : null,
                 sex: formData.respondent.sex.value,
                 contact_number: formData.respondent.contact_number.value,
                 barangay: formData.respondent.barangay.value,
@@ -292,6 +222,9 @@ export const useCaseStore = create((set, get) => ({
             case_type: formData.caseDetails.nature_of_complaint_code.value,
             settlement_type: formData.caseDetails.settlement.value,
             description: formData.caseDetails.description.value,
+            predicted_hearings: formData.hearingInfo.predicted_number.value,
+            remarks: "",
+            case_status: data.userRole === 'admin' ? "approved" : "pending_approval",
             hearing_info: {
                 hearing_date: formData.hearingInfo.first_hearing_date.value ? formData.hearingInfo.first_hearing_date.value.toISOString().split("T")[0] : null,
                 time: formData.hearingInfo.time.value ? formData.hearingInfo.time.value : null,
@@ -337,6 +270,8 @@ export const useCaseStore = create((set, get) => ({
 
             toast.success("Case filed successfully!");
             get().resetFormData();
+            fetchHearings();
+            get().fetchCases();
 
             return true;
         } catch (error) {
@@ -411,5 +346,139 @@ export const useCaseStore = create((set, get) => ({
         }
     },
 
+    deleteCase: async (case_id) => {
+        try {
+            const res = await axios.delete(`${API_URL}/delete-case/`, {
+                data: { case_id: case_id }
+            });
+
+            if (res.status === 204) {
+                get().fetchCases();
+                toast.success("Case " + case_id + " deleted successfully.");
+            }
+            
+        } catch (error) {
+            toast.error("Delete case unsuccessful:", error);
+        }
+    },
+
+    updateCaseInfo: async (data, update, id, forResubmission) => {
+
+        // Update user info if they have account
+        // const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+        // const data = JSON.parse(stored);
+
+        const { fetchCases } = get();
+        switch(update) {
+            case 'complainant':{
+                try {
+                const res = await axios.put(`${API_URL}/update-complainant/${id}/`, data);
+
+                if(forResubmission) {
+                    await axios.put(`${API_URL}/update-case/${id}/`, {
+                        case_status: "pending_approval",
+                        remarks: "",
+                        rejection_section: "none"
+                    });
+
+                }
+
+                if(res.status === 200) {
+                    fetchCases();
+                    toast.success("Complainant updated successfully.");
+                }
+                } catch (error) {
+                    toast.error("Update complainant unsuccessful:", error);
+                }
+
+                break;
+            }
+            case 'respondent':
+                {
+                try {
+                    const res = await axios.put(`${API_URL}/update-respondent/${id}/`, data);
+
+                    if(forResubmission) {
+                        await axios.put(`${API_URL}/update-case/${id}/`, {
+                            case_status: "pending_approval",
+                            remarks: "",
+                            rejection_section: "none"
+                        });
+
+                    }
+
+                    if(res.status === 200) {
+                        fetchCases();
+                        toast.success("Respondent updated successfully.");
+                    }
+                    } catch (error) {
+                        toast.error("Update respondent unsuccessful:", error);
+                    }
+
+                    break;
+                }
+            case "case":
+                try {
+                    const edited = forResubmission
+                        ? {
+                            ...data,
+                            case_status: "pending_approval",
+                            remarks: "",
+                            rejection_section: "none"
+                        }
+                        : data;
+
+                    const res = await axios.put(`${API_URL}/update-case/${id}/`, edited);
+
+                    console.log(res);
+
+                    if (res.status === 200) {
+                        fetchCases();
+                        toast.success("Case updated successfully.");
+                    }
+                } catch (error) {
+                    console.error(error);
+                    toast.error("Update case unsuccessful: " + (error?.response?.data || error.message));
+                }
+                break;
+
+            default:
+                break;
+        }
+    },
+
+    updateCaseStatus: async(caseInfo, update) => {
+        const { fetchCases } = get();
+        switch(update){
+            case 'rejected': {
+                try {
+                    const res = await axios.put(`${API_URL}/update-case/${caseInfo.id}/`, caseInfo);
+                    if(res.status === 200) {
+                        fetchCases();
+                        toast.success("Case rejected successfully.");
+                    }
+                    } catch (error) {
+                        toast.error("Update case status unsuccessful:", error);
+                    }
+
+                    break;
+            }
+            case 'approved':{
+                try {
+                    const res = await axios.put(`${API_URL}/update-case/${caseInfo.id}/`, caseInfo);
+                    if(res.status === 200) {
+                        fetchCases();
+                        toast.success("Case approved successfully.");
+                    }
+                    } catch (error) {
+                        toast.error("Update case status unsuccessful:", error);
+                    }
+
+                    break;
+            }
+            default:
+                break;
+        }
+    },
 
 }))

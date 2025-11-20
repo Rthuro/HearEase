@@ -10,8 +10,18 @@ export const getComplainants = async () => {
     return response.data;
 }
 
+export const getRespondents = async () => {
+    const response = await axios.get(`${API_URL}/respondents`);
+    return response.data;
+}
+
+export const getUsers = async () => {
+    const response = await axios.get(`${API_URL}/find-user`);
+    return response.data.users;
+}
+
 export const useRetrieveUsersStore = create( (set) => ({
-    complainantsUsers: [],
+    complainantsUsers: [],    
     fetchComplainants: async () => {
         try {
             const data = await getComplainants();
@@ -19,5 +29,23 @@ export const useRetrieveUsersStore = create( (set) => ({
         } catch (error) {
             toast.error(error);
         }
-    }
+    },
+    users: [],
+    fetchUsers: async () => {
+        try {
+            const data = await getUsers();
+            set({ users: data })
+        } catch (error) {
+            toast.error(error);
+        }
+    },
+    respondents: [],
+    fetchRespondents: async () => {
+        try {
+            const data = await getRespondents();
+            set({ respondents: data })
+        } catch (error) {
+            toast.error(error);
+        }
+    },
 }))
