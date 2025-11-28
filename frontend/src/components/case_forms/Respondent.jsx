@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { Input } from "../ui/input"
 import { Label } from "../ui/label"
-import { CalendarIcon } from "lucide-react"
+import { CalendarIcon, Plus, Minus } from "lucide-react"
 import { Button } from "../ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
 import { Calendar } from "../ui/calendar"
@@ -10,6 +10,9 @@ import { getBarangayNames } from "@/lib/helpers";
 import { getStreets } from "@/lib/helpers";
 import { useCaseStore } from "@/store/useCaseStore"
 import { RetrieveRespondentsPopover } from "./retrieve-respondents-popover"
+import { cn } from "@/lib/utils"
+import { Separator } from "../ui/separator"
+import { dateFormatter } from "@/lib/helpers"
 
 export function Respondent() {
     const { setFormData, formData, co_respondents, set_coRespondents } = useCaseStore();
@@ -38,10 +41,10 @@ export function Respondent() {
         setRespondents(updateRespondents);
     };
 
-    const removeCoComplainants = (index) => {
+    const removeCoRespondents = (index) => {
         const updated =  respondents.filter((_, i) => i !== index);
-        set_coComplainants(updated);
-        setComplainants(updated);
+        set_coRespondents(updated);
+        setRespondents(updated);
     };
 
     const minDate = new Date("1900-01-01");
@@ -93,7 +96,7 @@ export function Respondent() {
                             className="w-72 justify-between font-normal"
                         >
                             {formData.respondent.birth_date.value ? 
-                            formData.respondent.birth_date.value.toLocaleDateString() : "Select date"}
+                            dateFormatter(formData.respondent.birth_date.value) : "Select date"}
                             <CalendarIcon />
                         </Button>
                     </PopoverTrigger>
@@ -208,6 +211,80 @@ export function Respondent() {
                         setFormData('respondent', 'additional_info', e.target.value)}
                     />
                 </div>
+            </div>
+
+            <Separator className="col-span-2 my-2"/>
+
+            <div className="grid grid-cols-1 col-span-2 gap-2">
+                <p className="font-medium ">Add Co-Respondents
+                </p>
+                { respondents.length <= 0 && (
+                    <Button type="button" variant="default" className={cn("bg-redBase hover:bg-redBase/95")} onClick={addCoRespondents} >
+                        <Plus size={16} />
+                        Add Respondent
+                    </Button>
+                )}
+
+                {respondents.length > 0 && respondents?.map( (respondent, index) => (
+                    <div key={index} className="grid grid-cols-2 gap-4 border p-4 rounded-md">
+                        <div className="grid grid-cols-1 gap-2">
+                            <Label htmlFor="first_name">First Name
+                                <span className="text-redBase">*</span></Label>
+                            <Input id="first_name" type="text" className="w-72" 
+                            value={respondent.first_name}
+                            onChange ={ (e) => {
+                                updateCoRespondents( index, 'first_name', e.target.value);
+                            }}
+                            required/>
+                        </div>
+                        <div className="grid grid-cols-1 gap-2">
+                            <Label htmlFor="middle_name">Middle Name
+                            </Label>
+                            <Input id="middle_name" type="text" className="w-72"
+                                value={respondent.middle_name}
+                                onChange ={ (e) => {
+                                    updateCoRespondents(index, 'middle_name', e.target.value);
+                                }}
+                            />
+                        </div>
+                        <div className="grid grid-cols-1 gap-2">
+                            <Label htmlFor="last_name">Last Name
+                                <span className="text-redBase">*</span></Label>
+                            <Input id="last_name" type="text" className="w-72" 
+                            value={respondent.last_name}
+                            onChange ={ (e) => {
+                                updateCoRespondents(index, 'last_name', e.target.value);
+                            }}
+                            required/>
+                        </div>        
+                        
+                        <div className="grid grid-cols-1 gap-2">
+                            <Label htmlFor="contact">Contact Number
+                            </Label>
+                            <Input id="contact" type="tel" 
+                                placeholder="09876543210"
+                                className="w-72"
+                                inputMode="numeric"         
+                                pattern="[0-9]*"              
+                                maxLength={11} 
+                                value={respondent.contact_number}
+                                onChange={ (e) => {
+                                    updateCoRespondents(index, 'contact_number', e.target.value);
+                                }}
+                            />
+                        </div>
+
+                        <div className="flex gap-2">
+                            <Button type="button" variant="outline" onClick={addCoRespondents} >
+                                <Plus size={16} />
+                                Add Another Respondent
+                            </Button>
+                            <Button type="button" variant="destructive" onClick={() => removeCoRespondents(index)} >
+                                <Minus size={16} />
+                            </Button>
+                        </div>
+                    </div>
+                ) )}
             </div>
         </div>
     )

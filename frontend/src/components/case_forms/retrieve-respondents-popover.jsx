@@ -27,10 +27,10 @@ import { Dialog,
 
 export function RetrieveRespondentsPopover() {
     const { setFormData } = useCaseStore();
-    const { fetchrespondents, respondents} = useRetrieveUsersStore();
+    const { fetchRespondents, respondents} = useRetrieveUsersStore();
 
     useEffect(() => {
-            fetchrespondents();
+        fetchRespondents();
     }, []);
 
     const [query, setQuery] = useState("")
@@ -104,7 +104,7 @@ return <div className="flex justify-end col-span-2 border-b mb-2 pb-3 gap-3">
                                         className="cursor-pointer"
                                         >
                                         {selectedUser?.id === user.id && <Check />}
-                                        {user.first_name} {user.last_name} — {user.email}
+                                        {user.first_name} {user.last_name}
                                         </CommandItem>
                                     </DialogClose>
                                     

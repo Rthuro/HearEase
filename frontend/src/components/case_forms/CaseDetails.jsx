@@ -5,7 +5,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "../ui/popover"
-import { Check, ChevronsUpDown, CloudUpload, Trash2, File, ChevronDown} from "lucide-react"
+import { Check, ChevronsUpDown, CloudUpload, Trash2, File, ChevronDown, AlertCircle, X} from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -42,7 +42,7 @@ export function CaseDetails(){
   }
     
     return (
-        <div className="grid grid-cols-1 gap-3">
+        <div className="grid grid-cols-1 gap-3 w-[400px]">
             <p className=" text-center  text-2xl mb-3">Case Details</p>
             <div className="grid grid-cols-1 gap-2">
                 <Label htmlFor="natureComplaint">Nature of Complaint
@@ -140,6 +140,12 @@ export function CaseDetails(){
                 onChange={(e) => setFormData('caseDetails', 'description', e.target.value)}
                 />
             </div>
+
+            <div className="flex flex-col gap-1 bg-amber-50 border border-amber-300 rounded-md p-3">
+                  <p className="font-medium text-sm ">Data Privacy Warning</p>  
+                  <p className="text-xs text-zinc-600">You are responsible for ensuring that any uploaded media involving another person’s face or personal information is taken with their consent. Unauthorized disclosure may violate the Data Privacy Act.</p>           
+            </div>
+
             <div className="flex flex-col gap-2">
               <p className="font-medium text-lg">Upload Documents</p>
               <p className="text-sm text-zinc-700">Select file evidence.</p>
