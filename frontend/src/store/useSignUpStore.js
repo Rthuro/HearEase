@@ -47,7 +47,7 @@ export const useSignUpStore = create((set, get) => ({
         barangay: "Tetuan",
         street: "",
         additional_info: "",
-        role: "user",
+        is_user: true,
     },
 
     resetFormData: () => {
@@ -64,7 +64,6 @@ export const useSignUpStore = create((set, get) => ({
                 barangay: "Tetuan",
                 street: "",
                 additional_info: "",
-                role: "user",
             }
         });
     },
@@ -94,7 +93,7 @@ export const useSignUpStore = create((set, get) => ({
                 barangay: formData.barangay,
                 street: formData.street,
                 additional_info: formData.additional_info,
-                role: formData.role,
+                is_user: formData.is_user,
             });
 
             if (res.data.error) {
