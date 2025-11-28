@@ -66,6 +66,7 @@ class Case(models.Model):
     is_active = models.BooleanField(default=True)
     date_filed = models.DateTimeField(auto_now_add=True)
     co_complainants_ids = models.JSONField(blank=True, null=True)
+    co_respondents_ids = models.JSONField(blank=True, null=True)
     predicted_hearings = models.IntegerField(blank=True, null=True)
     remarks = models.TextField(blank=True, null=True)
     rejection_section = models.CharField(

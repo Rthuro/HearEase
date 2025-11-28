@@ -60,13 +60,14 @@ class CaseView(APIView):
         # Extract respondent data
         respondent_data = data.get("respondent")
 
-        # Try to find an existing respondent by name or contact number
+        # Try to find an existing respondent by name 
         respondent = Respondent.objects.filter(
             first_name__iexact=respondent_data.get("first_name"),
             last_name__iexact=respondent_data.get("last_name"),
         ).first()
 
         if respondent:
+            respondent_id = respondent.id
             # Update respondent info if provided
             for field, value in respondent_data.items():
                 if value not in [None, ""]:
@@ -75,18 +76,38 @@ class CaseView(APIView):
         else:
             # Create a new respondent if not found
             respondent = Respondent.objects.create(**respondent_data)
+            respondent_id = respondent.id
+
+
+        co_respondents = data.get("co_respondents")
+        co_respondents_ids = []
+
+        for respondent in co_respondents:
+            check_respondent = Respondent.objects.filter(
+                first_name__iexact=respondent.get("first_name"),
+                last_name__iexact=respondent.get("last_name"),
+            ).first()
+
+            if check_respondent:
+                co_respondents_ids.append(check_respondent.id)
+            else:
+                # Create a new respondent if not found
+                co_respondent = Respondent.objects.create(**respondent)
+                co_respondents_ids.append(co_respondent.id)
+        
 
         case_data = {
             "id": data.get("id"),
             "case_type_id": data.get("case_type"),
             "settlement_type_id": data.get("settlement_type"),
             "complainant_user_id": complainant_id,
-            "respondent_user_id": respondent.id,
+            "respondent_user_id": respondent_id,
             "description": data.get("description"),
             "co_complainants_ids": co_complainants_ids,
             "remarks": data.get("remarks"),
             "predicted_hearings": data.get("predicted_hearings"),
             "case_status": "pending_approval",
+            "co_respondents_ids": co_respondents_ids,
         }
 
         new_case = Case.objects.create(**case_data)
@@ -144,9 +165,9 @@ class CaseListView(APIView):
         user_id = Complainant.objects.filter(first_name=first_name, last_name=last_name).first()
 
         if role == "user":
-            cases = Case.objects.filter(complainant_user_id=user_id)
+            cases = Case.objects.filter(complainant_user_id=user_id).order_by("-date_filed")
         else:
-            cases = Case.objects.all().select_related("case_type", "settlement_type", "respondent_user", "complainant_user")
+            cases = Case.objects.all().select_related("case_type", "settlement_type", "respondent_user", "complainant_user").order_by("-date_filed")
 
         serializer = CaseSerializer(cases, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -177,6 +198,16 @@ class UpdateCaseInfoView(APIView):
             return Response(response_data, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class SingleCaseView(APIView):
+    def get(self, request):
+        case_id = request.query_params.get("case_id")
+        try:
+            case = Case.objects.get(id=case_id)
+            serializer = CaseSerializer(case)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Case.DoesNotExist:
+            return Response({"error": "Case not found."}, status=status.HTTP_404_NOT_FOUND)
 
 
 

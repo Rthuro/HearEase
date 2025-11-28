@@ -7,28 +7,30 @@ from .models import User
 class CustomUserCreationForm(UserCreationForm):
     class Meta:
         model = User
-        fields = ('email', 'role')  # include your custom fields
+        fields = ('email', 'is_user', 'is_admin', 'is_superadmin')  # include your custom fields
 
 class CustomUserChangeForm(UserChangeForm):
     class Meta:
         model = User
-        fields = ('email', 'role', 'is_active', 'is_staff')
+        fields = ('email', 'is_active', 'is_staff','is_user', 'is_admin', 'is_superadmin')
 
 class CustomUserAdmin(UserAdmin):
     add_form = CustomUserCreationForm
     form = CustomUserChangeForm
     model = User
 
-    list_display = ('email', 'role', 'is_staff', 'is_active')
-    list_filter = ('is_staff', 'is_active', 'role')
+    list_display = ('email', 'is_staff', 'is_active', 'is_user', 'is_admin', 'is_superadmin')
+    list_filter = ('is_staff', 'is_active')
+
     fieldsets = (
-        (None, {'fields': ('email', 'password', 'role')}),
-        ('Permissions', {'fields': ('is_staff', 'is_active')}),
+        (None, {'fields': ('email', 'password')}),
+        ('Permissions', {'fields': ('is_staff', 'is_active', 'is_user', 'is_admin', 'is_superadmin')}),
     )
+
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'role', 'password1', 'password2', 'is_staff', 'is_active')}
+            'fields': ('email', 'password1', 'password2', 'is_staff', 'is_active', 'is_user', 'is_admin', 'is_superadmin')}
         ),
     )
     search_fields = ('email',)

@@ -19,9 +19,20 @@ class RegisterView(generics.CreateAPIView):
 
         if serializer.is_valid():
             user = serializer.save()
+            role = (
+                "user" if user.is_user else
+                "admin" if user.is_admin else
+                "superadmin" if user.is_superadmin else
+                "unknown"
+            )
             return Response(
                 {"message": "User registered successfully", 
-                 "user": RegisterSerializer(user).data},
+                 "user": 
+                    {
+                        "id": user.id,
+                        "email": user.email,
+                        "role": role
+                    }},
                 status=status.HTTP_201_CREATED
             )
 
@@ -32,7 +43,7 @@ class CheckEmailView(APIView):
 
     def post(self, request):
         email = request.data.get("email")
-        if User.objects.filter(username=email).exists():
+        if User.objects.filter(email=email).exists():
             return Response({"error": "Email already exists"})
         return Response({"message": "Email is available"}, status=status.HTTP_200_OK)   
 
@@ -42,30 +53,40 @@ class LoginView(APIView):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data["user"]
+            role = (
+                    "user" if user.is_user else
+                    "admin" if user.is_admin else
+                    "superadmin" if user.is_superadmin else
+                    "unknown"
+                )
+            
             return Response({
                 "message": "Login successful",
                 "user": 
                 {
                     "id": user.id,
                     "email": user.email,
-                    "role": user.role
+                    "role": role
                 }
             }, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class FindUserView(APIView):
+    permission_classes = [AllowAny]
     def post(self, request):
         email = request.data.get("email")
-        user = User.objects.filter(username=email)
+        user = User.objects.filter(email=email)
         if user.exists():
             return Response({"user": UserInfoSerializer(user.first()).data})
         return Response({"error": "User do not exist"}, status=status.HTTP_400_BAD_REQUEST)
+    
     def get(self, request):
-        users = User.objects.all().exclude(role='admin')
+        users = User.objects.all().exclude(is_admin=True, is_superadmin=True)
         serializer = UserInfoSerializer(users, many=True)
         return Response({"users": serializer.data}, status=status.HTTP_200_OK)
 
 class UpdateUserView(APIView):
+    permission_classes = [AllowAny]
     def put(self, request, pk=None):
         try:
             user = User.objects.get(pk=pk)

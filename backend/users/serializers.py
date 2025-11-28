@@ -10,27 +10,25 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = [
-            'id',
-            'username',
-            'email',
-            'password',
-            'role',
-            'first_name',
-            'last_name',
-            'middle_name',
-            'birth_date',
-            'sex',
-            'contact_number',
-            'barangay',
-            'street',
-            'additional_info',
-        ]
+        fields = '__all__'
+        # fields = [
+        #     'id',
+        #     'email',
+        #     'password',
+        #     'role',
+        #     'first_name',
+        #     'last_name',
+        #     'middle_name',
+        #     'birth_date',
+        #     'sex',
+        #     'contact_number',
+        #     'barangay',
+        #     'street',
+        #     'additional_info',
+        # ]
 
     def create(self, validated_data):
-        user = User(**validated_data)  
-        user.set_password(validated_data.get('password'))  
-        user.save()  
+        user = User.objects.create_user(**validated_data)
         return user
 
 class LoginSerializer(serializers.Serializer):
@@ -41,7 +39,7 @@ class LoginSerializer(serializers.Serializer):
         email = data.get("email")
         password = data.get("password")
 
-        user = authenticate(username=email, password=password)
+        user = authenticate(email=email, password=password)
 
         if not user:
             raise serializers.ValidationError("Invalid email or password.")
@@ -52,21 +50,22 @@ class LoginSerializer(serializers.Serializer):
 class UserInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = [
-            'id',
-            'username',
-            'email',
-            'password',
-            'role',
-            'first_name',
-            'last_name',
-            'middle_name',
-            'birth_date',
-            'sex',
-            'contact_number',
-            'barangay',
-            'street',
-            'additional_info',
-        ]
+        fields = '__all__'
+
+        # fields = [
+        #     'id',
+        #     'email',
+        #     'password',
+        #     'role',
+        #     'first_name',
+        #     'last_name',
+        #     'middle_name',
+        #     'birth_date',
+        #     'sex',
+        #     'contact_number',
+        #     'barangay',
+        #     'street',
+        #     'additional_info',
+        # ]
 
     

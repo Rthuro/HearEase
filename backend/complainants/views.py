@@ -39,3 +39,41 @@ class updateComplainantView(APIView):
             return Response(complainant_data, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class GetCaseCoComplainantsView(APIView):
+    def post(self, request):
+        try:
+            ids = request.data.get("ids", [])
+            complainants = Complainant.objects.filter(id__in=ids)
+            serializer = ComplainantSerializer(complainants, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+class CoComplainantView(APIView):
+    def get(self, request, pk):
+        try:
+            complainant = Complainant.objects.get(pk=pk)
+        except Complainant.DoesNotExist:
+            return Response({"error": "Complainant not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ComplainantSerializer(complainant)
+        return Response(serializer.data, status=status.HTTP_200_OK) 
+    def put(self, request, pk):
+        try:
+            complainant = Complainant.objects.get(pk=pk)
+        except Complainant.DoesNotExist:
+            return Response({"error": "Complainant not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ComplainantSerializer(complainant, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            complainant = serializer.save()
+            response_data = ComplainantSerializer(complainant).data
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
