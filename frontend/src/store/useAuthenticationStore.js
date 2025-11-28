@@ -1,18 +1,5 @@
 import { create } from "zustand";
 
-// const useAuthenticationStore = create((set) => ({
-//     isAuthenticated: false,
-//     userRole: null, 
-//     userInfo: null, 
-//     userLinkName: null,
-//     username:null,
-//     login: (role, info) => set({ isAuthenticated: true, userRole: role, userInfo: info, userLinkName: 'u/@' + info.email, username: info.email.split("@")[0] }),
-//     logout: () => set({ isAuthenticated: false, userRole: null, userInfo: null, userLinkName: null, username: null }),
-
-// }));
-
-// export default useAuthenticationStore;
-
 const LOCAL_STORAGE_KEY = "authData";
 
 const useAuthenticationStore = create((set) => ({
