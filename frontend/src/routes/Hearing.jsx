@@ -195,6 +195,13 @@ export default function Hearing() {
     } else {
         return (
             <div className="flex flex-col p-6 gap-6">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
+                            <ChevronLeft />
+                        </Button>
+                    </div>
+                </div>
                 <div className="flex gap-3 bg-white p-4 rounded-lg border flex-col">
                     <h2 className="text-xl font-semibold">Hearing Information</h2>
                     <div className="border rounded-lg overflow-hidden">
