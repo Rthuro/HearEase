@@ -32,7 +32,7 @@ import Hearing from './routes/Hearing';
 function App() {
   const { initializeAuth } = useAuthenticationStore();
   const { fetchCases, cases} = useCaseStore();
-  const { fetchHearings, hearings } = useHearingStore();
+  const { fetchHearings } = useHearingStore();
   const { fetchMembers } = useLuponStore();
 
   useEffect(() => {
