@@ -139,9 +139,8 @@ export function CaseRecords(){
                                     setStatus(s);
                                 }}>
                                 <DropdownMenuRadioItem value="all">All</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="filed">Filed</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="pending">Pending Approval</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="Approved">Approved</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="pending_approval">Pending Approval</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="approved">Approved</DropdownMenuRadioItem>
                                 <DropdownMenuRadioItem value="in_progress">In progress</DropdownMenuRadioItem>
                                 <DropdownMenuRadioItem value="resolved">Resolved</DropdownMenuRadioItem>
                                 <DropdownMenuRadioItem value="escalated">Escalated</DropdownMenuRadioItem>
