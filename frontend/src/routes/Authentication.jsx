@@ -43,29 +43,11 @@ export function Authentication(){
         const email = document.getElementById("email").value;
         const password = document.getElementById("password").value;
 
-            // if( email === "" || password === "" ){
-            //     toast.error("Please fill in all required fields");
-            //     return;
-            // }
-
-            // const checkUser  = data.find(user => user.email === email);
-
-            // if(!checkUser){
-            //     toast.error("User not found");
-            // }else{
-            //     if(checkUser.password !== password){
-            //         setPassErr(true);
-            //     }else{
-            //         checkUser.role === "admin" ? login("admin", checkUser) : login("user", checkUser);
-            //         navigate(`/${checkUser.role === "admin" ? "Admin" : 'u/@' + 
-            //             checkUser.name.replace(" ", "_")}`);
-            //     }
-            // }
-
-            await loginUser(email, password);
-            if(isAuthenticated){
-                navigate(userRole === "admin" ? "/Admin" : "/" + userLinkName);
-            }
+        const res = await loginUser(email, password);
+        if(res && isAuthenticated){
+            navigate(userRole === "admin" ? "/Admin" : "/" + userLinkName);
+            return;
+        }
         
         
     }
