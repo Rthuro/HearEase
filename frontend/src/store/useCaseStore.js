@@ -60,6 +60,13 @@ export const fetchRespondent = async (respondent_id) => {
     return response.data;
 }
 
+export const fetchCase = async (case_id) => {
+    const response = await axios.get(`${API_URL}/single-case/`, {
+        params: { case_id: case_id }
+    });
+    return response.data;
+}
+
 export const useCaseStore = create((set, get) => ({
     cases: [],
     caseTypes: [],
@@ -193,7 +200,7 @@ export const useCaseStore = create((set, get) => ({
         const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
         const data = JSON.parse(stored);
 
-        const { formData, co_complainants } = get();
+        const { formData, co_complainants, co_respondents } = get();
         const caseData = {
             id: get().case.case_number,
             complainant_user: {
@@ -208,6 +215,7 @@ export const useCaseStore = create((set, get) => ({
                 additional_info: formData.complainant.additional_info.value,
             },
             co_complainants: co_complainants ,
+            co_respondents: co_respondents,
             respondent: {
                 first_name: formData.respondent.first_name.value,
                 last_name: formData.respondent.last_name.value,
