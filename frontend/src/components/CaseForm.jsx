@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Button } from "./ui/button"
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import useAuthenticationStore from "@/store/useAuthenticationStore";
 import { Complainant } from "./case_forms/Complainant";
 import { Respondent } from "./case_forms/Respondent";
@@ -13,6 +13,7 @@ import { useCaseStore } from "@/store/useCaseStore";
 import { toast } from "react-hot-toast";
 import { invalidContactNumber } from "@/lib/helpers";
 import { useEffect } from "react";
+import { cn } from "@/lib/utils";
 
 export function CaseForm(){
     const { formData, addCaseData, fetchCaseTypes, fetchSettlementTypes } = useCaseStore();
@@ -25,7 +26,7 @@ export function CaseForm(){
     const { userRole, userLinkName } = useAuthenticationStore();
     const navigate = useNavigate();
     const [stepNumber, setStepNumber] = useState(1);
-
+    const [submitModalOpen, setSubmitModalOpen] = useState(false);
     
 
     const formProgress = [
@@ -66,6 +67,14 @@ export function CaseForm(){
         setStepNumber((prev) => prev - 1);
     };
 
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        const res = await addCaseData(); 
+
+        if (res) {
+            setStepNumber((prev) => prev + 1);
+        }
+    };
     
 
     const handleNext = () => {
@@ -93,18 +102,13 @@ export function CaseForm(){
         }
 
         if (stepNumber === 4) {
-            const res = addCaseData();
-            if (res) {
-                setStepNumber((prev) => prev + 1);
-                return;
-            } else {
-                setStepNumber(4); 
-                return;
-            }
+           setSubmitModalOpen(true);
+           return;
         }
 
         setStepNumber((prev) => prev + 1);
     };
+
 
     return(
         <main className="flex flex-col w-full h-full items-center justify-center gap-3 bg-white">
@@ -154,8 +158,22 @@ export function CaseForm(){
                 <FiledSuccess />
             )}
 
-
             </form>
+
+            { submitModalOpen && (
+                <div className="flex fixed items-center justify-center bottom-0 top-0 left-0 right-0 bg-black/50 z-50">
+                    <div className="relative bg-white rounded-md p-6 flex flex-col items-center gap-3 w-[480px]">
+                        <X className=" absolute top-3 right-3 cursor-pointer"
+                        onClick={() => setSubmitModalOpen(false)} />
+                        <p className="font-medium mt-5 text-center">I hereby swear that the information and evidence I have provided are true, accurate, and based on facts. I understand that providing false information may result in penalties under the law.</p>
+                        <Button className={cn('!bg-redBase w-full mt-2')} onClick={(e) => {
+                            handleSubmit(e);
+                            setSubmitModalOpen(false);
+                        }}>Submit Case</Button>
+                        <Button variant="outline" className="w-full">Save as Draft</Button>
+                    </div>
+                </div>
+            )}
 
             { stepNumber < 5 && (
                 <div className="flex items-center justify-between w-1/2 pb-12 pt-6">
@@ -164,7 +182,7 @@ export function CaseForm(){
                         Previous
                     </Button>
                     <Button onClick={handleNext} className="!bg-redBase">
-                        Next
+                        { stepNumber === 4 ? "Submit Case" : "Next" }
                         <ChevronRight />
                     </Button>
                 </div>
