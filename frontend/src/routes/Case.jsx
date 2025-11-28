@@ -29,6 +29,7 @@ import { useGenerateDocumentStore } from "@/store/useGenerateDocumentStore";
 import { EditCaseInfo } from "@/components/EditCaseInfo";
 import { CaseCancellationModal } from "@/components/CaseCancellationModal";
 import { useLuponStore } from "@/store/useLuponStore";
+import { EditCoAttendee } from "@/components/EditCoAttendee";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
@@ -36,7 +37,7 @@ export function Case() {
     const { case_number } = useParams();
     const { cases, updateCaseStatus } = useCaseStore();
     const { hearings } = useHearingStore();
-    const { complainantsUsers, fetchComplainants} = useRetrieveUsersStore();
+    const { caseCoComplainants, fetchCaseCoComplainants, caseCoRespondents, fetchCaseCoRespondents} = useRetrieveUsersStore();
     const [template, setTemplate] = useState({});
     const { case_documents, fetchCaseDocuments } = useCaseDocumentsStore();
     const [ viewImg, setViewImg ] = useState(null);
@@ -50,7 +51,6 @@ export function Case() {
     const userRole = data.userRole;
 
     useEffect(() => {
-        fetchComplainants();
         fetchTemplates();
         fetchCaseDocuments(case_number);
     }, [case_number])
@@ -61,24 +61,14 @@ export function Case() {
 
     const caseInfo = cases.find( c => c.id == case_number);
 
-    const caseCoComplainants = [];
-
-    caseInfo?.co_complainants_ids?.map( (c) => {
-        caseCoComplainants.push(complainantsUsers.find( co_c => co_c.id == c))
-    })
-
-    const formatCoComplainants = () => {
-        const newFormat = []
-        caseCoComplainants.map( (co_c) => 
-            newFormat.push(
-                {
-                    full_name: `${co_c?.first_name} ${co_c?.middle_name ? co_c?.middle_name + ' ' : ''}${co_c?.last_name}`,
-                    contact_number: co_c?.contact_number,
-                }
-            )
-        )
-        return newFormat;
-    } 
+    useEffect( () => {
+        if(caseInfo?.co_respondents_ids?.length > 0){
+            fetchCaseCoRespondents(caseInfo.co_respondents_ids);
+        }
+        if(caseInfo?.co_complainants_ids?.length > 0){
+            fetchCaseCoComplainants(caseInfo.co_complainants_ids);
+        }
+    }, [caseInfo])
 
     const navigate = useNavigate();
     
@@ -88,8 +78,6 @@ export function Case() {
         return null;
     }
 
-
-    
 
     const formatedBday = (dateString) => {
         if(!dateString) return '-';
@@ -101,6 +89,10 @@ export function Case() {
         {
             section: "Case Information",
             details: [
+                {
+                    label:"Case Number",
+                    value: caseInfo?.id, 
+                },
                 {
                     label:"Status",
                     value: caseInfo?.case_status, 
@@ -240,7 +232,55 @@ export function Case() {
             console.log(error);
         }
     }
-    
+
+    const userStatusDisplay = (status) => {
+        switch (status) {
+            case "approved":
+                return (
+                    <>
+                        <p className="font-medium">Case Approved</p>
+                        <p className="text-zinc-700 text-sm">Your case is approved. A summon letter will be delivered to the respondent on: <strong>_____</strong>.</p>
+                    </>
+                );
+
+            case "pending_approval":
+                return (
+                    <>
+                        <p className="font-medium">Pending Approval</p>
+                        <p className="text-zinc-700 text-sm">Your case is pending approval. The Lupon Secretary will review your submission.</p>
+                    </>
+                );
+
+            case "in_progress":
+                return (
+                    <>
+                        <p className="font-medium">In progess</p>
+                        <p className="text-zinc-700 text-sm">Respondent acknowledged the summon. Your hearing schedule is on <strong>date</strong> at <strong>time</strong>.</p>
+                    </>
+                );
+
+            case "rejected":
+                return (
+                    <>
+                    <p className="font-medium text-lg text-redBase">
+                        Your case appointment has been rejected.
+                    </p>
+                    <p className="text-redBase">
+                        Rejected section: {caseInfo.rejection_section == "case_details" ? "Case Details" : caseInfo.rejection_section == "complainant_info" ? "Complainant Information" : "Respondent Information"}
+                    </p>
+                    <p className="text-redBase">
+                        Reason: {caseInfo.remarks}
+                    </p>
+                    <EditCaseInfo section={caseInfo.rejection_section == "case_details" ? "case" : caseInfo.rejection_section == "complainant_info" ? "complainant" : "respondent"} 
+                        caseInfo={caseInfo} forResubmission={true} />
+                    </>
+                );
+
+            default:
+                return <p>Unknown Status</p>;
+        }
+    };
+
     
     return (
         <div className="relative flex flex-col gap-4 p-6 ">
@@ -269,22 +309,41 @@ export function Case() {
                 )}
             </div>
 
-            {userRole == 'user' && caseInfo.case_status == 'rejected' && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-md flex flex-col gap-1">
-                    <p className="font-medium text-lg text-redBase">
-                        Your case appointment has been rejected.
-                    </p>
-                    <p className="text-redBase">
-                        Rejected section: {caseInfo.rejection_section == "case_details" ? "Case Details" : caseInfo.rejection_section == "complainant_info" ? "Complainant Information" : "Respondent Information"}
-                    </p>
-                    <p className="text-redBase">
-                        Reason: {caseInfo.remarks}
-                    </p>
-                    <EditCaseInfo section={caseInfo.rejection_section == "case_details" ? "case" : caseInfo.rejection_section == "complainant_info" ? "complainant" : "respondent"} 
-                        caseInfo={caseInfo} forResubmission={true} />
+            <div className="flex flex-col gap-6 bg-white p-4 rounded-md shadow-2xs border ">
+                <div className={`grid grid-cols-4 items-center gap-3`}>
+                    <div className="flex flex-col gap-2 items-center">
+                        <p className="text-sm">Appointment Submitted</p>
+                        <div className="h-1 w-full rounded-full bg-green-600 "></div>
+                    </div>
+                    <div className="flex flex-col gap-2 items-center">
+                        <p className="text-sm">Pending Approval</p>
+                        <div
+                            className={`w-full h-1 rounded-full 
+                                ${caseInfo.case_status === 'approved' ? 'bg-green-600' : 'bg-gray-300'}`}
+                        ></div>
+                    </div>
+                    <div className="flex flex-col gap-2 items-center">
+                        <p className="text-sm">On-Going Hearing</p>
+                        <div
+                            className={`w-full h-1 rounded-full 
+                                ${caseInfo.case_status === 'on_going' ? 'bg-green-600' : 'bg-gray-300'}`}
+                        ></div>
+                    </div>
+                    <div className="flex flex-col gap-2 items-center">
+                        <p className="text-sm">Case Resolved</p>
+                        <div
+                            className={`w-full h-1 rounded-full 
+                                ${caseInfo.case_status === 'resolved' ? 'bg-green-600' : 'bg-gray-300'}`}
+                        ></div>
+                    </div>
                 </div>
-            )}
-            
+                {userRole == 'user' && (
+                    <div className="flex flex-col">
+                        {userStatusDisplay(caseInfo.case_status)}
+                    </div>
+                )}
+            </div>
+
             {caseDetails.map((section) => (
                 <div key={section.section} className="flex flex-col gap-4 bg-white p-4 rounded-md border shadow-2xs">
             
@@ -370,30 +429,65 @@ export function Case() {
                         </div>
                     )}
 
-                    { section.section === "Complainant Information" && caseCoComplainants.length > 0 &&                     
+                    { section.section === "Complainant Information" && caseCoComplainants?.length > 0 &&                     
                         (
                             <div className="flex flex-col">
-                                <h2 className="font-medium mb-2 text-zinc-700">Co-Complainants</h2>
-                                    {formatCoComplainants().map( c => (
-                                        <div key={c} 
-                                        className="ml-2 grid grid-cols-2 gap-4 "
-                                        >
-                                            <div
-                                            className="flex flex-col gap-1 "
-                                            >
-                                                <Label className={cn("text-zinc-600 font-normal text-xs")}>
-                                                Full Name
-                                                </Label>
-                                                <p>{c.full_name}</p>
-                                            </div>
-                                            <div
-                                            className="flex flex-col gap-1 "
-                                            >
-                                                <Label className={cn("text-zinc-600 font-normal text-xs")}>
-                                                    Contact
-                                                </Label>
-                                                <p>{c.contact_number}</p>
-                                            </div>
+                                <h2 className="font-medium mb-2 text-zinc-900">Co-Complainants</h2>
+                                    {caseCoComplainants.map( c => (
+                                        <div className="border rounded-lg overflow-hidden">
+                                            <Table>
+                                                <TableHeader>
+                                                    <TableRow>
+                                                    <TableHead className="text-left px-4 py-2">Full Name</TableHead>
+                                                    <TableHead className="text-left px-4 py-2">Contact</TableHead>
+                                                    <TableHead className="px-4 py-2"></TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+
+                                                <TableBody>
+                                                    <TableRow key={c.id} className="border-t">
+                                                        <TableCell className="px-4 py-2">{c.first_name} {c.middle_name ? c.middle_name + ' ' : ''}{c.last_name}</TableCell>
+                                                        <TableCell className="px-4 py-2">{c.contact_number || "-"}</TableCell>
+                                                        <TableCell>
+                                                            <EditCoAttendee co_attendees={caseInfo.co_complainants_ids} type="complainant"
+                                                            attendeeInfo={c} />
+                                                        </TableCell>
+                                                    </TableRow>
+                                                </TableBody>
+                                            </Table>
+                                        </div>
+                                        
+                                    ))}
+                            </div>
+                        )
+                    }
+
+                    { section.section === "Respondent Information" && caseCoRespondents?.length > 0 &&                     
+                        (
+                            <div className="flex flex-col">
+                                <h2 className="font-medium mb-2 text-zinc-900">Co-Respondents</h2>
+                                    {caseCoRespondents.map( c => (
+                                        <div className="border rounded-lg overflow-hidden">
+                                            <Table>
+                                                <TableHeader>
+                                                    <TableRow>
+                                                    <TableHead className="text-left px-4 py-2">Full Name</TableHead>
+                                                    <TableHead className="text-left px-4 py-2">Contact</TableHead>
+                                                    <TableHead className="px-4 py-2"></TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+
+                                                <TableBody>
+                                                    <TableRow key={c.id} className="border-t">
+                                                        <TableCell className="px-4 py-2">{c.first_name} {c.middle_name ? c.middle_name + ' ' : ''}{c.last_name}</TableCell>
+                                                        <TableCell className="px-4 py-2">{c.contact_number || "-"}</TableCell>
+                                                        <TableCell>
+                                                            <EditCoAttendee co_attendees={caseInfo.co_respondents_ids} type="respondent"
+                                                            attendeeInfo={c} />
+                                                        </TableCell>
+                                                    </TableRow>
+                                                </TableBody>
+                                            </Table>
                                         </div>
                                         
                                     ))}
