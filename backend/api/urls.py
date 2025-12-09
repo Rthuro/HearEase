@@ -14,21 +14,27 @@ urlpatterns = [
     path('check-email/', UserViews.CheckEmailView.as_view(), name='check-email'),
     path('find-user/', UserViews.FindUserView.as_view(), name='find-user'),
     path('update-user/<int:pk>/', UserViews.UpdateUserView.as_view(), name='update-user'),
+    path('admins/', UserViews.AdminView.as_view(), name='admins'),
 
     path('complainants/', ComplainantsViews.ComplainantView.as_view(), name='complainants-list'),
+    path('complainant/<int:pk>/', ComplainantsViews.CoComplainantView.as_view(), name='complainant'),
     path('update-complainant/<int:pk>/', ComplainantsViews.updateComplainantView.as_view(), name='update-complainant'),
-    path('co-complainant/<int:pk>/', ComplainantsViews.CoComplainantView.as_view(), name='co-complainant'),
-    path('get-case-co-complainants/', ComplainantsViews.GetCaseCoComplainantsView.as_view(), name='case-co-complainants-list'),
+    path('case-complainant/', ComplainantsViews.CaseComplainantView.as_view(), name='case-complainant'),
+    path('get-case-complainants/', ComplainantsViews.GetCaseCoComplainantsView.as_view(), name='case-complainants-list'),
 
     path('respondents/', RespondentViews.RespondentView.as_view(), name='respondents'),
-    path('co-respondent/<int:pk>/', RespondentViews.CoRespondentView.as_view(), name='co-respondent'),
+    path('respondent/<int:pk>/', RespondentViews.CoRespondentView.as_view(), name='respondent'),
     path('update-respondent/<int:pk>/', RespondentViews.UpdateRespondentView.as_view(), name='update-respondent'),
-    path('get-case-co-respondents/', RespondentViews.GetCaseCoRespondentsView.as_view(), name='case-co-respondents-list'),
+    path('get-case-respondents/', RespondentViews.GetCaseCoRespondentsView.as_view(), name='case-respondents-list'),
+    path('case-respondent/', RespondentViews.CaseRespondentView.as_view(), name='case-respondent'),
 
     path('login/', UserViews.LoginView.as_view(), name='login'),
     path('barangays/', AddressViews.BarangayListView.as_view(), name='barangay-list'),
     path('streets/', AddressViews.StreetListView.as_view(), name='street-list'),
     path('lupon-members/', LuponViews.LuponMemberView.as_view(), name='lupon-member-list'),
+    path('lupon-member/', LuponViews.LuponPageView.as_view(), name='lupon-member-detail'),
+    path('update-lupon/<int:pk>/', LuponViews.UpdateLuponView.as_view(), name='update-lupon'),
+    path('delete-lupon/', LuponViews.LuponDeleteView.as_view(), name='delete-lupon'),
 
     path('cases/', CaseViews.CaseView.as_view(), name='create-case'),
     path('case-list/', CaseViews.CaseListView.as_view(), name='case-list'),
@@ -44,6 +50,8 @@ urlpatterns = [
     path('document-templates/', DocumentViews.DocumentTemplateListCreateView.as_view(), name='document-template-list-create'),
     path('templates/<int:pk>/generate/', DocumentViews.GenerateDocumentView.as_view(), name='generate-document'),
     path('generated-documents/', DocumentViews.GeneratedDocumentListView.as_view(), name='generated-documents'),
+
+    path('reports/', CaseViews.ReportView.as_view(), name='reports'),
 
     path("", include("case_documents.urls")),
 

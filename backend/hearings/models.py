@@ -6,6 +6,7 @@ from lupon_members.models import LuponMember
 class Hearing(models.Model):
     # --- Status choices (sync with frontend)
     HEARING_STATUS_CHOICES = [
+        ("filed", "Filed"),
         ("pending_schedule", "Pending Schedule"),
         ("scheduled", "Scheduled"),
         ("rescheduled", "Rescheduled"),
@@ -36,6 +37,7 @@ class Hearing(models.Model):
         choices=HEARING_STATUS_CHOICES,
         default="pending_schedule"
     )
+    hearing_number = models.IntegerField(blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

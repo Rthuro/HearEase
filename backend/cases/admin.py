@@ -32,8 +32,8 @@ class CaseAdmin(admin.ModelAdmin):
         "id",
         "case_type",
         "settlement_type",
-        "complainant_user",
-        "respondent_user",
+        "get_complainants",
+        "get_respondents",
         "case_status",
         "is_active",
         "date_filed",
@@ -47,8 +47,8 @@ class CaseAdmin(admin.ModelAdmin):
     search_fields = (
         "id",
         "case_type__case_name",
-        "complainant_user__email",
-        "respondent_user__user__email",
+        "get_complainants",
+        "get_respondents",
     )
     fieldsets = (
         ("Case Information", {
@@ -56,9 +56,8 @@ class CaseAdmin(admin.ModelAdmin):
                 "id",
                 "case_type",
                 "settlement_type",
-                "complainant_user",
-                "respondent_user",
-                "co_complainants_ids",
+                "complainants",
+                "respondents",
                 "description",
                 "remarks",
             )
@@ -74,6 +73,14 @@ class CaseAdmin(admin.ModelAdmin):
     )
     readonly_fields = ("date_filed",)
     ordering = ("-date_filed",)
+    
+    def get_complainants(self, obj):
+        return ", ".join([str(c) for c in obj.complainants.all()])
+    get_complainants.short_description = "Complainants"
+
+    def get_respondents(self, obj):
+        return ", ".join([str(r) for r in obj.respondents.all()])
+    get_respondents.short_description = "Respondents"
 
 
 # ----- Register Models -----

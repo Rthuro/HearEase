@@ -100,3 +100,9 @@ class UpdateUserView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class AdminView(APIView):
+     def get(self, request):
+        users = User.objects.all().exclude(is_user=True)
+        serializer = UserInfoSerializer(users, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

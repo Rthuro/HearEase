@@ -18,6 +18,7 @@ class Complainant(models.Model):
     street = models.CharField(max_length=100, blank=True, null=True)
     additional_info = models.TextField(blank=True, null=True)
     account = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
+    with_account = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"

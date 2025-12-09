@@ -4,7 +4,7 @@ from .models import Barangay, Street
 class StreetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Street
-        fields = ['id', 'name']
+        fields = '__all__'
 
 
 class BarangaySerializer(serializers.ModelSerializer):
@@ -12,4 +12,4 @@ class BarangaySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Barangay
-        fields = ['id', 'name', 'streets']
+        fields = '__all__'

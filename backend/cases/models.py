@@ -47,13 +47,9 @@ class Case(models.Model):
     settlement_type = models.ForeignKey(
         SettlementType, on_delete=models.SET_NULL, null=True, related_name="cases"
     )
-    
-    complainant_user = models.ForeignKey(
-        Complainant, on_delete=models.CASCADE
-    )
-    respondent_user = models.ForeignKey(
-        Respondent, on_delete=models.CASCADE
-    )
+
+    complainants = models.ManyToManyField(Complainant, related_name="cases_as_complainant")
+    respondents = models.ManyToManyField(Respondent, related_name="cases_as_respondent")
 
     case_status = models.CharField(
         max_length=20,
@@ -65,8 +61,6 @@ class Case(models.Model):
     description = models.TextField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     date_filed = models.DateTimeField(auto_now_add=True)
-    co_complainants_ids = models.JSONField(blank=True, null=True)
-    co_respondents_ids = models.JSONField(blank=True, null=True)
     predicted_hearings = models.IntegerField(blank=True, null=True)
     remarks = models.TextField(blank=True, null=True)
     rejection_section = models.CharField(

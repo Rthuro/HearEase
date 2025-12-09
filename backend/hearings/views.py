@@ -21,7 +21,7 @@ class HearingView(APIView):
         if role == "user":
             try:
                 user_id = Complainant.objects.filter(first_name=first_name, last_name=last_name).first().id
-                cases = Case.objects.filter(complainant_user_id=user_id)
+                cases = Case.objects.filter(complainants=user_id)
             except AttributeError:
                 cases = Case.objects.none()
         else:

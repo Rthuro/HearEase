@@ -77,3 +77,17 @@ class CoComplainantView(APIView):
             return Response(response_data, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class CaseComplainantView(APIView):
+    def post(self, request):
+        try:
+            ids = request.data.get("ids", [])
+            complainants = Complainant.objects.filter(id__in=ids)
+            serializer = ComplainantSerializer(complainants, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )

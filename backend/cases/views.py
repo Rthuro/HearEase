@@ -11,6 +11,9 @@ from complainants.serializers import ComplainantSerializer
 from .serializers import CaseSerializer, CaseTypeSerializer, SettlementTypeSerializer
 from hearings.models import Hearing
 from django.contrib.auth import get_user_model
+from django.db.models.functions import TruncMonth
+from django.db.models import Count
+from datetime import datetime
 
 User = get_user_model()
 
@@ -31,86 +34,53 @@ class SettlementTypeListView(APIView):
 class CaseView(APIView):
     def post(self, request):
         data = request.data.copy()
-        complainant_data = data.get("complainant_user")
-        check_user = Complainant.objects.filter(first_name=complainant_data.get("first_name"), last_name=complainant_data.get("last_name")).first()
-
-        if check_user:
-            complainant_id = check_user.id
-        else:
-            complainant = Complainant.objects.create(**complainant_data)
-            complainant_id = complainant.id
         
-        co_complainants = data.get("co_complainants")
-        co_complainants_ids = []
+        complainants = data.get("complainants")
+        complainants_ids = []
 
-        for complainant in co_complainants:
+        for complainant in complainants:
             check_complainant = Complainant.objects.filter(
                 first_name__iexact=complainant.get("first_name"),
                 last_name__iexact=complainant.get("last_name"),
             ).first()
 
             if check_complainant:
-                co_complainants_ids.append(check_complainant.id)
+                complainants_ids.append(check_complainant.id)
             else:
-                # Create a new complainant if not found
-                co_complainant = Complainant.objects.create(**complainant)
-                co_complainants_ids.append(co_complainant.id)
+                complainant_obj = Complainant.objects.create(**complainant)
+                complainants_ids.append(complainant_obj.id)
         
 
         # Extract respondent data
-        respondent_data = data.get("respondent")
+        respondents = data.get("respondents")
+        respondents_ids = []
 
-        # Try to find an existing respondent by name 
-        respondent = Respondent.objects.filter(
-            first_name__iexact=respondent_data.get("first_name"),
-            last_name__iexact=respondent_data.get("last_name"),
-        ).first()
-
-        if respondent:
-            respondent_id = respondent.id
-            # Update respondent info if provided
-            for field, value in respondent_data.items():
-                if value not in [None, ""]:
-                    setattr(respondent, field, value)
-            respondent.save()
-        else:
-            # Create a new respondent if not found
-            respondent = Respondent.objects.create(**respondent_data)
-            respondent_id = respondent.id
-
-
-        co_respondents = data.get("co_respondents")
-        co_respondents_ids = []
-
-        for respondent in co_respondents:
+        for respondent in respondents:
             check_respondent = Respondent.objects.filter(
                 first_name__iexact=respondent.get("first_name"),
                 last_name__iexact=respondent.get("last_name"),
             ).first()
 
             if check_respondent:
-                co_respondents_ids.append(check_respondent.id)
+                respondents_ids.append(check_respondent.id)
             else:
-                # Create a new respondent if not found
-                co_respondent = Respondent.objects.create(**respondent)
-                co_respondents_ids.append(co_respondent.id)
-        
+                respondent_obj = Respondent.objects.create(**respondent)
+                respondents_ids.append(respondent_obj.id)        
 
         case_data = {
             "id": data.get("id"),
             "case_type_id": data.get("case_type"),
             "settlement_type_id": data.get("settlement_type"),
-            "complainant_user_id": complainant_id,
-            "respondent_user_id": respondent_id,
             "description": data.get("description"),
-            "co_complainants_ids": co_complainants_ids,
             "remarks": data.get("remarks"),
             "predicted_hearings": data.get("predicted_hearings"),
             "case_status": "pending_approval",
-            "co_respondents_ids": co_respondents_ids,
         }
 
         new_case = Case.objects.create(**case_data)
+
+        new_case.complainants.add(*complainants_ids)
+        new_case.respondents.add(*respondents_ids)
 
         # If hearing info is provided, create initial hearing
         hearing_info = data.get("hearing_info")
@@ -165,9 +135,9 @@ class CaseListView(APIView):
         user_id = Complainant.objects.filter(first_name=first_name, last_name=last_name).first()
 
         if role == "user":
-            cases = Case.objects.filter(complainant_user_id=user_id).order_by("-date_filed")
+            cases = Case.objects.filter(complainants=user_id.id).order_by("-date_filed")
         else:
-            cases = Case.objects.all().select_related("case_type", "settlement_type", "respondent_user", "complainant_user").order_by("-date_filed")
+            cases = Case.objects.all().select_related("case_type", "settlement_type").order_by("-date_filed")
 
         serializer = CaseSerializer(cases, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -209,5 +179,51 @@ class SingleCaseView(APIView):
         except Case.DoesNotExist:
             return Response({"error": "Case not found."}, status=status.HTTP_404_NOT_FOUND)
 
+class ReportView(APIView):
+    def get(self, request):
+        start = request.GET.get('start_date')
+        end = request.GET.get('end_date')
 
+        # Default: last 6 months
+        if not start or not end:
+            start = datetime.now().replace(month=datetime.now().month-5, day=1)
+            end = datetime.now()
+
+        pending = (
+            Case.objects.filter(case_status="pending_approval", date_filed__range=[start, end])
+            .annotate(month=TruncMonth('date_filed'))
+            .values('month')
+            .annotate(total=Count('id'))
+        )
+
+        approved = (
+            Case.objects.filter(case_status="approved", date_filed__range=[start, end])
+            .annotate(month=TruncMonth('date_filed'))
+            .values('month')
+            .annotate(total=Count('id'))
+        )
+
+        resolved = (
+            Case.objects.filter(case_status="resolved", date_filed__range=[start, end])
+            .annotate(month=TruncMonth('date_filed'))
+            .values('month')
+            .annotate(total=Count('id'))
+        )
+
+        # Combine results
+        result = []
+        months = sorted(set([f['month'] for f in pending] + [a['month'] for a in approved] + [r['month'] for r in resolved]))
+
+        for m in months:
+            f = next((x['total'] for x in pending if x['month'] == m), 0)
+            a = next((x['total'] for x in approved if x['month'] == m), 0)
+            r = next((x['total'] for x in resolved if x['month'] == m), 0)
+            result.append({
+                "month": m.strftime("%b"),
+                "pending": f,
+                "approved": a,
+                "resolved": r,
+            })
+
+        return Response(result)
 

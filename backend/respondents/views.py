@@ -77,7 +77,19 @@ class CoRespondentView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    
+class CaseRespondentView(APIView):
+    def post(self, request):
+        try:
+            ids = request.data.get("ids", [])
+            respondents = Respondent.objects.filter(id__in=ids)
+            serializer = RespondentSerializer(respondents, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
     
     
         
