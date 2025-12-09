@@ -11,25 +11,25 @@ const LOCAL_STORAGE_KEY = "authData";
 
 
 export const getCaseTypes = async () => {
-  const response = await axios.get(`${API_URL}/case-types/`);
-  return response.data;
+    const response = await axios.get(`${API_URL}/case-types/`);
+    return response.data;
 };
 
 export const getSettlementTypes = async () => {
-  const response = await axios.get(`${API_URL}/settlement-types/`);
-  return response.data;
+    const response = await axios.get(`${API_URL}/settlement-types/`);
+    return response.data;
 };
 
 export const addCase = async (caseData) => {
-  try {
-    const response = await axios.post(`${API_URL}/cases/`, caseData);
-    if (response.status === 201) {
-      return response.data;
+    try {
+        const response = await axios.post(`${API_URL}/cases/`, caseData);
+        if (response.status === 201) {
+            return response.data;
+        }
+    } catch (error) {
+        console.error("Error adding case:", error.response?.data || error.message);
+        return null;
     }
-  } catch (error) {
-    console.error("Error adding case:", error.response?.data || error.message);
-    return null;
-  }
 };
 
 export const getCases = async () => {
@@ -38,12 +38,12 @@ export const getCases = async () => {
 
     const userData = await getUser();
 
-    const response = await axios.post(`${API_URL}/case-list/`,{
+    const response = await axios.post(`${API_URL}/case-list/`, {
         role: data.userRole,
         first_name: userData.user.first_name,
         last_name: userData.user.last_name
     });
-  return response.data;
+    return response.data;
 };
 
 export const getUser = async () => {
@@ -52,7 +52,7 @@ export const getUser = async () => {
     const response = await axios.post(`${API_URL}/find-user/`, {
         email: data.userInfo.email
     });
-  return response.data;
+    return response.data;
 };
 
 export const fetchRespondent = async (respondent_id) => {
@@ -71,7 +71,10 @@ export const useCaseStore = create((set, get) => ({
     cases: [],
     caseTypes: [],
     settlementTypes: [],
-    case : {
+    relationshipTypes: [],
+    predictions: null,
+    predictionsLoading: false,
+    case: {
         case_number: "",
         date: "",
         case_status: "pending_approval",
@@ -82,21 +85,21 @@ export const useCaseStore = create((set, get) => ({
     },
 
     co_complainants: [],
-    set_coComplainants: (updatedComplainants) =>{
-        set({co_complainants: updatedComplainants})
+    set_coComplainants: (updatedComplainants) => {
+        set({ co_complainants: updatedComplainants })
     },
     co_respondents: [],
-    set_coRespondents: (updatedRespondents) =>{
-        set({co_respondents: updatedRespondents})
+    set_coRespondents: (updatedRespondents) => {
+        set({ co_respondents: updatedRespondents })
     },
 
     complainantList: [],
-    set_complainants: (updatedComplainants) =>{
-        set({complainantList: updatedComplainants})
+    set_complainants: (updatedComplainants) => {
+        set({ complainantList: updatedComplainants })
     },
     respondentList: [],
-    set_respondents: (updatedRespondents) =>{
-        set({respondentList: updatedRespondents})
+    set_respondents: (updatedRespondents) => {
+        set({ respondentList: updatedRespondents })
     },
 
     formData: {
@@ -109,6 +112,7 @@ export const useCaseStore = create((set, get) => ({
             contact_number: { value: "", required: true },
             barangay: { value: "Tetuan", required: true },
             street: { value: "", required: true },
+            relationship: { value: "Neighbor", required: true },
             additional_info: { value: "", required: false },
         },
         respondent: {
@@ -120,6 +124,7 @@ export const useCaseStore = create((set, get) => ({
             contact_number: { value: "", required: false },
             barangay: { value: "Tetuan", required: true },
             street: { value: "", required: true },
+            relationship: { value: "Neighbor", required: true },
             additional_info: { value: "", required: false },
         },
         caseDetails: {
@@ -153,7 +158,7 @@ export const useCaseStore = create((set, get) => ({
 
     resetFormData: () => {
         set({
-             formData: {
+            formData: {
                 complainant: {
                     first_name: { value: "", required: true },
                     last_name: { value: "", required: true },
@@ -163,6 +168,7 @@ export const useCaseStore = create((set, get) => ({
                     contact_number: { value: "", required: true },
                     barangay: { value: "Tetuan", required: true },
                     street: { value: "", required: true },
+                    relationship: { value: "Neighbor", required: true },
                     additional_info: { value: "", required: false },
                 },
                 respondent: {
@@ -174,6 +180,7 @@ export const useCaseStore = create((set, get) => ({
                     contact_number: { value: "", required: false },
                     barangay: { value: "Tetuan", required: true },
                     street: { value: "", required: true },
+                    relationship: { value: "Neighbor", required: true },
                     additional_info: { value: "", required: false },
                 },
                 caseDetails: {
@@ -189,6 +196,7 @@ export const useCaseStore = create((set, get) => ({
                     lupon_member_id: { value: null, required: true },
                 }
             },
+            predictions: null,
         })
     },
 
@@ -225,12 +233,12 @@ export const useCaseStore = create((set, get) => ({
         };
 
         const case_documents = formData.caseDetails.documents.value;
-    
+
         try {
             const newCase = await addCase(caseData);
             set((state) => ({ cases: [...state.cases, newCase] }));
 
-            if(newCase === null) {
+            if (newCase === null) {
                 toast.error("Failed to file case.");
                 return false;
             }
@@ -244,11 +252,11 @@ export const useCaseStore = create((set, get) => ({
 
                     try {
                         const res = await axios.post(
-                        "http://127.0.0.1:8000/api/case-documents/",
-                        case_document_formData,
+                            "http://127.0.0.1:8000/api/case-documents/",
+                            case_document_formData,
                             {
                                 headers: {
-                                "Content-Type": "multipart/form-data",
+                                    "Content-Type": "multipart/form-data",
                                 },
                             }
                         );
@@ -276,45 +284,45 @@ export const useCaseStore = create((set, get) => ({
 
     setComplainantInfo: async () => {
         try {
-        const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-        const user_data = JSON.parse(stored);
-        
-        if(user_data.userRole !== 'user') {
-            return;
-        }
+            const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+            const user_data = JSON.parse(stored);
 
-        const data = await getUser(); 
-        const user = data.user;
+            if (user_data.userRole !== 'user') {
+                return;
+            }
 
-       set((state) => {
-            const updatedComplainant = { ...state.formData.complainant };
+            const data = await getUser();
+            const user = data.user;
 
-            Object.keys(updatedComplainant).forEach((key) => {
-                if (user[key] !== undefined && user[key] !== null) {
-                updatedComplainant[key] = {
-                    ...updatedComplainant[key],
-                    value: user[key],
-                };
-                }
-            });
+            set((state) => {
+                const updatedComplainant = { ...state.formData.complainant };
 
-            return {
+                Object.keys(updatedComplainant).forEach((key) => {
+                    if (user[key] !== undefined && user[key] !== null) {
+                        updatedComplainant[key] = {
+                            ...updatedComplainant[key],
+                            value: user[key],
+                        };
+                    }
+                });
+
+                return {
                     formData: {
-                    ...state.formData,
-                    complainant: updatedComplainant,
+                        ...state.formData,
+                        complainant: updatedComplainant,
                     },
                 };
             });
         } catch (error) {
-        console.error("Failed to fetch complainant info:", error);
+            console.error("Failed to fetch complainant info:", error);
         }
     },
 
     fetchCases: async () => {
         try {
             const data = await getCases();
-            set({cases: data})
-        
+            set({ cases: data })
+
         } catch (error) {
             set({ loading: false, error: error.message });
         }
@@ -348,7 +356,7 @@ export const useCaseStore = create((set, get) => ({
                 get().fetchCases();
                 toast.success("Case " + case_id + " deleted successfully.");
             }
-            
+
         } catch (error) {
             toast.error("Delete case unsuccessful:", error);
         }
@@ -361,36 +369,12 @@ export const useCaseStore = create((set, get) => ({
         // const data = JSON.parse(stored);
 
         const { fetchCases } = get();
-        switch(update) {
-            case 'complainant':{
+        switch (update) {
+            case 'complainant': {
                 try {
-                const res = await axios.put(`${API_URL}/update-complainant/${id}/`, data);
+                    const res = await axios.put(`${API_URL}/update-complainant/${id}/`, data);
 
-                if(forResubmission) {
-                    await axios.put(`${API_URL}/update-case/${id}/`, {
-                        case_status: "pending_approval",
-                        remarks: "",
-                        rejection_section: "none"
-                    });
-
-                }
-
-                if(res.status === 200) {
-                    fetchCases();
-                    toast.success("Complainant updated successfully.");
-                }
-                } catch (error) {
-                    toast.error("Update complainant unsuccessful:", error);
-                }
-
-                break;
-            }
-            case 'respondent':
-                {
-                try {
-                    const res = await axios.put(`${API_URL}/update-respondent/${id}/`, data);
-
-                    if(forResubmission) {
+                    if (forResubmission) {
                         await axios.put(`${API_URL}/update-case/${id}/`, {
                             case_status: "pending_approval",
                             remarks: "",
@@ -399,10 +383,34 @@ export const useCaseStore = create((set, get) => ({
 
                     }
 
-                    if(res.status === 200) {
+                    if (res.status === 200) {
                         fetchCases();
-                        toast.success("Respondent updated successfully.");
+                        toast.success("Complainant updated successfully.");
                     }
+                } catch (error) {
+                    toast.error("Update complainant unsuccessful:", error);
+                }
+
+                break;
+            }
+            case 'respondent':
+                {
+                    try {
+                        const res = await axios.put(`${API_URL}/update-respondent/${id}/`, data);
+
+                        if (forResubmission) {
+                            await axios.put(`${API_URL}/update-case/${id}/`, {
+                                case_status: "pending_approval",
+                                remarks: "",
+                                rejection_section: "none"
+                            });
+
+                        }
+
+                        if (res.status === 200) {
+                            fetchCases();
+                            toast.success("Respondent updated successfully.");
+                        }
                     } catch (error) {
                         toast.error("Update respondent unsuccessful:", error);
                     }
@@ -439,38 +447,132 @@ export const useCaseStore = create((set, get) => ({
         }
     },
 
-    updateCaseStatus: async(caseInfo, update) => {
+    updateCaseStatus: async (caseInfo, update) => {
         const { fetchCases } = get();
-        switch(update){
+        switch (update) {
             case 'rejected': {
                 try {
                     const res = await axios.put(`${API_URL}/update-case/${caseInfo.id}/`, caseInfo);
-                    if(res.status === 200) {
+                    if (res.status === 200) {
                         fetchCases();
                         toast.success("Case rejected successfully.");
                     }
-                    } catch (error) {
-                        toast.error("Update case status unsuccessful:", error);
-                    }
+                } catch (error) {
+                    toast.error("Update case status unsuccessful:", error);
+                }
 
-                    break;
+                break;
             }
-            case 'approved':{
+            case 'approved': {
                 try {
                     const res = await axios.put(`${API_URL}/update-case/${caseInfo.id}/`, caseInfo);
-                    if(res.status === 200) {
+                    if (res.status === 200) {
                         fetchCases();
                         toast.success("Case approved successfully.");
                     }
-                    } catch (error) {
-                        toast.error("Update case status unsuccessful:", error);
-                    }
+                } catch (error) {
+                    toast.error("Update case status unsuccessful:", error);
+                }
 
-                    break;
+                break;
             }
             default:
                 break;
         }
     },
 
+    // AI Model Prediction Functions
+    fetchPredictions: async () => {
+        const { formData, complainantList, respondentList, caseTypes } = get();
+
+        console.log("fetchPredictions called, caseTypes:", caseTypes.length, "items");
+
+        // Get the case type name from the caseTypes list
+        const caseTypeId = formData.caseDetails.nature_of_complaint_code.value;
+        console.log("Looking for case type ID:", caseTypeId);
+
+        const caseType = caseTypes.find(ct => ct.id === caseTypeId);
+
+        if (!caseType) {
+            console.error("Case type not found for ID:", caseTypeId, "Available types:", caseTypes.map(c => ({ id: c.id, name: c.name })));
+            set({ predictionsLoading: false });
+            return null;
+        }
+
+        console.log("Found case type:", caseType.case_name);
+
+        // Get severity (default to 1 if not set)
+        const severity = formData.caseDetails.severity.value || 1;
+
+        // Get relationship from complainant (using primary complainant's relationship)
+        const relationship = formData.complainant.relationship.value || "Neighbor";
+
+        // Count complainants and respondents
+        const numComplainants = Math.max(1, complainantList.length);
+        const numRespondents = Math.max(1, respondentList.length);
+
+        set({ predictionsLoading: true });
+
+        const requestPayload = {
+            case_type: caseType.case_name,  // Fixed: API uses 'case_name' not 'name'
+            severity: severity,
+            relationship: relationship,
+            num_complainants: numComplainants,
+            num_respondents: numRespondents,
+            lockdown_status: "Normal"
+        };
+
+        console.log("Sending prediction request:", requestPayload);
+
+        try {
+            const response = await axios.post(`${API_URL}/predict-case/`, requestPayload);
+
+            if (response.data.success) {
+                set({
+                    predictions: response.data.predictions,
+                    predictionsLoading: false
+                });
+                return response.data.predictions;
+            } else {
+                console.error("Prediction failed:", response.data.error);
+                set({
+                    predictions: null,
+                    predictionsLoading: false
+                });
+                return null;
+            }
+        } catch (error) {
+            console.error("Error fetching predictions:", error);
+            set({
+                predictions: null,
+                predictionsLoading: false
+            });
+            return null;
+        }
+    },
+
+    clearPredictions: () => {
+        set({ predictions: null, predictionsLoading: false });
+    },
+
+    // Fetch relationship types from the AI model
+    fetchRelationshipTypes: async () => {
+        try {
+            const response = await axios.get(`${API_URL}/model-info/`);
+            if (response.data.success && response.data.relationship_types) {
+                set({ relationshipTypes: response.data.relationship_types });
+            }
+        } catch (error) {
+            console.error("Error fetching relationship types:", error);
+            // Default relationship types if API fails
+            set({
+                relationshipTypes: [
+                    "Neighbor", "Family", "Coworker", "Stranger",
+                    "Ex-Partner", "Tenant/Landlord"
+                ]
+            });
+        }
+    },
+
 }))
+

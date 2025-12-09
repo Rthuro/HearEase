@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'documents',
     'case_documents',
     'api',
+    'AIModel',
     
 ] 
 

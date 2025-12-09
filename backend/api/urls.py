@@ -7,6 +7,7 @@ from hearings import views as HearingViews
 from complainants import views as ComplainantsViews
 from documents import views as DocumentViews
 from respondents import views as RespondentViews
+from AIModel import views as AIModelViews
 
 urlpatterns = [
     path("register/", UserViews.RegisterView.as_view(), name="register"),
@@ -54,5 +55,9 @@ urlpatterns = [
     path('reports/', CaseViews.ReportView.as_view(), name='reports'),
 
     path("", include("case_documents.urls")),
+
+    # AI Model Prediction Endpoints
+    path('predict-case/', AIModelViews.PredictCaseView.as_view(), name='predict-case'),
+    path('model-info/', AIModelViews.ModelInfoView.as_view(), name='model-info'),
 
 ] 
