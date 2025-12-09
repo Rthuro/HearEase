@@ -16,7 +16,7 @@ import { useEffect } from "react";
 import { cn } from "@/lib/utils";
 
 export function CaseForm(){
-    const { formData, addCaseData, fetchCaseTypes, fetchSettlementTypes } = useCaseStore();
+    const { formData, addCaseData, fetchCaseTypes, fetchSettlementTypes, complainantList, respondentList } = useCaseStore();
 
     useEffect(() => {
         fetchCaseTypes();
@@ -27,6 +27,9 @@ export function CaseForm(){
     const navigate = useNavigate();
     const [stepNumber, setStepNumber] = useState(1);
     const [submitModalOpen, setSubmitModalOpen] = useState(false);
+
+    const stored = localStorage.getItem("authData");
+    const storedData = stored ? JSON.parse(stored) : null;
     
 
     const formProgress = [
@@ -51,6 +54,11 @@ export function CaseForm(){
             form: "hearingInfo"
         },
     ]
+
+    const visibleSteps =
+    storedData?.userRole === "user"
+        ? formProgress.filter(step => step.number <= 3)
+        : formProgress;
     
     const handlePrev = () => {
         if (stepNumber === 1) {
@@ -72,7 +80,7 @@ export function CaseForm(){
         const res = await addCaseData(); 
 
         if (res) {
-            setStepNumber((prev) => prev + 1);
+            setStepNumber(5);
         }
     };
     
@@ -82,23 +90,45 @@ export function CaseForm(){
 
         if (!currentFormKey) return false;
 
+        if (stepNumber == 1) {
+            if (complainantList.length === 0) {
+                toast.error("Please add at least one complainant.");
+                return;
+            }
+        }
+
+        if (stepNumber == 2) {
+            if (respondentList.length === 0) {
+                toast.error("Please add at least one respondent.");
+                return;
+            }
+        }
+
         const currentFormData = formData[currentFormKey];
 
-        for (const field in currentFormData) {
-            if (currentFormData[field]?.required) {
-                const value = currentFormData[field]?.value;
-                if (value === null || value === undefined || value === '') {
-                    toast.error("Please fill in all required fields.");
-                    return;
-                }
-
-                if (field === 'contact_number') {
-                    if (invalidContactNumber(value)) {
-                        toast.error("Invalid contact number format.");
+        if(stepNumber === 3 || (stepNumber === 4 && storedData.userRole === 'admin')) {
+            
+            for (const field in currentFormData) {
+                if (currentFormData[field]?.required) {
+                    const value = currentFormData[field]?.value;
+                    if (value === null || value === undefined || value === '') {
+                        toast.error("Please fill in all required fields.");
                         return;
+                    }
+
+                    if (field === 'contact_number') {
+                        if (invalidContactNumber(value)) {
+                            toast.error("Invalid contact number format.");
+                            return;
+                        }
                     }
                 }
             }
+        }
+
+        if(stepNumber === 3 && storedData.userRole === 'user') {
+            setSubmitModalOpen(true);
+            return;
         }
 
         if (stepNumber === 4) {
@@ -114,29 +144,51 @@ export function CaseForm(){
         <main className="flex flex-col w-full h-full items-center justify-center gap-3 bg-white">
             <PageSync page="" />
             
-            <div className=" w-full max-h-max flex items-center justify-center pb-20 border-b border-zinc-200">
+            <div className="w-full max-h-max flex items-center justify-center pb-20 border-b border-zinc-200"> 
                 <div className="flex items-center">
-                    {formProgress.map((step) => (
-                        <div key={step.number} className="flex items-center">
-                            <div className="flex flex-col items-center gap-2 relative">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center p-2 
-                                ${step.number === stepNumber ? 'border border-redBase text-redBase' : step.number < stepNumber ? 'bg-redBase text-white' : 'border border-zinc-400 text-zinc-400'}`
-                                }>
-                                    {step.number}   
-                                </div>
-                                <p className={`text-sm absolute top-10 text-center ${step.number === stepNumber || step.number < stepNumber ? 'text-redBase' : 'text-zinc-400'}`}>{step.title}</p>
-                            </div>
-                            
-                            {step.number !== formProgress.length && (
-                                <div className={`w-[120px] border 
-                                ${step.number < stepNumber ? 'border-redBase' : 'border-zinc-400'}
-                                `}></div>
-                            )}
+                    {visibleSteps.map((step, index) => (
+                    <div key={step.number} className="flex items-center">
+                        
+                        <div className="flex flex-col items-center gap-2 relative">
+                        <div
+                            className={`w-8 h-8 rounded-full flex items-center justify-center p-2 
+                            ${
+                                step.number === stepNumber
+                                ? "border border-redBase text-redBase"
+                                : step.number < stepNumber
+                                ? "bg-redBase text-white"
+                                : "border border-zinc-400 text-zinc-400"
+                            }`}
+                        >
+                            {step.number}
                         </div>
+
+                        <p
+                            className={`text-sm absolute top-10 text-center 
+                            ${
+                                step.number === stepNumber || step.number < stepNumber
+                                ? "text-redBase"
+                                : "text-zinc-400"
+                            }`}
+                        >
+                            {step.title}
+                        </p>
+                        </div>
+
+                        {/* Connector Line */}
+                        {index !== visibleSteps.length - 1 && (
+                        <div
+                            className={`w-[120px] border 
+                            ${step.number < stepNumber ? "border-redBase" : "border-zinc-400"}`}
+                        ></div>
+                        )}
+
+                    </div>
                     ))}
-                </div> 
+                </div>
             </div>
-            <form className="w-full flex flex-col items-center gap-6 h-max my-6">
+
+            <form className="w-full flex flex-col items-center gap-6 max-h-max min-h-64 my-6 ">
 
             {stepNumber == 1 && (
                 <Complainant />
@@ -182,7 +234,7 @@ export function CaseForm(){
                         Previous
                     </Button>
                     <Button onClick={handleNext} className="!bg-redBase">
-                        { stepNumber === 4 ? "Submit Case" : "Next" }
+                        { stepNumber === 3 && storedData.userRole === 'user' ? "Submit Case" : stepNumber === 4 ? "Submit Case" : "Next" }
                         <ChevronRight />
                     </Button>
                 </div>

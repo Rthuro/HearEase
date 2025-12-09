@@ -34,7 +34,6 @@ export function HearingInfo(){
     const [firstHearing] = useState(getFirstHearingDate(scheduledDate));
 
     const [open, setOpen] = useState(false)
-    // const [value, setValue] = useState(null)
 
     return(
          <div className="grid grid-cols-2 gap-4">
@@ -43,7 +42,8 @@ export function HearingInfo(){
                 <Label htmlFor="predictedNumber">Number of Predicted Hearing
                     <span className="text-redBase">(auto)</span>
                 </Label>
-                <Input id="predictedNumber" type="number" className="w-72" readOnly />
+                <Input id="predictedNumber" type="number" className="w-72"
+                 value={formData?.hearingInfo?.predicted_number?.value} readOnly />
             </div>
 
             <div className="grid grid-cols-1 gap-2">

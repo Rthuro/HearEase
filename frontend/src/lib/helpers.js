@@ -26,3 +26,9 @@ export function invalidContactNumber(number) {
 export function getNatureLabel(code){
     return natureOfComplaints.find(n => n.code === code )?.label;
 }
+
+export const formatedBday = (dateString) => {
+    if(!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+};

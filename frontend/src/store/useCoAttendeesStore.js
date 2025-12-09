@@ -2,12 +2,12 @@ import { create } from "zustand";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useRetrieveUsersStore } from "./useRetrieveUsersStore";
-const { fetchCaseCoRespondents, fetchCaseCoComplainants } = useRetrieveUsersStore.getState();
+const { fetchCaseRespondents, fetchCaseComplainants } = useRetrieveUsersStore.getState();
 
 const API_URL = "http://127.0.0.1:8000/api";
 
 export const getCoAttendee = async (id, type) => {
-    const response = await axios.get(`${API_URL}/co-${type}/${id}/`);
+    const response = await axios.get(`${API_URL}/${type}/${id}/`);
     return response.data;
 };
 
@@ -30,11 +30,11 @@ export const useCoAttendeesStore = create( (set) => ({
             const data = await updateCoAttendee(id, type, coAttendeeData);
             if (data) {
                 if (type === "respondent") {
-                    await fetchCaseCoRespondents(co_attendees);
+                    await fetchCaseRespondents(co_attendees);
                 } else if (type === "complainant") {
-                    await fetchCaseCoComplainants(co_attendees);
+                    await fetchCaseComplainants(co_attendees);
                 }
-                toast.success(`Co-${type} information updated successfully.`);
+                toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} information updated successfully.`);
             }
             return;
         } catch (error) {

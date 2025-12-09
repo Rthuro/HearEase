@@ -2,11 +2,11 @@ import { create } from "zustand";
 import axios from "axios";
 import toast from "react-hot-toast";
 
-const API_BASE_URL = "http://127.0.0.1:8000/api/lupon-members"; 
+const API_URL = "http://127.0.0.1:8000/api";
 
 export const getLuponMembers = async () => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/`);
+    const response = await axios.get(`${API_URL}/lupon-members/`);
     return response.data;
   } catch (error) {
     console.error("Error fetching Lupon members:", error);
@@ -15,10 +15,11 @@ export const getLuponMembers = async () => {
   }
 };
 
+
 // POST (add Lupon member)
 export const addLuponMember = async (memberData) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/`, memberData);
+    const response = await axios.post(`${API_URL}/lupon-members/`, memberData);
     toast.success("Lupon member added successfully!");
     return response.data;
   } catch (error) {
@@ -27,6 +28,18 @@ export const addLuponMember = async (memberData) => {
     throw error;
   }
 };
+
+export const fetchLuponMemberDetails = async (id) => {
+  const response = await axios.get(`${API_URL}/lupon-member/`, {
+        params: { id: id }
+    });
+    return response.data;
+}
+
+export const updateLupon = async (id, data) => {
+  const response = await axios.put(`${API_URL}/update-lupon/${id}/`,data);
+    return response.data;
+}
 
 export const useLuponStore = create((set, get) => ({
   members: [],
@@ -42,7 +55,7 @@ export const useLuponStore = create((set, get) => ({
     barangay: { value: "Tetuan", required: true },
     street: { value: "", required: true },
     additional_info: { value: "", required: false },
-    sched: { value: [], required: false },
+    sched: { value: [], required: true },
   },
 
   // Fetch Lupon Members
@@ -116,4 +129,37 @@ export const useLuponStore = create((set, get) => ({
       },
     });
   },
+   deleteLupon: async (id) => {
+        try {
+            const res = await axios.delete(`${API_URL}/delete-lupon/`, {
+                data: {id: id}
+            });
+
+            if (res.status === 204) {
+                toast.success("Lupon member has been removed");
+            }
+        } catch (error) {
+            toast.error("Cannot removed lupon member:", error);
+        }
+    },
+    updateLuponMember: async (id, data) => {
+      try {
+        const res = await updateLupon(id,data);
+        if(res){
+          await fetchLuponMemberDetails(id);
+          toast.success("Lupon member information updated");
+        }
+        return
+      } catch (error) {
+          toast.error("Cannot update lupon member information:", error);
+      }
+    },
+    getMemberDetails: async (id) => {
+            try {
+                const data = await fetchLuponMemberDetails(id);
+                return data
+            } catch (error) {
+                toast.error("Error fetching Lupon member details:", error);
+            }       
+      }
 }));

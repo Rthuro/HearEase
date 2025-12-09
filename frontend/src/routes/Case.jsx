@@ -37,7 +37,7 @@ export function Case() {
     const { case_number } = useParams();
     const { cases, updateCaseStatus } = useCaseStore();
     const { hearings } = useHearingStore();
-    const { caseCoComplainants, fetchCaseCoComplainants, caseCoRespondents, fetchCaseCoRespondents} = useRetrieveUsersStore();
+    const { case_complainants, case_respondents, fetchCaseComplainants, fetchCaseRespondents} = useRetrieveUsersStore();
     const [template, setTemplate] = useState({});
     const { case_documents, fetchCaseDocuments } = useCaseDocumentsStore();
     const [ viewImg, setViewImg ] = useState(null);
@@ -62,12 +62,8 @@ export function Case() {
     const caseInfo = cases.find( c => c.id == case_number);
 
     useEffect( () => {
-        if(caseInfo?.co_respondents_ids?.length > 0){
-            fetchCaseCoRespondents(caseInfo.co_respondents_ids);
-        }
-        if(caseInfo?.co_complainants_ids?.length > 0){
-            fetchCaseCoComplainants(caseInfo.co_complainants_ids);
-        }
+        fetchCaseComplainants(caseInfo?.complainants);
+        fetchCaseRespondents(caseInfo?.respondents);
     }, [caseInfo])
 
     const navigate = useNavigate();
@@ -78,14 +74,7 @@ export function Case() {
         return null;
     }
 
-
-    const formatedBday = (dateString) => {
-        if(!dateString) return '-';
-        const date = new Date(dateString);
-        return date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-    }
-
-    const caseDetails = [
+    const caseDetails = 
         {
             section: "Case Information",
             details: [
@@ -107,7 +96,7 @@ export function Case() {
                 },
                 {
                     label: "Assigned Lupon",
-                    value: lupon?.first_name + " " + (lupon?.middle_name ? lupon?.middle_name + " " : "") + lupon?.last_name || '-'
+                    value: lupon ?  lupon?.first_name + " " + (lupon?.middle_name ? lupon?.middle_name + " " : "") + lupon?.last_name : '-'
                 },
                 {
                     label:"Predicted Hearings",
@@ -133,58 +122,8 @@ export function Case() {
                     value: case_documents
                 }
             ]
-        },
-        {
-            section: "Complainant Information",
-            details: [
-                {
-                    label: "Full Name",
-                    value: `${caseInfo?.complainant_user?.first_name} ${caseInfo?.complainant_user?.middle_name ? caseInfo?.complainant_user?.middle_name + ' ' : ''}${caseInfo?.complainant_user?.last_name}`
-                },
-                {
-                    label: "Gender",
-                    value: caseInfo?.complainant_user?.sex || '-'
-                },
-                {
-                    label: "Birth Date",
-                    value: formatedBday(caseInfo?.complainant_user?.birth_date)
-                },
-                {
-                    label: "Contact",
-                    value: caseInfo?.complainant_user?.contact_number || '-'
-                },
-                {  
-                    label: "Address",
-                    value: `${caseInfo?.complainant_user?.street}, ${caseInfo?.complainant_user?.barangay}${caseInfo?.complainant_user?.additional_info ? ', ' + caseInfo?.complainant_user?.additional_info : ''}`
-                },
-            ]
-        },
-        {
-            section: "Respondent Information",
-            details: [
-                {
-                    label: "Full Name",
-                    value: `${caseInfo?.respondent_user?.first_name} ${caseInfo?.respondent_user?.middle_name ? caseInfo?.respondent_user?.middle_name + ' ' : ''}${caseInfo?.respondent_user?.last_name}`
-                },
-                {
-                    label: "Gender",
-                    value: caseInfo?.respondent_user?.sex || '-'
-                },
-                {
-                    label: "Birth Date",
-                    value: formatedBday(caseInfo?.respondent_user?.birth_date)
-                },
-                {
-                    label: "Contact",
-                    value: caseInfo?.respondent_user?.contact_number || '-'
-                },
-                {  
-                    label: "Address",
-                    value: `${caseInfo?.respondent_user?.street}, ${caseInfo?.respondent_user?.barangay}${caseInfo?.respondent_user?.additional_info ? ', ' + caseInfo?.respondent_user?.additional_info : ''}`
-                },
-            ]
         }
-    ];
+    ;
 
     const generate = {
         user: [
@@ -281,7 +220,7 @@ export function Case() {
         }
     };
 
-    
+    console.log("case_complainants", case_complainants);
     return (
         <div className="relative flex flex-col gap-4 p-6 ">
             <PageSync page="" />
@@ -344,160 +283,167 @@ export function Case() {
                 )}
             </div>
 
-            {caseDetails.map((section) => (
-                <div key={section.section} className="flex flex-col gap-4 bg-white p-4 rounded-md border shadow-2xs">
             
-                    <div className="flex items-center justify-between">
-                        <h2 className="text-lg font-medium">{section.section}</h2>
-                        <EditCaseInfo section={section.section == "Case Information" ? "case" : section.section == "Complainant Information" ? "complainant" : "respondent"} 
-                        caseInfo={caseInfo} forResubmission={false} />
-                    </div>
-
-                    <div className="grid grid-cols-4 gap-4">
-                            {section.details.map((detail) => (
-                                <div key={detail.label} 
-                                className={`flex flex-col gap-1 
-                                ${detail.label === 'Description' ? 'col-span-2' : ''}
-                                ${detail.label === 'Documents' ? 'col-span-4' : ''}
-                                `}
-                                >
-                                    <Label className={cn("text-zinc-600 font-normal text-xs")}>
-                                        {detail.label}
-                                    </Label>
-                                    {detail.label === 'Status'? <CaseStatusDisplay caseStatus={detail.value} /> : 
-                                    detail.label === 'Documents'? 
-                                        <div className="flex gap-2">
-                                            { detail.value && detail.value.length > 0 ? (
-                                                detail.value.map((doc, index) => {
-                                                
-                                                    const file = doc?.file
-                                                        ? doc.file.startsWith("http")
-                                                            ? doc.file
-                                                            : `${BASE_URL}${doc.file}`
-                                                        : "";
-                                                        
-                                                    console.log("Document file:", file);
-                                                    if (!file) {
-                                                        return <p key={index}>No documents submitted</p>;
-                                                    }
-
-                                                    return file.match(/\.(jpg|jpeg|png|gif)$/i) ? (
-                                                        <Button variant="outline" key={index} onClick={(e) => {
-                                                            e.preventDefault();
-                                                            setViewImg(file);
-                                                        }}>
-                                                            <img
-                                                            src={file}
-                                                            alt={`Document ${index + 1}`}
-                                                            className="h-full object-contain"
-                                                            />
-                                                        </Button>
-                                                        
-                                                    ) : (
-                                                        <Button
-                                                        type="link"
-                                                        key={index}
-                                                        onClick={(e) => {
-                                                            e.preventDefault();
-                                                            window.open(file, '_blank');
-                                                        }} variant="outline"
-                                                        rel="noopener noreferrer"
-                                                        className="border  py-2 px-4 rounded-lg flex items-center gap-2"
-                                                        >
-                                                            <FileText  />
-                                                            {doc.title || `Document ${index + 1}`}
-                                                        </Button>
-                                                    );
-                                                })
-                                            ) : (
-                                            <p>-</p>
-                                            )}
-                                        </div> 
-                                        : 
-                                        <p>{detail.value}</p>
-                                    }
-                                </div>
-                            ))}
-                    </div> 
-
-                    { viewImg && (
-                        <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50"
-                        onClick={() => setViewImg(null)}
-                        >
-                            <X className="text-white absolute top-4 right-4 cursor-pointer" onClick={ () => setViewImg(null)} />
-                            <img src={viewImg} alt="Document View" className=" h-1/2 rounded-md shadow-lg" />
-                        </div>
-                    )}
-
-                    { section.section === "Complainant Information" && caseCoComplainants?.length > 0 &&                     
-                        (
-                            <div className="flex flex-col">
-                                <h2 className="font-medium mb-2 text-zinc-900">Co-Complainants</h2>
-                                    {caseCoComplainants.map( c => (
-                                        <div className="border rounded-lg overflow-hidden">
-                                            <Table>
-                                                <TableHeader>
-                                                    <TableRow>
-                                                    <TableHead className="text-left px-4 py-2">Full Name</TableHead>
-                                                    <TableHead className="text-left px-4 py-2">Contact</TableHead>
-                                                    <TableHead className="px-4 py-2"></TableHead>
-                                                    </TableRow>
-                                                </TableHeader>
-
-                                                <TableBody>
-                                                    <TableRow key={c.id} className="border-t">
-                                                        <TableCell className="px-4 py-2">{c.first_name} {c.middle_name ? c.middle_name + ' ' : ''}{c.last_name}</TableCell>
-                                                        <TableCell className="px-4 py-2">{c.contact_number || "-"}</TableCell>
-                                                        <TableCell>
-                                                            <EditCoAttendee co_attendees={caseInfo.co_complainants_ids} type="complainant"
-                                                            attendeeInfo={c} />
-                                                        </TableCell>
-                                                    </TableRow>
-                                                </TableBody>
-                                            </Table>
-                                        </div>
-                                        
-                                    ))}
-                            </div>
-                        )
-                    }
-
-                    { section.section === "Respondent Information" && caseCoRespondents?.length > 0 &&                     
-                        (
-                            <div className="flex flex-col">
-                                <h2 className="font-medium mb-2 text-zinc-900">Co-Respondents</h2>
-                                    {caseCoRespondents.map( c => (
-                                        <div className="border rounded-lg overflow-hidden">
-                                            <Table>
-                                                <TableHeader>
-                                                    <TableRow>
-                                                    <TableHead className="text-left px-4 py-2">Full Name</TableHead>
-                                                    <TableHead className="text-left px-4 py-2">Contact</TableHead>
-                                                    <TableHead className="px-4 py-2"></TableHead>
-                                                    </TableRow>
-                                                </TableHeader>
-
-                                                <TableBody>
-                                                    <TableRow key={c.id} className="border-t">
-                                                        <TableCell className="px-4 py-2">{c.first_name} {c.middle_name ? c.middle_name + ' ' : ''}{c.last_name}</TableCell>
-                                                        <TableCell className="px-4 py-2">{c.contact_number || "-"}</TableCell>
-                                                        <TableCell>
-                                                            <EditCoAttendee co_attendees={caseInfo.co_respondents_ids} type="respondent"
-                                                            attendeeInfo={c} />
-                                                        </TableCell>
-                                                    </TableRow>
-                                                </TableBody>
-                                            </Table>
-                                        </div>
-                                        
-                                    ))}
-                            </div>
-                        )
-                    }
-                   
-
+            <div className="flex flex-col gap-4 bg-white p-4 rounded-md border shadow-2xs">
+        
+                <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-medium">{caseDetails.section}</h2>
+                    <EditCaseInfo section= "case" 
+                    caseInfo={caseInfo} forResubmission={false} />
                 </div>
-            ))}
+
+                <div className="grid grid-cols-4 gap-4">
+                        {caseDetails.details.map((detail) => (
+                            <div key={detail.label} 
+                            className={`flex flex-col gap-1 
+                            ${detail.label === 'Description' ? 'col-span-2' : ''}
+                            ${detail.label === 'Documents' ? 'col-span-4' : ''}
+                            `}
+                            >
+                                <Label className={cn("text-zinc-600 font-normal text-xs")}>
+                                    {detail.label}
+                                </Label>
+                                {detail.label === 'Status'? <CaseStatusDisplay caseStatus={detail.value} /> : 
+                                detail.label === 'Documents'? 
+                                    <div className="flex gap-2">
+                                        { detail.value && detail.value.length > 0 ? (
+                                            detail.value.map((doc, index) => {
+                                            
+                                                const file = doc?.file
+                                                    ? doc.file.startsWith("http")
+                                                        ? doc.file
+                                                        : `${BASE_URL}${doc.file}`
+                                                    : "";
+                                                    
+                                                console.log("Document file:", file);
+                                                if (!file) {
+                                                    return <p key={index}>No documents submitted</p>;
+                                                }
+
+                                                return file.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                                                    <Button variant="outline" key={index} onClick={(e) => {
+                                                        e.preventDefault();
+                                                        setViewImg(file);
+                                                    }}>
+                                                        <img
+                                                        src={file}
+                                                        alt={`Document ${index + 1}`}
+                                                        className="h-full object-contain"
+                                                        />
+                                                    </Button>
+                                                    
+                                                ) : (
+                                                    <Button
+                                                    type="link"
+                                                    key={index}
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        window.open(file, '_blank');
+                                                    }} variant="outline"
+                                                    rel="noopener noreferrer"
+                                                    className="border  py-2 px-4 rounded-lg flex items-center gap-2"
+                                                    >
+                                                        <FileText  />
+                                                        {doc.title || `Document ${index + 1}`}
+                                                    </Button>
+                                                );
+                                            })
+                                        ) : (
+                                        <p>-</p>
+                                        )}
+                                    </div> 
+                                    : 
+                                    <p>{detail.value}</p>
+                                }
+                            </div>
+                        ))}
+                </div> 
+
+                { viewImg && (
+                    <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50"
+                    onClick={() => setViewImg(null)}
+                    >
+                        <X className="text-white absolute top-4 right-4 cursor-pointer" onClick={ () => setViewImg(null)} />
+                        <img src={viewImg} alt="Document View" className=" h-1/2 rounded-md shadow-lg" />
+                    </div>
+                )}
+
+                
+
+              
+                
+
+            </div>
+                
+            { case_complainants?.length > 0 &&                     
+            ( <div className="flex flex-col gap-4 bg-white p-4 rounded-md border shadow-2xs">
+
+                <div className="flex flex-col">
+                    <h2 className="font-medium mb-2 text-zinc-900">Complainants</h2>
+                    <div className="border rounded-lg overflow-hidden">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                <TableHead className="text-left px-4 py-2">Full Name</TableHead>
+                                <TableHead className="text-left px-4 py-2">Contact</TableHead>
+                                <TableHead className="px-4 py-2"></TableHead>
+                                </TableRow>
+                            </TableHeader>
+
+                            <TableBody>
+                            {case_complainants.map( c => (
+                                
+                                <TableRow key={c.id} className="border-t">
+                                    <TableCell className="px-4 py-2">{c.first_name} {c.middle_name ? c.middle_name + ' ' : ''}{c.last_name}</TableCell>
+                                    <TableCell className="px-4 py-2">{c.contact_number || "-"}</TableCell>
+                                    <TableCell>
+                                        <EditCoAttendee co_attendees={caseInfo.complainants} type="complainant"
+                                        attendeeInfo={c} />
+                                    </TableCell>
+                                </TableRow>
+                                          
+                            ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </div>
+            </div>
+
+            )
+            }
+
+            { case_respondents?.length > 0 &&                     
+            (
+            <div className="flex flex-col gap-4 bg-white p-4 rounded-md border shadow-2xs">
+                <div className="flex flex-col">
+                    <h2 className="font-medium mb-2 text-zinc-900">Respondents</h2>
+                    <div className="border rounded-lg overflow-hidden">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                <TableHead className="text-left px-4 py-2">Full Name</TableHead>
+                                <TableHead className="text-left px-4 py-2">Contact</TableHead>
+                                <TableHead className="px-4 py-2"></TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                            {case_respondents.map( c => (
+                                <TableRow key={c.id} className="border-t">
+                                    <TableCell className="px-4 py-2">{c.first_name} {c.middle_name ? c.middle_name + ' ' : ''}{c.last_name}</TableCell>
+                                    <TableCell className="px-4 py-2">{c.contact_number || "-"}</TableCell>
+                                    <TableCell>
+                                        <EditCoAttendee co_attendees={caseInfo.respondents} type="respondent"
+                                        attendeeInfo={c} />
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                    </div>
+                </div>
+            </div>
+            )
+            }
 
             <div className="flex flex-col gap-4 bg-white p-4 rounded-md shadow-2xs border">
                 <h2 className="text-xl font-semibold">Hearing Attendance</h2>

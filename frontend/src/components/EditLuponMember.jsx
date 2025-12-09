@@ -7,10 +7,9 @@ import { Dialog,
   DialogDescription,
   DialogFooter
 } from "@/components/ui/dialog"
-import { Textarea } from "./ui/textarea";
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Edit } from "lucide-react"
-import { useState } from "react";
+import { Edit } from "lucide-react"
+import { useState, useEffect } from "react";
 import { Popover,
   PopoverTrigger,
   PopoverContent } from "@/components/ui/popover"
@@ -26,33 +25,44 @@ import { CalendarIcon } from "lucide-react";
 import { useAddressesStore } from "@/store/useAddressStore";
 import { getStreets } from "@/lib/helpers";
 import { cn } from "@/lib/utils";
-import { useCoAttendeesStore } from "@/store/useCoAttendeesStore";
-import { dateFormatter } from "@/lib/helpers";
+import { useLuponStore } from "@/store/useLuponStore";
 
-export function EditCoAttendee({co_attendees, type, attendeeInfo}){
+export function EditLuponMember({lupon}){
     const { barangays } = useAddressesStore();
+    const { updateLuponMember } = useLuponStore();
     const [openCalendar, setOpenCalendar] = useState(false);
-    const { updateCoAttendeeInfo } = useCoAttendeesStore();
     const minDate = new Date("1900-01-01");
     const maxDate = new Date();
-    const [info, setInfo] = useState(attendeeInfo);
+    const [info, setInfo] = useState(lupon?.lupon || {});
+
+    const formatDate = (d) => {
+        if (!d) return null;
+        if (d instanceof Date && !isNaN(d)) return d.toLocaleDateString();
+        const parsed = new Date(d);
+        return isNaN(parsed) ? null : parsed.toLocaleDateString();
+    };
+
+
+    useEffect(() => {
+        if (lupon) setInfo(lupon?.lupon);
+    }, [lupon]);
 
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        updateCoAttendeeInfo(co_attendees, info.id, type, info);
+        updateLuponMember(info.id, info);
     }
-    // console.log(info);
 
     return (
         <Dialog>
             <DialogTrigger asChild>     
-                <Button variant="outline"><Edit />Edit</Button>
+                    
+                <Button variant="outline"><Edit />Edit Lupon Member</Button>
             </DialogTrigger>
         <DialogContent className={cn('w-2/3')}>
                 <DialogHeader>
-                    <DialogTitle>Edit {type}</DialogTitle>
-                    <DialogDescription>Edit {type} information.</DialogDescription>
+                    <DialogTitle>Edit Lupon Member</DialogTitle>
+                    <DialogDescription>Edit Lupon Member information.</DialogDescription>
                 </DialogHeader>
                  <div className="grid grid-cols-2 gap-4 overflow-y-scroll max-h-[350px] px-3 py-2 mb-4 ">                                
                         <div className="grid grid-cols-1 gap-2">
@@ -95,8 +105,7 @@ export function EditCoAttendee({co_attendees, type, attendeeInfo}){
                                         id="date"
                                         className="justify-between font-normal"
                                     >
-                                        {info?.birth_date ? 
-                                        dateFormatter(info.birth_date) : "Select date"}
+                                        {formatDate(info?.birth_date) || "Select date"}
                                         <CalendarIcon />
                                     </Button>
                                 </PopoverTrigger>

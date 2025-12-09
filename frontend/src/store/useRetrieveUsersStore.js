@@ -15,9 +15,28 @@ export const getRespondents = async () => {
     return response.data;
 }
 
+export const getCaseComplainants = async (ids) => {
+    const response = await axios.post(`${API_URL}/case-complainant/`, {
+        ids: ids
+    });
+    return response.data;
+}
+
+export const getCaseRespondents = async (ids) => {
+    const response = await axios.post(`${API_URL}/case-respondent/`, {
+        ids: ids
+    });
+    return response.data;
+}
+
 export const getUsers = async () => {
     const response = await axios.get(`${API_URL}/find-user`);
     return response.data.users;
+}
+
+export const getAdmins = async () => {
+    const response = await axios.get(`${API_URL}/admins/`);
+    return response.data;
 }
 
 export const getUser = async (email) => {
@@ -41,11 +60,11 @@ export const getCaseCoComplainants = async (cocomplainant_ids) => {
 }
 
 export const useRetrieveUsersStore = create( (set) => ({
-    complainantsUsers: [],    
+    complainants: [],    
     fetchComplainants: async () => {
         try {
             const data = await getComplainants();
-            set({ complainantsUsers: data })
+            set({ complainants: data })
         } catch (error) {
             toast.error(error);
         }
@@ -68,20 +87,31 @@ export const useRetrieveUsersStore = create( (set) => ({
             toast.error(error);
         }
     },
-    caseCoComplainants:[],
-    fetchCaseCoComplainants: async (Ids) => {
+
+    case_complainants: [],
+    case_respondents: [],
+    fetchCaseComplainants: async (ids) => {
         try {
-            const data = await getCaseCoComplainants(Ids);
-            set({ caseCoComplainants: data });
+            const data = await getCaseComplainants(ids);
+            set({ case_complainants: data })
         } catch (error) {
             toast.error(error);
         }
     },
-    caseCoRespondents:[],
-    fetchCaseCoRespondents: async (Ids) => {
+    fetchCaseRespondents: async (ids) => {
         try {
-            const data = await getCaseCoRespondents(Ids);
-            set({ caseCoRespondents: data });
+            const data = await getCaseRespondents(ids);
+            set({ case_respondents: data })
+        } catch (error) {
+            toast.error(error);
+        }
+    },
+
+    admin_list: [],
+    fetchAdmins: async () => {
+        try {
+            const data = await getAdmins();
+            set({ admin_list: data })
         } catch (error) {
             toast.error(error);
         }

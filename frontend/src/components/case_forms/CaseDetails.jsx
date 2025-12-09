@@ -106,7 +106,7 @@ export function CaseDetails(){
                     )?.severity || ""
                 } />
             </div>
-             <div className="grid grid-cols-1 gap-2">
+             {/* <div className="grid grid-cols-1 gap-2">
                 <Label htmlFor="settlement">Settlement Type 
                     <span className="text-redBase">*</span>
                 </Label>
@@ -130,7 +130,7 @@ export function CaseDetails(){
                             </DropdownMenuRadioGroup>
                         </DropdownMenuContent>
                     </DropdownMenu>
-            </div>
+            </div> */}
             <div className="grid grid-cols-1 gap-2">
                 <Label htmlFor="description">Short Description
                     <span className="text-redBase">*</span>

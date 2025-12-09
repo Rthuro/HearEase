@@ -28,6 +28,8 @@ import { Profile } from './routes/Profile';
 import { useLuponStore } from './store/useLuponStore';
 import { Settings } from './routes/Settings';
 import Hearing from './routes/Hearing';
+import { Lupon } from './routes/admin/pages/Lupon';
+import { Reports } from './routes/admin/pages/Reports';
 
 function App() {
   const { initializeAuth } = useAuthenticationStore();
@@ -89,7 +91,9 @@ function App() {
               <Route path="Admin/CaseRecords" element={<CaseRecords />} />
               <Route path="Admin/Generate-Documents" element={<GenerateDocument />} />
               <Route path="Admin/Lupon-Management" element={<LuponManagement />} />
+              <Route path="Admin/Lupon/:id" element={<Lupon />} />
               <Route path="Admin/Profile" element={<Profile />} />
+              <Route path="Admin/Reports" element={<Reports />} />
               <Route path="Admin/Settings" element={<Settings />} />
               <Route path="Admin/Hearing/:hearing_id" element={<Hearing />} />
             </Route>

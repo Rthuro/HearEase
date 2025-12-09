@@ -90,6 +90,15 @@ export const useCaseStore = create((set, get) => ({
         set({co_respondents: updatedRespondents})
     },
 
+    complainantList: [],
+    set_complainants: (updatedComplainants) =>{
+        set({complainantList: updatedComplainants})
+    },
+    respondentList: [],
+    set_respondents: (updatedRespondents) =>{
+        set({respondentList: updatedRespondents})
+    },
+
     formData: {
         complainant: {
             first_name: { value: "", required: true },
@@ -117,11 +126,10 @@ export const useCaseStore = create((set, get) => ({
             nature_of_complaint_code: { value: null, required: true },
             severity: { value: null, required: false },
             description: { value: "", required: true },
-            settlement: { value: null, required: true },
             documents: { value: [], required: false },
         },
         hearingInfo: {
-            predicted_number: { value: null, required: false },
+            predicted_number: { value: 3, required: false },
             first_hearing_date: { value: null, required: false },
             time: { value: null, required: false },
             lupon_member_id: { value: null, required: true },
@@ -172,7 +180,6 @@ export const useCaseStore = create((set, get) => ({
                     nature_of_complaint_code: { value: "", required: true },
                     severity: { value: null, required: false },
                     description: { value: "", required: true },
-                    settlement: { value: "amicable", required: true },
                     documents: { value: [], required: false },
                 },
                 hearingInfo: {
@@ -200,35 +207,12 @@ export const useCaseStore = create((set, get) => ({
         const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
         const data = JSON.parse(stored);
 
-        const { formData, co_complainants, co_respondents } = get();
+        const { formData, complainantList, respondentList } = get();
         const caseData = {
             id: get().case.case_number,
-            complainant_user: {
-                first_name: formData.complainant.first_name.value,
-                last_name: formData.complainant.last_name.value,
-                middle_name: formData.complainant.middle_name.value || undefined,
-                birth_date: formData.complainant.birth_date.value ? new Date(formData.complainant.birth_date.value).toISOString().split("T")[0] : null,
-                sex: formData.complainant.sex.value,
-                contact_number: formData.respondent.contact_number.value,
-                barangay: formData.respondent.barangay.value,
-                street: formData.respondent.street.value,
-                additional_info: formData.complainant.additional_info.value,
-            },
-            co_complainants: co_complainants ,
-            co_respondents: co_respondents,
-            respondent: {
-                first_name: formData.respondent.first_name.value,
-                last_name: formData.respondent.last_name.value,
-                middle_name: formData.respondent.middle_name.value || undefined,
-                birth_date: formData.respondent.birth_date.value ?  new Date(formData.respondent.birth_date.value).toISOString().split("T")[0] : null,
-                sex: formData.respondent.sex.value,
-                contact_number: formData.respondent.contact_number.value,
-                barangay: formData.respondent.barangay.value,
-                street: formData.respondent.street.value,
-                additional_info: formData.respondent.additional_info.value,
-            },
+            complainants: complainantList,
+            respondents: respondentList,
             case_type: formData.caseDetails.nature_of_complaint_code.value,
-            settlement_type: formData.caseDetails.settlement.value,
             description: formData.caseDetails.description.value,
             predicted_hearings: formData.hearingInfo.predicted_number.value,
             remarks: "",
