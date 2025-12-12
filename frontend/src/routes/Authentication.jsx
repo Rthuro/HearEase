@@ -3,14 +3,10 @@ import Mail from "@/assets/custom_icons/mail.svg"
 import Lock from "@/assets/custom_icons/https.svg"
 import { Input } from "@/components/ui/input"
 import { useNavigate, Link } from "react-router-dom"
-import { data } from "@/test/user_data"
-import { toast } from "react-hot-toast"
 import { useState } from "react"
 import useAuthenticationStore from "@/store/useAuthenticationStore"
 import { loginUser } from "@/store/useLogin"
 import { Eye, EyeClosed } from "lucide-react"
-import { checkSignUpEmail } from "@/store/useSignUpStore"
-import { useSignUpStore } from "@/store/useSignUpStore"
 import { useEffect } from "react"
 
 
@@ -20,6 +16,8 @@ export function Authentication(){
     const { login, userRole, userLinkName, isAuthenticated, getLocalInfo } = useAuthenticationStore();
     const [showPassword, setShowPassword] = useState(false);
     const [ passType, setPassType ] = useState("password");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
 
     useEffect(() => {
         const stored = localStorage.getItem("authData");
@@ -39,16 +37,13 @@ export function Authentication(){
 
     const checkInputs = async (e) => {
         e.preventDefault();
-            
-        const email = document.getElementById("email").value;
-        const password = document.getElementById("password").value;
 
         const res = await loginUser(email, password);
-        if(res && isAuthenticated){
-            navigate(userRole === "admin" ? "/Admin" : "/" + userLinkName);
-            return;
+        if(res.role == "admin"){
+            navigate("/Admin");
+        } else if(res.role == "user"){
+            navigate(`/u/@${res.email.split("@")[0]}`);
         }
-        
         
     }
 
@@ -62,16 +57,32 @@ export function Authentication(){
                 <p className="text-xl text-center">
                     Sign in to continue
                 </p>
-                <p className="text-lg text-center text-zinc-600"> Please enter your details to sign in.</p>
+                <p className="text-lg text-center text-zinc-600"> Please enter your details to sign in. {userLinkName}</p>
             </div>
             <div className="flex flex-col justify-center items-center gap-3 w-[320px]">
                 <div className="flex items-center relative w-full">
                     <img src={Mail} alt="email icon" className="absolute ml-3"/>
-                    <Input type="email" id="email" placeholder="Enter your email..." className="pl-10" autoComplete="email" required />
+                    <Input
+                        type="email"
+                        className="pl-10 pr-3"
+                        placeholder="Enter your email..."
+                        autoComplete="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                    />
                 </div>
                 <div className="flex items-center relative w-full">
                     <img src={Lock} alt="lock icon" className="absolute ml-3"/>
-                    <Input type={passType} id="password" placeholder="Enter your password..." className="pl-10 pr-3" autoComplete="current-password" required />
+                    <Input
+                        type={passType}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Enter your password..."
+                        className="pl-10 pr-3"
+                        autoComplete="current-password"
+                        required
+                    />
                     { showPassword ?
                         <Eye className="absolute right-3 cursor-pointer text-redBase" onClick={togglePasswordVisibility} />
                         :
