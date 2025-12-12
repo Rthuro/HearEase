@@ -100,14 +100,14 @@ export function Case() {
                 },
                 {
                     label:"Predicted Hearings",
-                    value: (caseInfo?.predicted_number ? caseInfo.predicted_number + ' hearings' : '-') 
+                    value: (caseInfo?.predicted_hearings ? caseInfo.predicted_hearings + ' hearings' : '-') 
                 },
                 {
                     label:"Nature of Complaint",
                     value: caseInfo.case_type.case_name || '-'
                 },{
                     label:"Settlement",
-                    value: caseInfo.settlement_type.settlement_name || '-'
+                    value: caseInfo?.settlement_type?.settlement_name || '-'
                 },
                 {
                     label:"Severity",
@@ -444,7 +444,15 @@ export function Case() {
             </div>
             )
             }
-
+            
+            {userRole === 'admin' && (
+            <Link to={`/Admin/Case/Hearing-Scheduler/${caseInfo.id}`}>
+                <Button className="ml-auto" >
+                    Schedule Hearing
+                    <ArrowRight className="ml-2" />
+                </Button>
+            </Link>
+            )}
             <div className="flex flex-col gap-4 bg-white p-4 rounded-md shadow-2xs border">
                 <h2 className="text-xl font-semibold">Hearing Attendance</h2>
                 <div className="border rounded-lg overflow-hidden">
