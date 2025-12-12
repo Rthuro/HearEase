@@ -47,7 +47,10 @@ const useAuthenticationStore = create((set) => ({
 
     set({
       isAuthenticated: true,
-      ...authData,
+      userRole: role,
+      userInfo: info,
+      userLinkName: role === "admin" ? "/Admin" : "u/@" + info.email.split("@")[0],
+      username: info.email.split("@")[0],
     });
   },
 
