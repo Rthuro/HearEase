@@ -4,11 +4,11 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Case, SettlementType, CaseType
+from .models import Case, SettlementType, CaseType, Relationship
 from respondents.models import Respondent
 from complainants.models import Complainant
 from complainants.serializers import ComplainantSerializer
-from .serializers import CaseSerializer, CaseTypeSerializer, SettlementTypeSerializer
+from .serializers import CaseSerializer, CaseTypeSerializer, SettlementTypeSerializer, RelationshipSerializer
 from hearings.models import Hearing
 from django.contrib.auth import get_user_model
 from django.db.models.functions import TruncMonth
@@ -24,12 +24,18 @@ class CaseTypeListView(APIView):
         serializer = CaseTypeSerializer(case_types, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-
 class SettlementTypeListView(APIView):
     def get(self, request):
         settlements = SettlementType.objects.all().order_by("id")
         serializer = SettlementTypeSerializer(settlements, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+class RelationshipListView(APIView):
+    def get(self, request):
+        relationships = Relationship.objects.all().order_by("id")
+        serializer = RelationshipSerializer(relationships, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
 
 class CaseView(APIView):
     def post(self, request):
@@ -85,14 +91,17 @@ class CaseView(APIView):
         # If hearing info is provided, create initial hearing
         hearing_info = data.get("hearing_info")
         if hearing_info:
-            Hearing.objects.create(
-                case=new_case,  
-                hearing_date=hearing_info.get("hearing_date"),
-                time=hearing_info.get("time"),
-                lupon_member_id=hearing_info.get("lupon_member"),  
-                remarks=hearing_info.get("remarks", "Initial hearing pending schedule."),
-                hearing_status=hearing_info.get("hearing_status", "pending_schedule"),
-            )
+            for hearing in hearing_info:
+
+                Hearing.objects.create(
+                    case=new_case,  
+                    hearing_number=hearing.get("hearing_number"),
+                    hearing_date=hearing.get("hearing_date"),
+                    time=hearing.get("time"),
+                    lupon_member_id=hearing.get("lupon_member_id"),  
+                    remarks=hearing.get("remarks", "Initial hearing pending schedule."),
+                    hearing_status=hearing.get("hearing_status", "pending_schedule"),
+                )
 
         # Serialize and return
         serializer = CaseSerializer(new_case)
@@ -128,15 +137,17 @@ class CaseView(APIView):
 
 class CaseListView(APIView):
     def post(self, request):
-        role = request.data.get("role")
+        is_user = request.data.get("is_user")
         first_name = request.data.get("first_name")
         last_name = request.data.get("last_name")
 
         user_id = Complainant.objects.filter(first_name=first_name, last_name=last_name).first()
 
-        if role == "user":
+        cases = []
+
+        if is_user and user_id:
             cases = Case.objects.filter(complainants=user_id.id).order_by("-date_filed")
-        else:
+        elif not is_user:
             cases = Case.objects.all().select_related("case_type", "settlement_type").order_by("-date_filed")
 
         serializer = CaseSerializer(cases, many=True)
