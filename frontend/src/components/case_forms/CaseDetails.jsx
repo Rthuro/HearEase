@@ -46,8 +46,6 @@ export function CaseDetails(){
     setUploadedFiles(updatedFiles);
     setFormData('caseDetails', 'documents', updatedFiles);
   }
-
-  console.log("relationshipList:", relationshipList);
     
     return (
         <div className="flex flex-col items-center gap-4">
