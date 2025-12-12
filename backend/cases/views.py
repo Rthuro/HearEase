@@ -80,7 +80,7 @@ class CaseView(APIView):
             "description": data.get("description"),
             "remarks": data.get("remarks"),
             "predicted_hearings": data.get("predicted_hearings"),
-            "case_status": "pending_approval",
+            "case_status": data.get("case_status"),
         }
 
         new_case = Case.objects.create(**case_data)
