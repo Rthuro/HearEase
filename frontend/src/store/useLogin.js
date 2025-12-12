@@ -16,7 +16,7 @@ export const loginUser = async (email, password) => {
     login(user.role, user);
 
     toast.success("Login successful!");
-    return true;
+    return user;
   } catch (err) {
     toast.error(
       err.response?.data?.non_field_errors?.[0] ||
