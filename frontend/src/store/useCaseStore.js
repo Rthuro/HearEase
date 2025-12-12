@@ -20,6 +20,11 @@ export const getSettlementTypes = async () => {
     return response.data;
 };
 
+export const getRelationshipList = async () => {
+    const response = await axios.get(`${API_URL}/relationship-list/`);
+    return response.data;
+};
+
 export const addCase = async (caseData) => {
     try {
         const response = await axios.post(`${API_URL}/cases/`, caseData);
@@ -33,13 +38,10 @@ export const addCase = async (caseData) => {
 };
 
 export const getCases = async () => {
-    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-    const data = JSON.parse(stored);
-
     const userData = await getUser();
 
     const response = await axios.post(`${API_URL}/case-list/`, {
-        role: data.userRole,
+        is_user: userData.user.is_user,
         first_name: userData.user.first_name,
         last_name: userData.user.last_name
     });
@@ -72,6 +74,8 @@ export const useCaseStore = create((set, get) => ({
     caseTypes: [],
     settlementTypes: [],
     relationshipTypes: [],
+    relationshipList: [],
+
     predictions: null,
     predictionsLoading: false,
     case: {
@@ -124,23 +128,27 @@ export const useCaseStore = create((set, get) => ({
             contact_number: { value: "", required: false },
             barangay: { value: "Tetuan", required: true },
             street: { value: "", required: true },
-            relationship: { value: "Neighbor", required: true },
             additional_info: { value: "", required: false },
         },
         caseDetails: {
             nature_of_complaint_code: { value: null, required: true },
             severity: { value: null, required: false },
+            relationship: { value: "", required: true },
             description: { value: "", required: true },
             documents: { value: [], required: false },
+            predicted_number: { value: null, required: false },
         },
-        hearingInfo: {
-            predicted_number: { value: 3, required: false },
-            first_hearing_date: { value: null, required: false },
-            time: { value: null, required: false },
-            lupon_member_id: { value: null, required: true },
-        }
+        hearingInfo: [],
     },
 
+    setHearings: (hearingData) => {
+        set((state) => ({
+            formData: {
+                ...state.formData,
+                hearingInfo: hearingData,
+            },
+        }));
+    },
     setFormData: (section, field, value) => {
         set((state) => ({
             formData: {
@@ -186,15 +194,12 @@ export const useCaseStore = create((set, get) => ({
                 caseDetails: {
                     nature_of_complaint_code: { value: "", required: true },
                     severity: { value: null, required: false },
+                    relationship: { value: "", required: true },
                     description: { value: "", required: true },
                     documents: { value: [], required: false },
+                    predicted_number: { value: "", required: false },
                 },
-                hearingInfo: {
-                    predicted_number: { value: null, required: false },
-                    first_hearing_date: { value: null, required: false },
-                    time: { value: null, required: false },
-                    lupon_member_id: { value: null, required: true },
-                }
+                hearingInfo: [],
             },
             predictions: null,
         })
@@ -216,20 +221,41 @@ export const useCaseStore = create((set, get) => ({
         const data = JSON.parse(stored);
 
         const { formData, complainantList, respondentList } = get();
+
+        const formattedHearing = () => {
+            if (formData.hearingInfo.length <= 0) return null;
+
+            const formatted = formData.hearingInfo.map((hearing) => {
+                let dateStr = null;
+                
+                if (hearing.hearing_date) { 
+                    const d = new Date(hearing.hearing_date);
+                    
+                    const year = d.getFullYear();
+                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+                    dateStr = `${year}-${month}-${day}`;
+                }
+
+                return {
+                    ...hearing,
+                    hearing_date: dateStr, 
+                };
+            });
+
+            return formatted;
+        }
+
         const caseData = {
             id: get().case.case_number,
             complainants: complainantList,
             respondents: respondentList,
             case_type: formData.caseDetails.nature_of_complaint_code.value,
             description: formData.caseDetails.description.value,
-            predicted_hearings: formData.hearingInfo.predicted_number.value,
+            predicted_hearings: formData.caseDetails.predicted_number.value || 0,
             remarks: "",
             case_status: data.userRole === 'admin' ? "approved" : "pending_approval",
-            hearing_info: {
-                hearing_date: formData.hearingInfo.first_hearing_date.value ? formData.hearingInfo.first_hearing_date.value.toISOString().split("T")[0] : null,
-                time: formData.hearingInfo.time.value ? formData.hearingInfo.time.value : null,
-                lupon_member: formData.hearingInfo.lupon_member_id.value,
-            },
+            hearing_info: formattedHearing(),
         };
 
         const case_documents = formData.caseDetails.documents.value;
@@ -505,7 +531,7 @@ export const useCaseStore = create((set, get) => ({
         const severity = formData.caseDetails.severity.value || 1;
 
         // Get relationship from complainant (using primary complainant's relationship)
-        const relationship = formData.complainant.relationship.value || "Neighbor";
+        const relationship = formData.caseDetails.relationship.value || "Neighbor";
 
         // Count complainants and respondents
         const numComplainants = Math.max(1, complainantList.length);
@@ -571,6 +597,15 @@ export const useCaseStore = create((set, get) => ({
                     "Ex-Partner", "Tenant/Landlord"
                 ]
             });
+        }
+    },
+
+    fetchRelationshipList: async () => {
+        try {
+            const relationshipList = await getRelationshipList();
+            set({ relationshipList: relationshipList });
+        } catch (error) {
+            console.error("Fetch relationship types error:", error);
         }
     },
 
