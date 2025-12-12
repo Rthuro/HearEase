@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -28,9 +28,6 @@ export default function Hearing() {
     const { hearings } = useHearingStore();
     const { members } = useLuponStore();
     const navigate = useNavigate();
-    const [time, setTime] = useState(0); 
-    const [running, setRunning] = useState(false);
-    const intervalRef = useRef(null);
     const [ complainantAttendance, setComplainantAttendance ] = useState("present");
     const [ respondentAttendance, setRespondentAttendance ] = useState("present");
     const [ luponAttendance, setLuponAttendance ] = useState("present");
@@ -41,34 +38,6 @@ export default function Hearing() {
     const stored = localStorage.getItem("authData");
     const data = JSON.parse(stored);
     const userRole = data.userRole;
-
-    const startTimer = () => {
-        if (running) return; // prevent double interval
-        setRunning(true);
-
-        intervalRef.current = setInterval(() => {
-        setTime((prev) => prev + 1);
-        }, 1000);
-    };
-
-    const stopTimer = () => {
-        clearInterval(intervalRef.current);
-        setRunning(false);
-    };
-
-    const resetTimer = () => {
-        clearInterval(intervalRef.current);
-        setRunning(false);
-        setTime(0);
-    };
-
-    // Format seconds to MM:SS
-    const formatTime = () => {
-        const mins = String(Math.floor(time / 60)).padStart(2, "0");
-        const secs = String(time % 60).padStart(2, "0");
-        return `${mins}:${secs}`;
-    };
-
     
     if(userRole == 'admin'){
         return (
@@ -100,13 +69,13 @@ export default function Hearing() {
 
                         <TableBody>
                             <TableRow className="border-t">
-                                <TableCell className="px-4 py-2">{hearing.hearing_date}</TableCell>
-                                <TableCell className="px-4 py-2">{hearing.time}</TableCell>
+                                <TableCell className="px-4 py-2">{hearing?.hearing_date}</TableCell>
+                                <TableCell className="px-4 py-2">{hearing?.time}</TableCell>
                                 <TableCell className="px-4 py-2">
                                     {lupon?.first_name + lupon?.last_name}
                                 </TableCell>
                                 <TableCell className="px-4 py-2"> 
-                                    <CaseStatusDisplay caseStatus={hearing.hearing_status} />
+                                    <CaseStatusDisplay caseStatus={hearing?.hearing_status} />
                                 </TableCell>
                                  <TableCell className="px-4 py-2">
                                     <Button variant="outline">
@@ -118,17 +87,7 @@ export default function Hearing() {
                         </TableBody>
                     </Table>
                     </div>
-                    
-                    {/* { hearing.hearing_status == 'scheduled' && (
-                        <div className="flex gap-3 self-end">
-                            <Button className={cn("bg-redBase")}>
-                                Reschedule Hearing
-                            </Button>
-                            <Button variant="outline" className={cn("text-redBase")}>
-                                Cancel Hearing
-                            </Button>
-                        </div>
-                    )} */}
+    
                     <div className="flex gap-3 self-end">
                         <Button className={cn("bg-redBase")}>
                             Reschedule Hearing
