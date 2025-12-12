@@ -1,14 +1,12 @@
 import { Input } from "../ui/input"
 import { Label } from "../ui/label"
 import { useState, useEffect } from "react";
-import { getFirstHearingDate } from "@/lib/helpers";
 import {
     Popover,
     PopoverContent,
     PopoverTrigger,
 } from "../ui/popover"
 import { Check, ChevronsUpDown, Loader2 } from "lucide-react"
-import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
     Command,
@@ -20,10 +18,13 @@ import {
 } from "@/components/ui/command"
 import { useCaseStore } from "@/store/useCaseStore";
 import { useLuponStore } from "@/store/useLuponStore";
+import { HearingSched } from "../HearingSched";
+import { Separator } from "../ui/separator";
 
 export function HearingInfo() {
     const { setFormData, formData, predictions, predictionsLoading, fetchPredictions, caseTypes, fetchCaseTypes } = useCaseStore();
     const { members, fetchMembers } = useLuponStore();
+    const [prediction, setPrediction] = useState(null);
 
     useEffect(() => {
         fetchMembers();
@@ -44,11 +45,6 @@ export function HearingInfo() {
         }
     }, [caseTypes.length]);
 
-    const [scheduledDate] = useState(new Date());
-    const [firstHearing] = useState(getFirstHearingDate(scheduledDate));
-
-    const [open, setOpen] = useState(false)
-
     // Get the first prediction (Amicable Settlement as default display)
     const defaultPrediction = predictions ?
         (predictions["Amicable Settlement"] || Object.values(predictions)[0]) : null;
@@ -63,7 +59,8 @@ export function HearingInfo() {
     // Update formData with AI prediction
     useEffect(() => {
         if (defaultPrediction) {
-            setFormData('hearingInfo', 'predicted_number', defaultPrediction.predicted_hearings);
+            setFormData('caseDetails', 'predicted_number', defaultPrediction.predicted_hearings);
+            setPrediction(defaultPrediction);
         }
     }, [predictions]);
 
@@ -108,66 +105,9 @@ export function HearingInfo() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-2">
-                <Label htmlFor="hearingDate">Date of First Hearing
-                    <span className="text-redBase"> (auto)</span></Label>
-                <Input id="hearingDate" type="text" className="w-72"
-                    value={firstHearing.toLocaleDateString()} readOnly />
-            </div>
-            <div className="grid grid-cols-1 gap-2">
-                <Label htmlFor="time">Time
-                    <span className="text-redBase"> (auto)</span>
-                </Label>
-                <Input id="time" type="time" className="w-72" readOnly />
-            </div>
+            <Separator className="col-span-2" />
 
-            <div className="grid grid-cols-1 gap-2 col-span-2">
-                <Label htmlFor="lupon">Assigned Lupon Member
-                    <span className="text-redBase">*</span>
-                </Label>
-                <Popover open={open} onOpenChange={setOpen} id="lupon">
-                    <PopoverTrigger asChild>
-                        <Button
-                            role="combobox"
-                            aria-expanded={open}
-                            variant="outline"
-                            className="max-w-max min-w-full justify-between"
-                        >
-                            {formData.hearingInfo.lupon_member_id.value ? (members.find((lupon) => lupon.id === formData.hearingInfo.lupon_member_id.value)?.first_name + " " + members.find((lupon) => lupon.id === formData.hearingInfo.lupon_member_id.value)?.last_name)
-                                : "Select lupon members..."}
-                            <ChevronsUpDown className="opacity-50" />
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[400px] p-0">
-                        <Command>
-                            <CommandInput placeholder="Search lupon members..." className="h-9" />
-                            <CommandList>
-                                <CommandEmpty>No lupon members found.</CommandEmpty>
-                                <CommandGroup>
-                                    {members.map((lupon) => (
-                                        <CommandItem
-                                            key={lupon.id}
-                                            value={lupon.id}
-                                            onSelect={() => {
-                                                setFormData('hearingInfo', 'lupon_member_id', lupon.id);
-                                                setOpen(false)
-                                            }}
-                                        >
-                                            {lupon.first_name} {lupon.last_name}
-                                            <Check
-                                                className={cn(
-                                                    "ml-auto",
-                                                    formData.hearingInfo.lupon_member_id.value === lupon.id ? "opacity-100" : "opacity-0"
-                                                )}
-                                            />
-                                        </CommandItem>
-                                    ))}
-                                </CommandGroup>
-                            </CommandList>
-                        </Command>
-                    </PopoverContent>
-                </Popover>
-            </div>
+            <HearingSched prediction={prediction} luponMembers={members} />
         </div>
     )
 }
