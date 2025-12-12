@@ -107,7 +107,7 @@ export function HearingInfo() {
 
             <Separator className="col-span-2" />
 
-            <HearingSched prediction={prediction} luponMembers={members} />
+            <HearingSched predicted={formData?.caseDetails?.predicted_number?.value} luponMembers={members} />
         </div>
     )
 }

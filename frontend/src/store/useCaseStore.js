@@ -75,6 +75,7 @@ export const useCaseStore = create((set, get) => ({
     settlementTypes: [],
     relationshipTypes: [],
     relationshipList: [],
+    loading: false,
 
     predictions: null,
     predictionsLoading: false,
@@ -507,6 +508,41 @@ export const useCaseStore = create((set, get) => ({
         }
     },
 
+    updateHearings: async (case_id, hearing_data, prediction) => {
+        try {
+            set({ loading: true });
+
+            if (hearing_data.length === 0) {
+                toast.error("No hearing data to update.");
+                set({ loading: false });
+                return;
+            };
+   
+            const res_hearing = await axios.post(`${API_URL}/update-hearings/${case_id}/`, {
+                hearings: hearing_data,
+            });
+
+            if (!(res_hearing.status === 200)) return;
+
+            const res_case = await axios.put(`${API_URL}/update-case/${case_id}/`, {
+                case_status: "in_progress",
+                predicted_hearings: prediction ? prediction.predicted_hearings : null,
+            });
+
+            if (!(res_case.status === 200)) return;
+
+            if(res_case.status === 200 && res_hearing.status === 200) {
+                set({ loading: false });
+                toast.success("Hearings successfully created.");
+                get().resetFormData();
+                fetchHearings();
+                get().fetchCases();
+            }
+        } catch (error) {
+            set({ loading: false });
+            toast.error("Update hearings unsuccessful:", error);
+        }
+    },
     // AI Model Prediction Functions
     fetchPredictions: async () => {
         const { formData, complainantList, respondentList, caseTypes } = get();

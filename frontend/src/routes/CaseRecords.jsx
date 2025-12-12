@@ -177,7 +177,7 @@ export function CaseRecords(){
                                                 <TableRow key={c.id} className={cn("text-zinc-700")}>
                                                     <TableCell>{c.id}</TableCell>
                                                     <TableCell>{c.case_type.case_name}</TableCell>
-                                                    <TableCell>{c.settlement_type.settlement_name}</TableCell>
+                                                    <TableCell>{c?.settlement_type?.settlement_name || "-"}</TableCell>
                                                     <TableCell>{new Date(c.date_filed).toLocaleString()}</TableCell>
                                                     <TableCell>
                                                         <CaseStatusDisplay caseStatus={c.case_status} />

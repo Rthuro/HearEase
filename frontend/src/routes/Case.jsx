@@ -10,7 +10,7 @@ import cancellation_notice from "@/assets/imgs/cancellation_notice.png"
 import { cn } from "@/lib/utils";
 import { PageSync } from "@/components/PageSync";
 import { CaseStatusDisplay } from "@/components/CaseStatusDisplay";
-import { ChevronLeft, X,Check, Edit, ArrowRight } from "lucide-react";
+import { ChevronLeft, X,Check, Edit, ArrowRight, ArrowUpRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import useHearingStore from "@/store/useHearingStore";
 import { useRetrieveUsersStore } from "@/store/useRetrieveUsersStore";
@@ -35,7 +35,7 @@ const BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 export function Case() {
     const { case_number } = useParams();
-    const { cases, updateCaseStatus } = useCaseStore();
+    const { cases, updateCaseStatus, deleteCase } = useCaseStore();
     const { hearings } = useHearingStore();
     const { case_complainants, case_respondents, fetchCaseComplainants, fetchCaseRespondents} = useRetrieveUsersStore();
     const [template, setTemplate] = useState({});
@@ -55,7 +55,7 @@ export function Case() {
         fetchCaseDocuments(case_number);
     }, [case_number])
 
-    const findHearingCase = hearings.filter( hearing => hearing.case == case_number);
+    const findHearingCase = hearings.length > 0 ? hearings.filter( hearing => hearing.case == case_number) : [];
 
     const lupon = members.find(member => member.id === findHearingCase[0]?.lupon_member);
 
@@ -246,6 +246,17 @@ export function Case() {
                         </Button>
                     </div>
                 )}
+
+                { userRole == 'user' && caseInfo.case_status == 'pending_approval' && (
+                    <div className="flex gap-2">
+                         <Button variant="default" className={cn("bg-redBase")}
+                        onClick={() => {
+                            deleteCase(caseInfo.id);
+                        }}>
+                            Withdraw Application
+                        </Button>
+                    </div>
+                )}
             </div>
 
             <div className="flex flex-col gap-6 bg-white p-4 rounded-md shadow-2xs border ">
@@ -258,14 +269,14 @@ export function Case() {
                         <p className="text-sm">Pending Approval</p>
                         <div
                             className={`w-full h-1 rounded-full 
-                                ${caseInfo.case_status === 'approved' ? 'bg-green-600' : 'bg-gray-300'}`}
+                                ${caseInfo.case_status === 'approved' || caseInfo.case_status !== 'pending_approval' ? 'bg-green-600' : 'bg-gray-300'}`}
                         ></div>
                     </div>
                     <div className="flex flex-col gap-2 items-center">
                         <p className="text-sm">On-Going Hearing</p>
                         <div
                             className={`w-full h-1 rounded-full 
-                                ${caseInfo.case_status === 'on_going' ? 'bg-green-600' : 'bg-gray-300'}`}
+                                ${caseInfo.case_status === 'in_progress' ? 'bg-green-600' : 'bg-gray-300'}`}
                         ></div>
                     </div>
                     <div className="flex flex-col gap-2 items-center">
@@ -444,15 +455,7 @@ export function Case() {
             </div>
             )
             }
-            
-            {userRole === 'admin' && (
-            <Link to={`/Admin/Case/Hearing-Scheduler/${caseInfo.id}`}>
-                <Button className="ml-auto" >
-                    Schedule Hearing
-                    <ArrowRight className="ml-2" />
-                </Button>
-            </Link>
-            )}
+
             <div className="flex flex-col gap-4 bg-white p-4 rounded-md shadow-2xs border">
                 <h2 className="text-xl font-semibold">Hearing Attendance</h2>
                 <div className="border rounded-lg overflow-hidden">
@@ -490,9 +493,19 @@ export function Case() {
                             ))
                             ) : (
                             <TableRow>
-                                <TableCell className="px-4 py-2" colSpan={8}>
-                                No hearing attendance found.
+                                { userRole === 'admin' && caseInfo.case_status == 'approved' ? (
+                                <TableCell className="px-4 py-3 text-center" colSpan={7}>
+                                    <Link to={`/Admin/Case/Hearing-Scheduler/${caseInfo.id}`}
+                                    className="text-redBase border-b border-redBase">
+                                        Schedule Case Hearings
+                                        <ArrowUpRight className="inline-block ml-1 h-4 w-4" />
+                                    </Link>
                                 </TableCell>
+                                ) : (   
+                                <TableCell className="px-4 py-2 text-center" colSpan={7}>
+                                Hearing schedule will appear here once approved.
+                                </TableCell>
+                                )}
                             </TableRow>
                             )}
                         </TableBody>

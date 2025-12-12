@@ -30,8 +30,8 @@ import { dateFormatter } from "@/lib/helpers";
 import { Calendar } from "./ui/calendar";
 import { useCaseStore } from "@/store/useCaseStore";
 
-export function HearingSched({ prediction, luponMembers }) {
-  const predicted_hearings = prediction ? prediction.predicted_hearings : 3;
+export function HearingSched({ predicted, luponMembers }) {
+  const predicted_hearings = predicted || 3;
   const { setHearings } = useCaseStore();
   const [openPopover, setOpenPopover] = useState(null);
   const [openCalendar, setOpenCalendar] = useState(null);
@@ -246,7 +246,7 @@ export function HearingSched({ prediction, luponMembers }) {
         return (
           <div
             key={i}
-            className="flex items-start gap-3 p-4 border border-gray-300 rounded-lg"
+            className="flex items-start gap-3 p-4 border border-gray-300 bg-white rounded-lg"
           >
             <p className="w-9 p-1 text-center rounded-full font-bold text-redBase bg-redBase/10">
               {h.hearing_number}
