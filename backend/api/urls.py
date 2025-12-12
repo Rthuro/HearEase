@@ -44,6 +44,7 @@ urlpatterns = [
     path('update-case/<str:pk>/', CaseViews.UpdateCaseInfoView.as_view(), name='update-case'),
     path('single-case/', CaseViews.SingleCaseView.as_view(), name='single-case'),
 
+    path('relationship-list/', CaseViews.RelationshipListView.as_view(), name='relationship-list'),
     path('settlement-types/', CaseViews.SettlementTypeListView.as_view(), name='settlement-type-list'),
     path('hearings/', HearingViews.HearingView.as_view(), name='all-hearing-list'),
     path('hearing-cases/', HearingViews.HearingCaseView.as_view(), name='hearing-case-list'),
