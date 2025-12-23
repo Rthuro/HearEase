@@ -131,7 +131,6 @@ if USE_SUPABASE:
             'PORT': os.getenv('SUPABASE_DB_PORT'),
             'OPTIONS': {
                 'sslmode': 'require',
-                'DISABLE_SERVER_SIDE_CURSORS': True, 
             },
         }
     }
