@@ -16,6 +16,7 @@ from dotenv import load_dotenv
 import firebase_admin
 from firebase_admin import credentials
 import psycopg2
+import json
 import os
 
 load_dotenv()
@@ -24,8 +25,20 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 if not firebase_admin._apps:
-    cred_path = os.path.join(BASE_DIR, 'firebase-adminsdk.json')
-    cred = credentials.Certificate(cred_path)
+    
+    # Option 1: Look for the Environment Variable (Production/Render)
+    firebase_creds_str = os.getenv('FIREBASE_CREDENTIALS_JSON')
+    
+    if firebase_creds_str:
+        # Convert the string back into a Python Dictionary
+        cred_dict = json.loads(firebase_creds_str)
+        cred = credentials.Certificate(cred_dict)
+        
+    # Option 2: Look for the local file (Local Development)
+    else:
+        cred_path = os.path.join(BASE_DIR, 'firebase-adminsdk.json')
+        cred = credentials.Certificate(cred_path)
+
     firebase_admin.initialize_app(cred)
 
 # Quick-start development settings - unsuitable for production
