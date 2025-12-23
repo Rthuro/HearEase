@@ -7,9 +7,11 @@ from hearings import views as HearingViews
 from complainants import views as ComplainantsViews
 from documents import views as DocumentViews
 from respondents import views as RespondentViews
+from AIModel import views as AIModelViews
 
 urlpatterns = [
     path("register/", UserViews.RegisterView.as_view(), name="register"),
+    path('auth/google/', UserViews.GoogleLoginView.as_view(), name='google-login'),
 
     path('check-email/', UserViews.CheckEmailView.as_view(), name='check-email'),
     path('find-user/', UserViews.FindUserView.as_view(), name='find-user'),
@@ -43,9 +45,12 @@ urlpatterns = [
     path('update-case/<str:pk>/', CaseViews.UpdateCaseInfoView.as_view(), name='update-case'),
     path('single-case/', CaseViews.SingleCaseView.as_view(), name='single-case'),
 
+    path('relationship-list/', CaseViews.RelationshipListView.as_view(), name='relationship-list'),
     path('settlement-types/', CaseViews.SettlementTypeListView.as_view(), name='settlement-type-list'),
     path('hearings/', HearingViews.HearingView.as_view(), name='all-hearing-list'),
     path('hearing-cases/', HearingViews.HearingCaseView.as_view(), name='hearing-case-list'),
+    path('update-hearings/<str:pk>/', HearingViews.SetCaseHearingsView.as_view(), name='update-hearings'),
+    path('update-single-hearing/<int:pk>/', HearingViews.UpdateHearingView.as_view(), name='update-hearing'),
 
     path('document-templates/', DocumentViews.DocumentTemplateListCreateView.as_view(), name='document-template-list-create'),
     path('templates/<int:pk>/generate/', DocumentViews.GenerateDocumentView.as_view(), name='generate-document'),
@@ -54,5 +59,9 @@ urlpatterns = [
     path('reports/', CaseViews.ReportView.as_view(), name='reports'),
 
     path("", include("case_documents.urls")),
+
+    # AI Model Prediction Endpoints
+    path('predict-case/', AIModelViews.PredictCaseView.as_view(), name='predict-case'),
+    path('model-info/', AIModelViews.ModelInfoView.as_view(), name='model-info'),
 
 ] 

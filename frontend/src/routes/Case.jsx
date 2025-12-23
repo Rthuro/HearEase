@@ -10,7 +10,7 @@ import cancellation_notice from "@/assets/imgs/cancellation_notice.png"
 import { cn } from "@/lib/utils";
 import { PageSync } from "@/components/PageSync";
 import { CaseStatusDisplay } from "@/components/CaseStatusDisplay";
-import { ChevronLeft, X,Check, Edit, ArrowRight } from "lucide-react";
+import { ChevronLeft, X,Check, Edit, ArrowRight, ArrowUpRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import useHearingStore from "@/store/useHearingStore";
 import { useRetrieveUsersStore } from "@/store/useRetrieveUsersStore";
@@ -30,12 +30,13 @@ import { EditCaseInfo } from "@/components/EditCaseInfo";
 import { CaseCancellationModal } from "@/components/CaseCancellationModal";
 import { useLuponStore } from "@/store/useLuponStore";
 import { EditCoAttendee } from "@/components/EditCoAttendee";
+import { CaseSettingsModal } from "@/components/CaseSettingsModal";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 export function Case() {
     const { case_number } = useParams();
-    const { cases, updateCaseStatus } = useCaseStore();
+    const { cases, updateCaseStatus, deleteCase, setFormData, set_complainants, set_respondents } = useCaseStore();
     const { hearings } = useHearingStore();
     const { case_complainants, case_respondents, fetchCaseComplainants, fetchCaseRespondents} = useRetrieveUsersStore();
     const [template, setTemplate] = useState({});
@@ -55,11 +56,22 @@ export function Case() {
         fetchCaseDocuments(case_number);
     }, [case_number])
 
-    const findHearingCase = hearings.filter( hearing => hearing.case == case_number);
+    const caseInfo = cases.find( c => c.id == case_number);
+
+    useEffect(() => {
+        if (caseInfo) {
+            setFormData('caseDetails', 'nature_of_complaint_code', caseInfo.case_type.id);
+            setFormData('caseDetails', 'severity', caseInfo.case_type.severity);
+            setFormData('caseDetails', 'relationship', caseInfo.relationship);
+            set_complainants(caseInfo.complainants);
+            set_respondents(caseInfo.respondents);
+        }
+    }, [caseInfo]);
+
+    const findHearingCase = hearings.length > 0 ? hearings.filter( hearing => hearing.case == case_number) : [];
 
     const lupon = members.find(member => member.id === findHearingCase[0]?.lupon_member);
 
-    const caseInfo = cases.find( c => c.id == case_number);
 
     useEffect( () => {
         fetchCaseComplainants(caseInfo?.complainants);
@@ -100,14 +112,14 @@ export function Case() {
                 },
                 {
                     label:"Predicted Hearings",
-                    value: (caseInfo?.predicted_number ? caseInfo.predicted_number + ' hearings' : '-') 
+                    value: (caseInfo?.predicted_hearings ? caseInfo.predicted_hearings + ' hearings' : '-') 
                 },
                 {
                     label:"Nature of Complaint",
                     value: caseInfo.case_type.case_name || '-'
                 },{
                     label:"Settlement",
-                    value: caseInfo.settlement_type.settlement_name || '-'
+                    value: caseInfo?.settlement_type?.settlement_name || '-'
                 },
                 {
                     label:"Severity",
@@ -220,7 +232,6 @@ export function Case() {
         }
     };
 
-    console.log("case_complainants", case_complainants);
     return (
         <div className="relative flex flex-col gap-4 p-6 ">
             <PageSync page="" />
@@ -231,21 +242,37 @@ export function Case() {
                         <ChevronLeft />
                     </Button>
                 </div>
-                { userRole == 'admin' && caseInfo.case_status == 'pending_approval' && (
-                    <div className="flex gap-2">
-                        <CaseCancellationModal caseInfo={caseInfo}  />
-                        <Button variant="default" className={cn("bg-redBase")}
-                        onClick={() => {
-                            updateCaseStatus({
-                                id: caseInfo.id,
-                                case_status: "approved",
-                            },"approved");
-                        }}>
-                            <Check />
-                            Approve Case
-                        </Button>
-                    </div>
-                )}
+               
+
+                <div className="flex gap-3">
+                     { userRole == 'admin' && caseInfo.case_status == 'pending_approval' && (
+                        <div className="flex gap-2">
+                            <CaseCancellationModal caseInfo={caseInfo}  />
+                            <Button variant="default" className={cn("bg-redBase")}
+                            onClick={() => {
+                                updateCaseStatus({
+                                    id: caseInfo.id,
+                                    case_status: "approved",
+                                },"approved");
+                            }}>
+                                <Check />
+                                Approve Case
+                            </Button>
+                        </div>
+                    )}
+                    { userRole == 'user' && caseInfo.case_status == 'pending_approval' && (
+                        <div className="flex gap-2">
+                            <Button variant="default" className={cn("bg-redBase")}
+                            onClick={() => {
+                                deleteCase(caseInfo.id);
+                            }}>
+                                Withdraw Application
+                            </Button>
+                        </div>
+                    )}
+                    <CaseSettingsModal caseData={caseInfo} />
+                </div>
+                
             </div>
 
             <div className="flex flex-col gap-6 bg-white p-4 rounded-md shadow-2xs border ">
@@ -258,14 +285,14 @@ export function Case() {
                         <p className="text-sm">Pending Approval</p>
                         <div
                             className={`w-full h-1 rounded-full 
-                                ${caseInfo.case_status === 'approved' ? 'bg-green-600' : 'bg-gray-300'}`}
+                                ${caseInfo.case_status === 'approved' || caseInfo.case_status !== 'pending_approval' ? 'bg-green-600' : 'bg-gray-300'}`}
                         ></div>
                     </div>
                     <div className="flex flex-col gap-2 items-center">
                         <p className="text-sm">On-Going Hearing</p>
                         <div
                             className={`w-full h-1 rounded-full 
-                                ${caseInfo.case_status === 'on_going' ? 'bg-green-600' : 'bg-gray-300'}`}
+                                ${caseInfo.case_status === 'in_progress' ? 'bg-green-600' : 'bg-gray-300'}`}
                         ></div>
                     </div>
                     <div className="flex flex-col gap-2 items-center">
@@ -482,9 +509,19 @@ export function Case() {
                             ))
                             ) : (
                             <TableRow>
-                                <TableCell className="px-4 py-2" colSpan={8}>
-                                No hearing attendance found.
+                                { userRole === 'admin' && caseInfo.case_status == 'approved' ? (
+                                <TableCell className="px-4 py-3 text-center" colSpan={7}>
+                                    <Link to={`/Admin/Case/Hearing-Scheduler/${caseInfo.id}`}
+                                    className="text-redBase border-b border-redBase">
+                                        Schedule Case Hearings
+                                        <ArrowUpRight className="inline-block ml-1 h-4 w-4" />
+                                    </Link>
                                 </TableCell>
+                                ) : (   
+                                <TableCell className="px-4 py-2 text-center" colSpan={7}>
+                                Hearing schedule will appear here once approved.
+                                </TableCell>
+                                )}
                             </TableRow>
                             )}
                         </TableBody>

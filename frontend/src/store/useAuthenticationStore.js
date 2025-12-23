@@ -1,6 +1,9 @@
 import { create } from "zustand";
+import axios from "axios";
 
 const LOCAL_STORAGE_KEY = "authData";
+const API_URL = "http://127.0.0.1:8000/api";
+
 
 const useAuthenticationStore = create((set) => ({
   isAuthenticated: false,
@@ -47,7 +50,10 @@ const useAuthenticationStore = create((set) => ({
 
     set({
       isAuthenticated: true,
-      ...authData,
+      userRole: role,
+      userInfo: info,
+      userLinkName: role === "admin" ? "/Admin" : "u/@" + info.email.split("@")[0],
+      username: info.email.split("@")[0],
     });
   },
 
@@ -62,6 +68,37 @@ const useAuthenticationStore = create((set) => ({
       username: null,
     });
   },
+
+  googleLogin: async (token) => {
+    try {
+      const res = await axios.post(`${API_URL}/auth/google/`, {
+        token:token
+      });
+      const user = res.data.user;
+      useAuthenticationStore.getState().login(user.role, user);
+      return user;
+    }
+    catch (err) {
+      console.error("Google login failed:", err);
+      return false;
+    }
+  },
+
+  googleSignUp: async (token) => {
+    try {
+      const res = await axios.post(`${API_URL}/auth/google/`, {
+        token: token
+      });
+      const user = res.data.user;
+      useAuthenticationStore.getState().login(user.role, user);
+      return user;
+    }
+    catch (err) {
+      console.error("Google sign-up failed:", err);
+      return false;
+    }
+  },
+
 }));
 
 export default useAuthenticationStore;

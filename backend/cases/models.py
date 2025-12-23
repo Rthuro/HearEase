@@ -21,6 +21,11 @@ class SettlementType(models.Model):
     def __str__(self):
         return self.settlement_name
 
+class Relationship(models.Model):
+    relationship = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.relationship
 
 class Case(models.Model):
 
@@ -46,6 +51,10 @@ class Case(models.Model):
     )
     settlement_type = models.ForeignKey(
         SettlementType, on_delete=models.SET_NULL, null=True, related_name="cases"
+    )
+
+    relationship = models.ForeignKey(
+        Relationship, on_delete=models.SET_NULL, null=True, related_name="cases"
     )
 
     complainants = models.ManyToManyField(Complainant, related_name="cases_as_complainant")

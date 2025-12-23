@@ -8,36 +8,65 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar"
 import { CalendarIcon } from "lucide-react"
 import { useState } from "react"
-import { getBarangayNames, getStreets } from "@/lib/helpers"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useSignUpStore } from "@/store/useSignUpStore"
 import { Separator } from "@/components/ui/separator"
 import { toast } from "react-hot-toast"
 import { checkSignUpEmail } from "@/store/useSignUpStore"
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import useAuthenticationStore from "@/store/useAuthenticationStore"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field"
+import { auth, googleProvider } from "@/firebase"
+import { signInWithPopup } from "firebase/auth"
+import { useEffect } from "react"
+import { cn } from "@/lib/utils"
 
 export function SignUp(){
     const navigate = useNavigate();
     const { formData, setFormData, registerUser } = useSignUpStore();
-    const { userLinkName } = useAuthenticationStore();
-    const [openCalendar, setOpenCalendar] = useState(false);
+    const { userLinkName, isAuthenticated, userRole, googleSignUp } = useAuthenticationStore();
     const [showPassword, setShowPassword] = useState(false);
+    const [ showConfirmPassword, setShowConfirmPassword ] = useState(false);
     const [passType, setPassType] = useState("password");
+    const [confirmPassType, setConfirmPassType] = useState("password");
+    const [confirmPassword, setConfirmPassword] = useState("");
     
-    const minDate = new Date("1900-01-01");
-    const maxDate = new Date();
-
     const togglePasswordVisibility = () => {
         setShowPassword(!showPassword);
         setPassType(showPassword ? "password" : "text");
     }
 
+    const toggleConfirmPasswordVisibility = () => {
+        setShowConfirmPassword(!showConfirmPassword);
+        setConfirmPassType(showConfirmPassword ? "password" : "text");
+    }
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            if (userRole === 'admin') {
+                navigate('/Admin/dashboard');
+            } else {
+                navigate(`/${userLinkName}`);
+            }
+        }
+    }, [isAuthenticated, userRole, navigate]);
+
     const checkInputs = async (e) => {
         e.preventDefault();
 
-        if( formData.email === "" || formData.password === "" || formData.first_name === "" || formData.last_name === "" || formData.birth_date === null || formData.contact_number === "" || formData.sex === "" || formData.barangay === "" || formData.street === "" ){
+        if( formData.email === "" || formData.first_name === "" || formData.last_name === ""){
             toast.error("Please fill in all required fields");
+            return;
+        }
+
+        if(formData.password.length < 8){
+            toast.error("Password must be at least 8 characters long");
+            return;
+        }
+
+        if(formData.password !== confirmPassword){
+            toast.error("Passwords do not match");
             return;
         }
 
@@ -55,206 +84,150 @@ export function SignUp(){
 
     }
 
+    
+
+    const handleGoogleSignUp = async () => {
+        try {
+
+            const result = await signInWithPopup(auth, googleProvider);
+            const user = result.user;
+            
+            const token = await user.getIdToken();
+
+            const response = await googleSignUp(token);
+
+            if (response) {
+                toast.success(`Welcome, ${response.first_name}!`);
+                navigate(`/${useAuthenticationStore.getState().userLinkName}`);
+            }
+
+        } catch (error) {
+            console.error("Google Auth Error:", error);
+            toast.error("Failed to sign up with Google");
+        }
+    };
+
 
     return (
-        <form onSubmit={checkInputs} className="grid grid-cols-1 w-fit mx-auto gap-10 pb-12 ">
-            <div className="flex flex-col justify-center items-center gap-2">
-                <p className="text-xl text-center">Sign Up</p>
-                <p className="text-lg text-center text-zinc-600">Please enter your details to create an account.</p>
-            </div>
-        <div className="grid grid-cols-2 gap-4">
-            <div className="flex items-center relative ">
-                <img src={Mail} alt="email icon" className="absolute ml-3"/>
-                <Input type="email" id="email" placeholder="Enter your email..." className="pl-10" autoComplete="email" value={formData.email} onChange={(e) => setFormData('email', e.target.value)} required />
-            </div>
-            <div className="flex items-center relative ">
-                <img src={Lock} alt="lock icon" className="absolute ml-3"/>
-                <Input type={passType} id="password" placeholder="Enter your password..." className="pl-10 pr-3" autoComplete="current-password" value={formData.password} onChange={(e) => setFormData('password', e.target.value)} required />
-                { showPassword ?
-                    <Eye className="absolute right-3 cursor-pointer text-redBase" onClick={togglePasswordVisibility} />
-                    :
-                    <EyeClosed className="absolute right-3 cursor-pointer text-redBase" onClick={togglePasswordVisibility} />
-                }
-            </div> 
-            <Separator className="col-span-2" />
-            <div className="grid grid-cols-1 gap-2">
-                <Label htmlFor="first_name">First Name
-                    <span className="text-redBase">*</span>
-                </Label>
-                <Input id="first_name" type="text" className="w-72" 
-                value={formData.first_name}
-                onChange ={ (e) => {
-                    setFormData('first_name', e.target.value);
-                }}
-                required
-                />
-            </div>
-            <div className="grid grid-cols-1 gap-2">
-                <Label htmlFor="middle_name">Middle Name
-                </Label>
-                <Input id="middle_name" type="text" className="w-72"
-                value={formData.middle_name} 
-                onChange ={ (e) => {
-                    setFormData('middle_name', e.target.value);
-                }}
-                />
-            </div>
-            <div className="grid grid-cols-1 gap-2">
-                <Label htmlFor="last_name">Last Name
-                    <span className="text-redBase">*</span>
-                </Label>
-                <Input id="last_name" type="text" className="w-72"
-                value={formData.last_name}
-                onChange ={ (e) => {
-                    setFormData('last_name', e.target.value);
-                }}
-                required/>
-            </div>
-
-            
-            <div className="grid grid-cols-1 gap-2">
-                <Label htmlFor="birth_date">
-                    Birthday
-                    <span className="text-redBase">*</span>
-                </Label>
-                <Popover open={openCalendar}  onOpenChange={setOpenCalendar} id="birth_date">
-                    <PopoverTrigger asChild>
-                        <Button
-                            variant="outline"
-                            id="date"
-                            className="w-72 justify-between font-normal"
-                        >
-                            {formData.birth_date ? 
-                            formData.birth_date.toLocaleDateString() : "Select date"}
-                            <CalendarIcon />
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className=" overflow-hidden p-0 w-72" align="start">
-                        <Calendar
-                            mode="single"
-                            selected={formData.birth_date ?? undefined}
-                            captionLayout="dropdown"
-                            disabled={(date) => date > maxDate || date < minDate}
-                            onSelect={(date) => {
-                                setOpenCalendar(false);
-                                setFormData('birth_date', date);
-                            }}
+        <div className=" w-[320px] mx-auto pb-12">
+            <Card  className={cn("border-none shadow-none p-0")}>
+                <CardHeader className="justify-center text-center">
+                    <CardTitle className="text-2xl text-redBase">Get started</CardTitle>
+                    <CardDescription>
+                    Create a new account
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className={cn("p-0")}>
+                    <form onSubmit={checkInputs}>
+                    <FieldGroup >
+                        <FieldGroup>
+                            <Field>
+                                <Button variant="outline" type="button"
+                                    onClick={handleGoogleSignUp}>
+                                    Continue with Google
+                                </Button>
+                                <div className="flex items-center">
+                                    <Separator className="shrink" />
+                                    <span className=" px-2 text-muted-foreground text-xs uppercase text-center">
+                                        or
+                                    </span>
+                                    <Separator className="shrink" />
+                                </div>
+                               
+                                <FieldLabel htmlFor="first_name">
+                                    First Name
+                                    <span className="text-redBase">*</span>
+                                </FieldLabel>
+                                <Input id="first_name" type="text" placeholder="John"
+                                value={formData.first_name}
+                                onChange={(e) => setFormData('first_name', e.target.value)} 
+                                required 
+                                />
+                            </Field>
+                            <Field>
+                                <FieldLabel htmlFor="last_name">
+                                    Last Name
+                                    <span className="text-redBase">*</span>
+                                </FieldLabel>
+                                <Input id="last_name" type="text" placeholder="Doe"
+                                value={formData.last_name}
+                                 onChange={(e) => setFormData('last_name', e.target.value)} required />
+                            </Field>    
+                            <FieldDescription>
+                                Please use your real name as it appears on your ID.
+                            </FieldDescription>
+                        </FieldGroup>
+                        <Field>
+                        <FieldLabel htmlFor="email">
+                            Email
+                            <span className="text-redBase">*</span>
+                        </FieldLabel>
+                        
+                        <Input
+                            id="email"
+                            type="email"
+                            placeholder="m@example.com"
+                            value={formData.email} onChange={(e) => setFormData('email', e.target.value)}
+                            required
                         />
-                    </PopoverContent>
-                </Popover>
-            </div>
-
-            <div className="grid grid-cols-1 gap-2">
-                <Label htmlFor="sex">Sex
-                    <span className="text-redBase">*</span>
-                </Label>
-                <DropdownMenu id="sex">
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline">
-                        {formData.sex || "Select"} 
-                        </Button>
-                    </DropdownMenuTrigger>
-
-                    <DropdownMenuContent className="w-56">
-                        <DropdownMenuRadioGroup
-                        value={formData.sex}
-                        onValueChange={(value) => 
-                            setFormData('sex', value)}
-                        >
-                        <DropdownMenuRadioItem value="Male">Male</DropdownMenuRadioItem>
-                        <DropdownMenuRadioItem value="Female">Female</DropdownMenuRadioItem>
-                        </DropdownMenuRadioGroup>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
-            <div className="grid grid-cols-1 gap-2">
-                <Label htmlFor="contact_number">
-                    Contact Number
-                    <span className="text-redBase">*</span>
-                </Label>
-                <Input id="contact_number" type="tel"
-                placeholder="09876543210"
-                inputMode="numeric"         
-                pattern="[0-9]*"              
-                maxLength={11} 
-                className="w-72"
-                value={formData.contact_number}
-                onChange={(e) => {
-                    const onlyDigits = e.target.value.replace(/\D/g, "");
-                    setFormData('contact_number', onlyDigits);
-                }} />
-            </div>
-            
-            <div className="grid grid-cols-1 col-span-2 gap-2">
-                <Label htmlFor="address">Address
-                </Label>
-                <div className="grid grid-cols-2 gap-3">
-                    <div className="grid grid-cols-1 gap-2">
-                        <Label htmlFor="barangay">
-                            Barangay
-                            <span className="text-redBase">*</span>
-                        </Label>
-                        <DropdownMenu id="barangay">
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="outline">
-                                    {formData.barangay || 'Select'}
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="w-72">
-                                <DropdownMenuRadioGroup 
-                                value={formData.barangay} 
-                                onChange={(value) => {
-                                    setFormData('barangay', value);
-                                    setFormData('street', getStreets(value)[0]);
-                                }}>
-
-                                {getBarangayNames().map(name => (
-                                    <DropdownMenuRadioItem key={name} value={name}>{name}
-                                    </DropdownMenuRadioItem>
-                                ))}
-
-                                </DropdownMenuRadioGroup>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-                    <div className="grid grid-cols-1 gap-2">
-                        <Label htmlFor="street">
-                            Street
-                            <span className="text-redBase">*</span>
-                        </Label>
-                        <DropdownMenu id="street">
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="outline">
-                                    {formData.street || 'Select'}
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="w-72">
-                                <DropdownMenuRadioGroup 
-                                value={formData.street} onValueChange={(value) => 
-                                setFormData('street', value)}>
-
-                                { getStreets(formData.barangay).map(street => (
-                                        <DropdownMenuRadioItem key={street} 
-                                        value={street}>{street}
-                                        </DropdownMenuRadioItem>
-                                    ))
-                                }
-                                </DropdownMenuRadioGroup>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-                </div>
-                <div className="grid grid-cols-1 gap-2 mt-2">
-                    <Label htmlFor="additional_info">Additional Information</Label>
-                    <Input id="additional_info" type="text" className="w-full"
-                    value={formData.additional_info}
-                    onChange={(e) => 
-                        setFormData('additional_info', e.target.value)} 
-                    />
-                </div>
-            </div>
+                        </Field>
+                        <Field >
+                            <FieldLabel htmlFor="password">
+                                Password
+                                <span className="text-redBase">*</span>
+                            </FieldLabel>
+                            <div className="relative">
+                              <Input id="password" 
+                                type={passType} 
+                                value={formData.password} 
+                                onChange={(e) => setFormData('password', e.target.value)} required />
+                                { showPassword ?
+                                    <Eye className="absolute top-2 right-3 cursor-pointer text-redBase" onClick={togglePasswordVisibility} />
+                                    :
+                                    <EyeClosed className="absolute top-2 right-3 cursor-pointer text-redBase" onClick={togglePasswordVisibility} />
+                                }  
+                            </div>
+                            
+                            
+                            <FieldDescription>
+                                Must be at least 8 characters long.
+                            </FieldDescription>
+                        </Field>
+                        <Field>
+                            <FieldLabel htmlFor="confirm-password">
+                                Confirm Password
+                                <span className="text-redBase">*</span>
+                            </FieldLabel>
+                            <div  className="relative ">
+                            <Input id="confirm-password" type={confirmPassType} 
+                                value={confirmPassword} 
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                required />
+                            { showConfirmPassword ?
+                                <Eye className="absolute top-2 right-3 cursor-pointer text-redBase" onClick={toggleConfirmPasswordVisibility} />
+                                :
+                                <EyeClosed className="absolute top-2 right-3 cursor-pointer text-redBase" onClick={toggleConfirmPasswordVisibility} />
+                            }
+                            </div>
+                            
+                            <FieldDescription>Please confirm your password.</FieldDescription>
+                        </Field>
+                        <FieldGroup>
+                        <Field>
+                            <Button type="submit" className="bg-redBase">Create Account</Button>
+                            <FieldDescription className="px-6 text-center">
+                            Already have an account? 
+                            <Link to="/Login" className="text-redBase font-medium ml-1 no-underline border-none">
+                                Sign In
+                            </Link>
+                            </FieldDescription>
+                        </Field>
+                        </FieldGroup>
+                    </FieldGroup>
+                    </form>
+                </CardContent>
+                </Card>
+           
         </div>
-            <button type="submit" className="w-fit bg-redBase text-white py-2 px-12 rounded-md text-center cursor-pointer mx-auto" >Sign In</button>
-        </form>
     )
-}
+} 

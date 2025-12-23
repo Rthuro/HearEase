@@ -14,16 +14,27 @@ import { toast } from "react-hot-toast";
 import { invalidContactNumber } from "@/lib/helpers";
 import { useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { useRetrieveUsersStore } from "@/store/useRetrieveUsersStore";
 
 export function CaseForm(){
     const { formData, addCaseData, fetchCaseTypes, fetchSettlementTypes, complainantList, respondentList } = useCaseStore();
+    const { fetchComplainants, fetchRespondents} = useRetrieveUsersStore();
+    
+    const { userRole, userLinkName } = useAuthenticationStore();
 
     useEffect(() => {
         fetchCaseTypes();
         fetchSettlementTypes();
     }, [fetchCaseTypes, fetchSettlementTypes]);
 
-    const { userRole, userLinkName } = useAuthenticationStore();
+    useEffect(() => {
+        if(userRole === 'admin') {
+            fetchComplainants();
+        }
+        fetchRespondents();
+    }, []);
+
+
     const navigate = useNavigate();
     const [stepNumber, setStepNumber] = useState(1);
     const [submitModalOpen, setSubmitModalOpen] = useState(false);
@@ -55,8 +66,7 @@ export function CaseForm(){
         },
     ]
 
-    const visibleSteps =
-    storedData?.userRole === "user"
+    const visibleSteps = userRole === "user"
         ? formProgress.filter(step => step.number <= 3)
         : formProgress;
     
@@ -234,7 +244,7 @@ export function CaseForm(){
                         Previous
                     </Button>
                     <Button onClick={handleNext} className="!bg-redBase">
-                        { stepNumber === 3 && storedData.userRole === 'user' ? "Submit Case" : stepNumber === 4 ? "Submit Case" : "Next" }
+                        { stepNumber === 3 && userRole === 'user' ? "Submit Case" : stepNumber === 4 ? "Submit Case" : "Next" }
                         <ChevronRight />
                     </Button>
                 </div>

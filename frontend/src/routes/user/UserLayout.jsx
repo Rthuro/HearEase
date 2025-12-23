@@ -1,12 +1,33 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, Navigate } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/user_ui/app-sidebar"
 import useAuthenticationStore from "@/store/useAuthenticationStore";
 import { Header } from "@/components/Header";
 import { CheckAuth } from "@/components/CheckAuth";
+import { useCaseStore } from "@/store/useCaseStore";
+import useHearingStore from "@/store/useHearingStore";
+import { useLuponStore } from "@/store/useLuponStore";
+import { useEffect } from "react";
 
 export function UserLayout() {
-  const { userInfo } = useAuthenticationStore();
+  const { userInfo, isAuthenticated } = useAuthenticationStore();
+  const { fetchCases} = useCaseStore();
+  const { fetchHearings } = useHearingStore();
+  const { fetchMembers } = useLuponStore();
+
+   useEffect(() => {
+      if (isAuthenticated) {
+        fetchCases();
+        fetchHearings();
+        fetchMembers();
+      }
+    }, [isAuthenticated, fetchCases, fetchHearings, fetchMembers]);
+
+    if (!isAuthenticated) {
+      return <Navigate to="/Login" replace />;
+    }
+
+  
 
   return (
     <>

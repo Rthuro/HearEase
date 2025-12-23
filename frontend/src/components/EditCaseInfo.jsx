@@ -9,7 +9,7 @@ import { Dialog,
 } from "@/components/ui/dialog"
 import { Textarea } from "./ui/textarea";
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Edit } from "lucide-react"
+import { ArrowRight, Pencil } from "lucide-react"
 import { useState } from "react";
 import { Popover,
   PopoverTrigger,
@@ -104,7 +104,10 @@ export function EditCaseInfo({section, caseInfo, forResubmission}){
                     <Button variant="outline" className="w-fit self-end">Resubmit <ArrowRight /></Button>
                 ): (
                     
-                    <Button variant="outline"><Edit />Edit</Button>
+                    <Button variant="outline">
+                        <Pencil className="h-4 w-4" />
+                        Edit
+                    </Button>
 
                 )}
             </DialogTrigger>

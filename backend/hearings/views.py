@@ -61,3 +61,93 @@ class HearingCaseView(APIView):
             return Response(response_data, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class SetCaseHearingsView(APIView):
+    def post(self, request, pk):
+        case_id = pk 
+        hearings_data = request.data.get("hearings", [])
+
+        print("Case ID:", case_id)
+        print("Received Data:", hearings_data)
+
+        try:
+            case = Case.objects.get(id=case_id)
+            
+            for h_data in hearings_data:
+
+                raw_date = h_data.get("hearing_date")
+                clean_date = None
+                if raw_date:
+                    if "T" in raw_date:
+                        clean_date = raw_date.split("T")[0]
+                    else:
+                        clean_date = raw_date
+
+                h_number = h_data.get("hearing_number")
+                
+                if h_number == 1:
+                    current_status = "scheduled"
+                    current_remarks = h_data.get("remarks") or "Initial hearing scheduled."
+                else:
+                    current_status = "pending_schedule"
+                    current_remarks = h_data.get("remarks") or "Subsequent hearing pending."
+
+                lupon_id = h_data.get("lupon_member_id")
+                
+                Hearing.objects.create(
+                    case=case,  
+                    hearing_number=h_number,
+                    hearing_date=clean_date, 
+                    time=h_data.get("time"),
+                    lupon_member_id=lupon_id,
+                    remarks=current_remarks,
+                    hearing_status=current_status,
+                )
+
+            return Response({"success": "Hearings successfully created."}, status=status.HTTP_200_OK)
+
+        except Case.DoesNotExist:
+            return Response({"error": "Case not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            print("Error saving hearing:", str(e)) 
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+           
+class UpdateHearingView(APIView):
+    def put(self, request, pk):
+        
+        try:
+            hearing = Hearing.objects.get(pk=pk)
+        except Hearing.DoesNotExist:
+            return Response({"error": "Hearing not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        data = request.data.copy()
+
+        # FIX DATE: Convert "2025-12-24T00:00:00.000Z" -> "2025-12-24"
+        raw_date = data.get("hearing_date")
+        clean_date = None
+        if raw_date:
+            if "T" in raw_date:
+                clean_date = raw_date.split("T")[0]
+            else:
+                clean_date = raw_date
+
+        data['hearing_date'] = clean_date
+        
+        if 'time' in data and data['time'] == "":
+            data['time'] = None
+        
+        if 'lupon_member' in data:
+            data['lupon_member'] = data['lupon_member']
+            print("Lupon Member ID:", data['lupon_member'])
+
+        # print("Update Data Received:", data)
+        serializer = HearingSerializer(hearing, data=data, partial=True)
+
+        if serializer.is_valid():
+            hearing = serializer.save()
+            print("Updated:", HearingSerializer(hearing).data)
+
+            return Response(HearingSerializer(hearing).data, status=status.HTTP_200_OK)
+        
+        print("Serializer Errors:", serializer.errors)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

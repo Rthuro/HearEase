@@ -18,17 +18,9 @@ import {
 import { Link } from "react-router-dom";
 import { CaseStatusDisplay } from "./CaseStatusDisplay";
 import { cn } from "@/lib/utils";
-import useHearingStore from "@/store/useHearingStore";
 
 export function TableHearings({hearingsList, showPagination, navigateTo}) {
-    const { hearings } = useHearingStore();
-
-    const findHearingCase = (case_id) => {
-        if (!hearings || !Array.isArray(hearings)) return null;
-
-        return hearings.find(hearing => hearing.case === case_id);
-    }
-
+    
     return(
         <section className="flex flex-col gap-6">
                 <div className="border rounded-lg overflow-hidden">
@@ -36,15 +28,15 @@ export function TableHearings({hearingsList, showPagination, navigateTo}) {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Case #</TableHead>
-                                    <TableHead>Nature of Complaint</TableHead>
                                     <TableHead>Hearing Date</TableHead>
+                                    <TableHead>Hearing Number</TableHead>
                                     <TableHead>Time</TableHead>
                                     <TableHead>Status</TableHead>
                                     <TableHead>Action</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {hearingsList.length === 0 ? (
+                                {  hearingsList?.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={6}>
                                             <p className="text-center">No hearings scheduled.</p>
@@ -55,20 +47,20 @@ export function TableHearings({hearingsList, showPagination, navigateTo}) {
                                         <TableRow key={hearing?.id} className="text-zinc-700">
                                             <TableCell>{hearing?.id}</TableCell>
                                             <TableCell>
-                                                {hearing?.case_type?.case_name ?? '-'}
+                                                {hearing?.hearing_date ?? '-'}
                                             </TableCell>
                                             <TableCell>
-                                                {findHearingCase(hearing?.id)?.hearing_date ?? '-'}
+                                                {hearing?.hearing_number ?? '-'}
                                             </TableCell>
                                             <TableCell>
-                                                {findHearingCase(hearing?.id)?.time ?? '-'} 
+                                                {hearing?.time ?? '-'} 
                                             </TableCell>
                                             <TableCell>
-                                                <CaseStatusDisplay caseStatus={findHearingCase(hearing?.id)?.hearing_status}
+                                                <CaseStatusDisplay caseStatus={hearing?.hearing_status}
                                                 />
                                             </TableCell>
                                             <TableCell className={cn("py-4")}>
-                                                <Link to={`/${navigateTo}/Case/${hearing?.id}`} className="text-redBase bg-red-100 px-3 py-2 rounded-lg text-sm">
+                                                <Link to={`/${navigateTo}/Hearing/${hearing?.id}`} className="text-redBase bg-red-100 px-3 py-2 rounded-lg text-sm">
                                                     Details 
                                                 </Link>
                                             </TableCell>

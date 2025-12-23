@@ -30,21 +30,10 @@ import { Settings } from './routes/Settings';
 import Hearing from './routes/Hearing';
 import { Lupon } from './routes/admin/pages/Lupon';
 import { Reports } from './routes/admin/pages/Reports';
+import { HearingScheduler } from './routes/admin/pages/Hearing-Scheduler';
 
 function App() {
   const { initializeAuth } = useAuthenticationStore();
-  const { fetchCases, cases} = useCaseStore();
-  const { fetchHearings } = useHearingStore();
-  const { fetchMembers } = useLuponStore();
-
-  useEffect(() => {
-    fetchCases();
-    fetchHearings();
-    fetchMembers();
-  }, [fetchCases, fetchHearings, fetchMembers]);
-
-  // console.log("Hearings:", hearings)
-  console.log("Cases:", cases)
 
   useEffect(() => {
     initializeAuth();
@@ -96,6 +85,7 @@ function App() {
               <Route path="Admin/Reports" element={<Reports />} />
               <Route path="Admin/Settings" element={<Settings />} />
               <Route path="Admin/Hearing/:hearing_id" element={<Hearing />} />
+              <Route path="Admin/Case/Hearing-Scheduler/:case_id" element={<HearingScheduler />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />

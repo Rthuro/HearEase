@@ -12,18 +12,19 @@ import useHearingStore from "@/store/useHearingStore";
 export function Dashboard() {
   const { userInfo, userLinkName } = useAuthenticationStore();
   const { cases, fetchCases } = useCaseStore();
-  const { fetchHearings } = useHearingStore();
+  const { fetchHearings, hearings } = useHearingStore();
 
   useEffect(() => {
     fetchCases();
     fetchHearings();
   }, [fetchCases, fetchHearings]);
 
-  const formatCases = cases;
+  const filterHearings = Array.isArray(hearings) 
+    ? hearings.filter(h => h.hearing_status === "scheduled") 
+    : [];
   
   const user = userInfo?.role === 'user' ? userLinkName : 'Admin';
   
-  console.log(cases)
   return (
     <div className="flex flex-col gap-6 p-6">
       <PageSync page="Dashboard" />
@@ -39,7 +40,7 @@ export function Dashboard() {
             View all
           </Link>
         </div>
-        <TableHearings hearingsList={formatCases} showPagination={false} navigateTo={user} />
+        <TableHearings hearingsList={filterHearings} showPagination={false} navigateTo={user} />
       </div>
 
       <div className="flex flex-col  gap-4 bg-white border border-zinc-200 rounded-lg p-6">

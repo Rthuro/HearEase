@@ -1,0 +1,8 @@
+Django
+django-cors-headers
+djangorestframework
+python-dotenv
+python-decouple
+psycopg2
+gunicorn
+whitenoise

@@ -13,13 +13,16 @@ import useHearingStore from "@/store/useHearingStore"
 export function UserDashboard() {
   const { userInfo, userLinkName } = useAuthenticationStore();
   const { fetchCases, cases} = useCaseStore();
-  const { fetchHearings } = useHearingStore();
+  const { fetchHearings, hearings } = useHearingStore();
 
   useEffect(() => {
     fetchCases();
     fetchHearings();
   }, [fetchCases, fetchHearings]);
 
+  const filterHearings = Array.isArray(hearings) 
+    ? hearings.filter(h => h.hearing_status === "scheduled") 
+    : [];
 
   const user = userInfo?.role === 'user' ? userLinkName : 'Admin';
 
@@ -38,7 +41,7 @@ export function UserDashboard() {
             View all
           </Link>
         </div>
-        <TableHearings hearingsList={cases} showPagination={false} navigateTo={user} />
+        <TableHearings hearingsList={filterHearings} showPagination={false} navigateTo={user} />
       </div>
       <div className="flex flex-col  gap-4 bg-white border border-zinc-200 rounded-lg p-6">
           <div className="flex items-center justify-between">

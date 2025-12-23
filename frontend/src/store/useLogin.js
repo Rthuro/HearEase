@@ -3,11 +3,13 @@ import { toast } from "react-hot-toast";
 import useAuthenticationStore from "./useAuthenticationStore"; 
 import { getUser } from "./useCaseStore";
 
+const API_URL = "http://127.0.0.1:8000/api";
+
 export const loginUser = async (email, password) => {
   const { login } = useAuthenticationStore.getState();
 
   try {
-    const res = await axios.post("http://127.0.0.1:8000/api/login/", {
+    const res = await axios.post(`${API_URL}/login/`, {
       email,
       password,
     });
@@ -16,7 +18,7 @@ export const loginUser = async (email, password) => {
     login(user.role, user);
 
     toast.success("Login successful!");
-    return true;
+    return user;
   } catch (err) {
     toast.error(
       err.response?.data?.non_field_errors?.[0] ||
