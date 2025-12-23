@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useCaseStore } from "@/store/useCaseStore";
@@ -21,29 +21,13 @@ import { Dialog,
 
 export function RetrievePopover({participantType}) {
     const { complainantList, set_complainants, respondentList, set_respondents} = useCaseStore();
-    const { fetchComplainants, complainants, fetchRespondents, respondents} = useRetrieveUsersStore();
-    const stored = localStorage.getItem("authData");
-    const storedData = stored ? JSON.parse(stored) : null;
-
-    useEffect(() => {
-        if(storedData.userRole === 'admin') {
-            if (participantType === "complainant") {
-                fetchComplainants();
-            } 
-        }
-
-        if (participantType === "respondent") {
-                fetchRespondents();
-            }
-    }, []);
+    const { complainants, respondents} = useRetrieveUsersStore();
 
     const [query, setQuery] = useState("")
-    // const [selected, setSelected] = useState([])
 
     const participantKey = participantType === "complainant" ? "complainant" : "respondent";
 
     const handleSelect = (user) => {
-        // setSelected([...selected, user.id]);
         const userData = {
                 id: user.id,
                 first_name: user.first_name,
@@ -97,7 +81,7 @@ export function RetrievePopover({participantType}) {
 
 return <div className="flex justify-end gap-3">
         <Dialog>
-            <DialogTrigger>     
+            <DialogTrigger asChild>     
                 <Button variant="outline"><Search /> Find {participantKey.charAt(0).toUpperCase() + participantKey.slice(1)}</Button>
             </DialogTrigger>
         <DialogContent>

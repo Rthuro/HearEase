@@ -1,26 +1,15 @@
-import { useState } from "react"
-import { Input } from "../ui/input"
-import { Label } from "../ui/label"
-import { CalendarIcon, Plus, Minus } from "lucide-react"
+
 import { Button } from "../ui/button"
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
-import { Calendar } from "../ui/calendar"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "../ui/dropdown-menu"
-import { getBarangayNames } from "@/lib/helpers";
-import { getStreets } from "@/lib/helpers";
 import { useCaseStore } from "@/store/useCaseStore"
 import { useEffect } from "react"
 import { Separator } from "../ui/separator"
 import { cn } from "@/lib/utils"
-import { dateFormatter } from "@/lib/helpers"
-import { RetrieveUserPopover } from "./retrieve-users-popover"
 import { RetrievePopover } from "./retrieve-popover"
 import { AddEditParticipant } from "./add-edit-participant"
 import { ParticipantCard } from "./participant-card"
 
 export function Complainant() {
-    const { setFormData, formData, setComplainantInfo, complainantList, respondentList, set_complainants, set_respondents } = useCaseStore();
-    const [openCalendar, setOpenCalendar] = useState(false);
+    const { formData, setComplainantInfo, complainantList, set_complainants } = useCaseStore();
 
     const stored = localStorage.getItem("authData");
     const storedData = stored ? JSON.parse(stored) : null;

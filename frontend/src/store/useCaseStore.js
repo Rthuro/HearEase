@@ -221,31 +221,7 @@ export const useCaseStore = create((set, get) => ({
         const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
         const data = JSON.parse(stored);
 
-        const { formData, complainantList, respondentList } = get();
-
-        const formattedHearing = () => {
-            if (formData.hearingInfo.length <= 0) return null;
-
-            const formatted = formData.hearingInfo.map((hearing) => {
-                let dateStr = null;
-                
-                if (hearing.hearing_date) { 
-                    const d = new Date(hearing.hearing_date);
-                    
-                    const year = d.getFullYear();
-                    const month = String(d.getMonth() + 1).padStart(2, '0');
-                    const day = String(d.getDate()).padStart(2, '0');
-                    dateStr = `${year}-${month}-${day}`;
-                }
-
-                return {
-                    ...hearing,
-                    hearing_date: dateStr, 
-                };
-            });
-
-            return formatted;
-        }
+        const { formData, complainantList, respondentList } = get();       
 
         const caseData = {
             id: get().case.case_number,
@@ -256,7 +232,7 @@ export const useCaseStore = create((set, get) => ({
             predicted_hearings: formData.caseDetails.predicted_number.value || 0,
             remarks: "",
             case_status: data.userRole === 'admin' ? "approved" : "pending_approval",
-            hearing_info: formattedHearing(),
+            hearing_info: formData.hearingInfo,
         };
 
         const case_documents = formData.caseDetails.documents.value;

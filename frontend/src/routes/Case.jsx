@@ -30,12 +30,13 @@ import { EditCaseInfo } from "@/components/EditCaseInfo";
 import { CaseCancellationModal } from "@/components/CaseCancellationModal";
 import { useLuponStore } from "@/store/useLuponStore";
 import { EditCoAttendee } from "@/components/EditCoAttendee";
+import { CaseSettingsModal } from "@/components/CaseSettingsModal";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 export function Case() {
     const { case_number } = useParams();
-    const { cases, updateCaseStatus, deleteCase } = useCaseStore();
+    const { cases, updateCaseStatus, deleteCase, setFormData, set_complainants, set_respondents } = useCaseStore();
     const { hearings } = useHearingStore();
     const { case_complainants, case_respondents, fetchCaseComplainants, fetchCaseRespondents} = useRetrieveUsersStore();
     const [template, setTemplate] = useState({});
@@ -55,11 +56,22 @@ export function Case() {
         fetchCaseDocuments(case_number);
     }, [case_number])
 
+    const caseInfo = cases.find( c => c.id == case_number);
+
+    useEffect(() => {
+        if (caseInfo) {
+            setFormData('caseDetails', 'nature_of_complaint_code', caseInfo.case_type.id);
+            setFormData('caseDetails', 'severity', caseInfo.case_type.severity);
+            setFormData('caseDetails', 'relationship', caseInfo.relationship);
+            set_complainants(caseInfo.complainants);
+            set_respondents(caseInfo.respondents);
+        }
+    }, [caseInfo]);
+
     const findHearingCase = hearings.length > 0 ? hearings.filter( hearing => hearing.case == case_number) : [];
 
     const lupon = members.find(member => member.id === findHearingCase[0]?.lupon_member);
 
-    const caseInfo = cases.find( c => c.id == case_number);
 
     useEffect( () => {
         fetchCaseComplainants(caseInfo?.complainants);
@@ -220,7 +232,6 @@ export function Case() {
         }
     };
 
-    console.log("case_complainants", case_complainants);
     return (
         <div className="relative flex flex-col gap-4 p-6 ">
             <PageSync page="" />
@@ -231,32 +242,37 @@ export function Case() {
                         <ChevronLeft />
                     </Button>
                 </div>
-                { userRole == 'admin' && caseInfo.case_status == 'pending_approval' && (
-                    <div className="flex gap-2">
-                        <CaseCancellationModal caseInfo={caseInfo}  />
-                        <Button variant="default" className={cn("bg-redBase")}
-                        onClick={() => {
-                            updateCaseStatus({
-                                id: caseInfo.id,
-                                case_status: "approved",
-                            },"approved");
-                        }}>
-                            <Check />
-                            Approve Case
-                        </Button>
-                    </div>
-                )}
+               
 
-                { userRole == 'user' && caseInfo.case_status == 'pending_approval' && (
-                    <div className="flex gap-2">
-                         <Button variant="default" className={cn("bg-redBase")}
-                        onClick={() => {
-                            deleteCase(caseInfo.id);
-                        }}>
-                            Withdraw Application
-                        </Button>
-                    </div>
-                )}
+                <div className="flex gap-3">
+                     { userRole == 'admin' && caseInfo.case_status == 'pending_approval' && (
+                        <div className="flex gap-2">
+                            <CaseCancellationModal caseInfo={caseInfo}  />
+                            <Button variant="default" className={cn("bg-redBase")}
+                            onClick={() => {
+                                updateCaseStatus({
+                                    id: caseInfo.id,
+                                    case_status: "approved",
+                                },"approved");
+                            }}>
+                                <Check />
+                                Approve Case
+                            </Button>
+                        </div>
+                    )}
+                    { userRole == 'user' && caseInfo.case_status == 'pending_approval' && (
+                        <div className="flex gap-2">
+                            <Button variant="default" className={cn("bg-redBase")}
+                            onClick={() => {
+                                deleteCase(caseInfo.id);
+                            }}>
+                                Withdraw Application
+                            </Button>
+                        </div>
+                    )}
+                    <CaseSettingsModal caseData={caseInfo} />
+                </div>
+                
             </div>
 
             <div className="flex flex-col gap-6 bg-white p-4 rounded-md shadow-2xs border ">

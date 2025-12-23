@@ -91,16 +91,35 @@ class CaseView(APIView):
         # If hearing info is provided, create initial hearing
         hearing_info = data.get("hearing_info")
         if hearing_info:
-            for hearing in hearing_info:
+            for h_data in hearing_info:
 
+                raw_date = h_data.get("hearing_date")
+                clean_date = None
+                if raw_date:
+                    if "T" in raw_date:
+                        clean_date = raw_date.split("T")[0]
+                    else:
+                        clean_date = raw_date
+
+                h_number = h_data.get("hearing_number")
+                
+                if h_number == 1:
+                    current_status = "scheduled"
+                    current_remarks = h_data.get("remarks") or "Initial hearing scheduled."
+                else:
+                    current_status = "pending_schedule"
+                    current_remarks = h_data.get("remarks") or "Subsequent hearing pending."
+
+                lupon_id = h_data.get("lupon_member_id")
+                
                 Hearing.objects.create(
                     case=new_case,  
-                    hearing_number=hearing.get("hearing_number"),
-                    hearing_date=hearing.get("hearing_date"),
-                    time=hearing.get("time"),
-                    lupon_member_id=hearing.get("lupon_member_id"),  
-                    remarks=hearing.get("remarks", "Initial hearing pending schedule."),
-                    hearing_status=hearing.get("hearing_status", "pending_schedule"),
+                    hearing_number=h_number,
+                    hearing_date=clean_date, 
+                    time=h_data.get("time"),
+                    lupon_member_id=lupon_id,
+                    remarks=current_remarks,
+                    hearing_status=current_status,
                 )
 
         # Serialize and return

@@ -34,18 +34,6 @@ import { HearingScheduler } from './routes/admin/pages/Hearing-Scheduler';
 
 function App() {
   const { initializeAuth } = useAuthenticationStore();
-  const { fetchCases, cases} = useCaseStore();
-  const { fetchHearings } = useHearingStore();
-  const { fetchMembers } = useLuponStore();
-
-  useEffect(() => {
-    fetchCases();
-    fetchHearings();
-    fetchMembers();
-  }, [fetchCases, fetchHearings, fetchMembers]);
-
-  // console.log("Hearings:", hearings)
-  console.log("Cases:", cases)
 
   useEffect(() => {
     initializeAuth();

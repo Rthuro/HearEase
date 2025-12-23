@@ -31,8 +31,9 @@ export const getHearingsByCase = async (case_id) => {
   return response.data;
 };
 
-const useHearingStore = create((set) => ({
+const useHearingStore = create((set, get) => ({
   hearings: [],
+  loading: false,
 
   fetchHearings: async () => {
     try {
@@ -43,7 +44,7 @@ const useHearingStore = create((set) => ({
     }
   },
 
-  fetcHearingsByCase: async (case_id) => {
+  fetchHearingsByCase: async (case_id) => {
         try {
             const response = await getHearingsByCase(case_id);
 
@@ -53,6 +54,60 @@ const useHearingStore = create((set) => ({
             toast.error("Failed to fetch case hearings", error);
         }
   },
+  updatedHearings: [],
+
+  setUpdatedHearings: (hearings) => {
+    set({ updatedHearings: hearings });
+  },
+
+   updateCaseHearings: async (case_id) => {
+        set({ loading: true }); // 2. Start Loading
+        try {
+            const { updatedHearings, hearings } = get();
+            
+            const updatePromises = updatedHearings.map((hearing) => {
+
+              let localDateString = null;
+              if (hearing.hearing_date) {
+                  const d = new Date(hearing.hearing_date);
+                  const year = d.getFullYear();
+                  const month = String(d.getMonth() + 1).padStart(2, '0');
+                  const day = String(d.getDate()).padStart(2, '0');
+                  localDateString = `${year}-${month}-${day}`;
+              }
+
+              const payload = {
+                  ...hearing,
+                  hearing_date: localDateString, 
+                  time: hearing.time || null,
+                  lupon_member: hearing.lupon_member
+              };
+
+            return axios.put(`${API_URL}/update-single-hearing/${hearing.id}/`, payload);
+
+            });
+
+            const responses = await Promise.all(updatePromises);
+
+            const savedHearings = responses.map(res => res.data);
+
+            toast.success("Hearings updated successfully");
+            
+            await get().fetchHearings();
+
+            set({ updatedHearings: savedHearings });
+
+            const resetHearings = hearings.filter(h => h.case_id !== case_id);
+
+            set({ hearings: [...resetHearings, ...savedHearings] });
+
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to update hearings");
+        } finally {
+            set({ loading: false });
+        }
+    },
 
 }));
 

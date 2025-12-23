@@ -12,12 +12,11 @@ import { CalendarCheck } from "lucide-react";
 
 export function HearingScheduler() {
     const { case_id} = useParams();
-    const { setFormData, cases, formData, predictions, predictionsLoading, fetchPredictions, caseTypes, fetchCaseTypes, set_complainants, set_respondents,  updateHearings, loading } = useCaseStore();
+    const { setFormData, formData, predictions, predictionsLoading, fetchPredictions, caseTypes, fetchCaseTypes,  updateHearings, loading } = useCaseStore();
     const { members, fetchMembers } = useLuponStore();
     const [prediction, setPrediction] = useState(null);
     const navigate = useNavigate();
 
-    const caseInfo = cases.find( c => c.id == case_id);
 
         useEffect(() => {
             fetchMembers();
@@ -29,16 +28,6 @@ export function HearingScheduler() {
                 fetchCaseTypes();
             }
         }, []);
-
-        useEffect(() => {
-            if (caseInfo) {
-                setFormData('caseDetails', 'nature_of_complaint_code', caseInfo.case_type.id);
-                setFormData('caseDetails', 'severity', caseInfo.case_type.severity);
-                setFormData('caseDetails', 'relationship', caseInfo.relationship);
-                set_complainants(caseInfo.complainants);
-                set_respondents(caseInfo.respondents);
-            }
-        }, [caseInfo]);
     
         // Fetch predictions only when caseTypes is loaded AND we have a case type selected
         useEffect(() => {
