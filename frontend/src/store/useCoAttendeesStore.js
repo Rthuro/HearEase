@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import { useRetrieveUsersStore } from "./useRetrieveUsersStore";
 const { fetchCaseRespondents, fetchCaseComplainants } = useRetrieveUsersStore.getState();
 
-const API_URL = "http://127.0.0.1:8000/api";
+const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
 
 export const getCoAttendee = async (id, type) => {
     const response = await axios.get(`${API_URL}/${type}/${id}/`);

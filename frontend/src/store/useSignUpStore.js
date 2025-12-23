@@ -3,7 +3,7 @@ import { toast } from "react-hot-toast";
 import { create } from "zustand";
 import useAuthenticationStore from "./useAuthenticationStore"; 
 
-const API_BASE_URL = "http://127.0.0.1:8000/api";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
 
 export const checkSignUpEmail = async (email) => {
 
