@@ -3,7 +3,7 @@ import { toast } from "react-hot-toast";
 import useAuthenticationStore from "./useAuthenticationStore"; 
 import { getUser } from "./useCaseStore";
 
-const API_URL = "http://127.0.0.1:8000/api";
+const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
 
 export const loginUser = async (email, password) => {
   const { login } = useAuthenticationStore.getState();

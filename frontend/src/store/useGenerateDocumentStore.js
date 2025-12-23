@@ -4,7 +4,7 @@ import useHearingStore from './useHearingStore';
 import { useLuponStore } from './useLuponStore';
 import toast from 'react-hot-toast';
 
-const API_BASE_URL = 'http://127.0.0.1:8000/api';
+const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api"
 const { hearings } = useHearingStore.getState();
 const { members } = useLuponStore.getState();
 
@@ -13,7 +13,7 @@ export const useGenerateDocumentStore = create((set) => ({
     templates: [],
     fetchTemplates: async () => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/document-templates/`);
+            const response = await axios.get(`${API_URL}/document-templates/`);
             set({ templates: response.data})
         } catch (error) {
             console.error('Error fetching templates:', error);
@@ -212,7 +212,7 @@ export const useGenerateDocumentStore = create((set) => ({
 
             try {
                 const response = await axios.post(
-                `${API_BASE_URL}/templates/${template_id}/generate/`,
+                `${API_URL}/templates/${template_id}/generate/`,
                 {   
                     template_id: template_id,
                     data: formData 
