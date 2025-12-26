@@ -29,9 +29,16 @@ const useAuthenticationStore = create((set) => ({
 
   getLocalInfo: () => {
     const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+    
     if (stored) {
       const data = JSON.parse(stored);
-
+       set({
+        isAuthenticated: true,
+        userRole: data.userRole,
+        userInfo: data.userInfo,
+        userLinkName: data.userLinkName,
+        username: data.username,
+      });
       return  data
     }
     return;
