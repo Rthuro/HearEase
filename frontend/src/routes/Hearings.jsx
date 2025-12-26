@@ -15,9 +15,10 @@ import { PageSync } from "@/components/PageSync";
 import { useEffect } from "react";
 import useAuthenticationStore from "@/store/useAuthenticationStore";
 import useHearingStore from "@/store/useHearingStore";
+import { Spinner } from "@/components/ui/spinner"
 
 export function Hearings() {
-    const { fetchHearings, hearings } = useHearingStore();
+    const { fetchHearings, hearings, loading } = useHearingStore();
     const [status, setStatus] = useState("all");
     const [filteredHearings, setFilteredHearings] = useState(hearings);
 
@@ -69,7 +70,8 @@ export function Hearings() {
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
-                <TableHearings hearingsList={filteredHearings} showPagination={true} navigateTo={navigateTo} />
+                { loading ? <div className="flex justify-center py-10"><Spinner /></div> : 
+                <TableHearings hearingsList={filteredHearings} showPagination={true} navigateTo={navigateTo} /> }
             </section>
         </div>
     );
