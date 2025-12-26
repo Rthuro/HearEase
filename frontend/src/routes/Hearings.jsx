@@ -33,9 +33,11 @@ export function Hearings() {
     const { userInfo, userLinkName } = useAuthenticationStore();
     const navigateTo = userInfo?.role === 'user' ? userLinkName : 'Admin';
 
+    const check_hearings = Array.isArray(hearings) ? hearings : [];
+
     const filterHearings = (status) => {
-        return hearings.filter((hearing) => {
-            if (status === "all") return hearings;
+        return check_hearings.filter((hearing) => {
+            if (status === "all") return check_hearings;
             return hearing.hearing_status.toLowerCase() === status;
         });
     }
@@ -70,7 +72,7 @@ export function Hearings() {
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
-                { loading ? <div className="flex justify-center py-10"><Spinner /></div> : 
+                { loading ? <div className="flex items-center justify-center gap-1 py-10"><Spinner /> loading...</div> : 
                 <TableHearings hearingsList={filteredHearings} showPagination={true} navigateTo={navigateTo} /> }
             </section>
         </div>

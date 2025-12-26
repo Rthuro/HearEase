@@ -20,6 +20,13 @@ import { CaseStatusDisplay } from "./CaseStatusDisplay";
 import { cn } from "@/lib/utils";
 
 export function TableHearings({hearingsList, showPagination, navigateTo}) {
+    let hearings = [];
+
+    if (Array.isArray(hearingsList)) {
+        hearings = hearingsList;
+    } else {
+        hearings = [];
+    }
     
     return(
         <section className="flex flex-col gap-6">
@@ -36,14 +43,14 @@ export function TableHearings({hearingsList, showPagination, navigateTo}) {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {  hearingsList?.length === 0 ? (
+                                {  hearings?.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={6}>
                                             <p className="text-center">No hearings scheduled.</p>
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    hearingsList.map((hearing) => (
+                                    hearings?.map((hearing) => (
                                         <TableRow key={hearing?.id} className="text-zinc-700">
                                             <TableCell>{hearing?.id}</TableCell>
                                             <TableCell>
@@ -71,7 +78,7 @@ export function TableHearings({hearingsList, showPagination, navigateTo}) {
                         </Table>
                 </div>
 
-                {showPagination && hearingsList.length > 0 && (
+                {showPagination && hearings.length > 0 && (
                     <Pagination>
                         <PaginationContent>
                             <PaginationItem>
