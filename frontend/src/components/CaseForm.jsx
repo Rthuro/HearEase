@@ -17,10 +17,22 @@ import { cn } from "@/lib/utils";
 import { useRetrieveUsersStore } from "@/store/useRetrieveUsersStore";
 
 export function CaseForm(){
-    const { formData, addCaseData, fetchCaseTypes, fetchSettlementTypes, complainantList, respondentList } = useCaseStore();
+    const { formData, addCaseData, fetchCaseTypes, fetchSettlementTypes, complainantList, respondentList, setComplainantInfo, set_complainants } = useCaseStore();
     const { fetchComplainants, fetchRespondents} = useRetrieveUsersStore();
     
     const { userRole, userLinkName } = useAuthenticationStore();
+
+    const userInfo = {
+        first_name: formData?.complainant?.first_name?.value,
+        last_name: formData?.complainant?.last_name?.value,
+        middle_name: formData?.complainant?.middle_name?.value,
+        birth_date: formData?.complainant?.birth_date?.value,
+        sex: formData?.complainant?.sex?.value,
+        contact_number: formData?.complainant?.contact_number?.value,
+        barangay: formData?.complainant?.barangay?.value,
+        street: formData?.complainant?.street?.value,
+        additional_info: formData?.complainant?.additional_info?.value,
+    }  
 
     useEffect(() => {
         fetchCaseTypes();
@@ -34,13 +46,25 @@ export function CaseForm(){
         fetchRespondents();
     }, []);
 
+    const isSelected = (user) => {
+        return complainantList.some(
+            (u) =>
+            u.first_name?.toLowerCase() === user.first_name?.toLowerCase() &&
+            u.last_name?.toLowerCase() === user.last_name?.toLowerCase()
+        );
+    };
+
+     useEffect(() => {
+        setComplainantInfo()
+        if(userRole === 'user' && !isSelected(userInfo)) {
+            set_complainants([userInfo])
+        }
+    }, [])
+
 
     const navigate = useNavigate();
     const [stepNumber, setStepNumber] = useState(1);
     const [submitModalOpen, setSubmitModalOpen] = useState(false);
-
-    const stored = localStorage.getItem("authData");
-    const storedData = stored ? JSON.parse(stored) : null;
     
 
     const formProgress = [
@@ -116,7 +140,7 @@ export function CaseForm(){
 
         const currentFormData = formData[currentFormKey];
 
-        if(stepNumber === 3 || (stepNumber === 4 && storedData.userRole === 'admin')) {
+        if(stepNumber === 3 || (stepNumber === 4 && userRole === 'admin')) {
             
             for (const field in currentFormData) {
                 if (currentFormData[field]?.required) {
@@ -136,7 +160,7 @@ export function CaseForm(){
             }
         }
 
-        if(stepNumber === 3 && storedData.userRole === 'user') {
+        if(stepNumber === 3 && userRole === 'user') {
             setSubmitModalOpen(true);
             return;
         }
