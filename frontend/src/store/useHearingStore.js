@@ -36,11 +36,15 @@ const useHearingStore = create((set, get) => ({
   loading: false,
 
   fetchHearings: async () => {
+    set({ loading: true });
     try {
       const response = await getHearings();
       set({ hearings: response });
+      
     } catch (error) {
       toast.error("Failed to fetch hearings", error);
+    } finally {
+      set({ loading: false });
     }
   },
 
