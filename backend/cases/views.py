@@ -41,10 +41,15 @@ class CaseView(APIView):
     def post(self, request):
         data = request.data.copy()
         
-        complainants = data.get("complainants")
+        complainants = data.get("complainants", [])
         complainants_ids = []
 
         for complainant in complainants:
+            if "birth_date" in complainant and complainant["birth_date"]:
+                raw_bd = str(complainant["birth_date"])
+                if "T" in raw_bd:
+                    complainant["birth_date"] = raw_bd.split("T")[0]
+
             check_complainant = Complainant.objects.filter(
                 first_name__iexact=complainant.get("first_name"),
                 last_name__iexact=complainant.get("last_name"),
@@ -57,11 +62,15 @@ class CaseView(APIView):
                 complainants_ids.append(complainant_obj.id)
         
 
-        # Extract respondent data
-        respondents = data.get("respondents")
+        respondents = data.get("respondents", [])
         respondents_ids = []
 
         for respondent in respondents:
+            if "birth_date" in respondent and respondent["birth_date"]:
+                raw_bd = str(respondent["birth_date"])
+                if "T" in raw_bd:
+                    respondent["birth_date"] = raw_bd.split("T")[0]
+
             check_respondent = Respondent.objects.filter(
                 first_name__iexact=respondent.get("first_name"),
                 last_name__iexact=respondent.get("last_name"),
