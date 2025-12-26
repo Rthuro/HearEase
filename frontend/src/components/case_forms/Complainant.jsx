@@ -1,52 +1,21 @@
 
 import { Button } from "../ui/button"
 import { useCaseStore } from "@/store/useCaseStore"
-import { useEffect } from "react"
 import { Separator } from "../ui/separator"
 import { cn } from "@/lib/utils"
 import { RetrievePopover } from "./retrieve-popover"
 import { AddEditParticipant } from "./add-edit-participant"
 import { ParticipantCard } from "./participant-card"
-
+import useAuthenticationStore from "@/store/useAuthenticationStore"
 export function Complainant() {
-    const { formData, setComplainantInfo, complainantList, set_complainants } = useCaseStore();
-
-    const stored = localStorage.getItem("authData");
-    const storedData = stored ? JSON.parse(stored) : null;
-
-    const userInfo = {
-                    first_name: formData?.complainant?.first_name?.value,
-                    last_name: formData?.complainant?.last_name?.value,
-                    middle_name: formData?.complainant?.middle_name?.value,
-                    birth_date: formData?.complainant?.birth_date?.value,
-                    sex: formData?.complainant?.sex?.value,
-                    contact_number: formData?.complainant?.contact_number?.value,
-                    barangay: formData?.complainant?.barangay?.value,
-                    street: formData?.complainant?.street?.value,
-                    additional_info: formData?.complainant?.additional_info?.value,
-                }      
-
-    const isSelected = (user) => {
-        return complainantList.some(
-            (u) =>
-            u.first_name?.toLowerCase() === user.first_name?.toLowerCase() &&
-            u.last_name?.toLowerCase() === user.last_name?.toLowerCase()
-        );
-    };
-
-    useEffect(() => {
-        setComplainantInfo()
-        if(storedData.userRole === 'user' && !isSelected(userInfo)) {
-            set_complainants([userInfo])
-        }
-    }, [])
+    const { complainantList, set_complainants } = useCaseStore();
+    const { userRole } = useAuthenticationStore();
 
     const handleReset = (e) => {
         e.preventDefault();
         set_complainants([])
 
     }
-
 
     
     return (
@@ -58,7 +27,7 @@ export function Complainant() {
                 <div className="flex gap-2">
                     <AddEditParticipant type="complainant" action="Add" />
 
-                    {storedData.userRole === 'admin' && (
+                    {userRole === 'admin' && (
                         <RetrievePopover participantType="complainant" />
                     )}
                 </div>
