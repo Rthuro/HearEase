@@ -23,8 +23,6 @@ export function Profile(){
         return date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
     }
 
-    console.log(user);
-
     const personalInfo = [
             {
             section: "Personal Information",
