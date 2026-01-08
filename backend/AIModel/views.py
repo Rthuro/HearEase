@@ -174,3 +174,91 @@ class TriggerRetrainView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+
+class SettlementPredictionView(APIView):
+    """
+    API endpoint to get the most likely settlement type for a case.
+    
+    POST /api/predict-settlement/
+    
+    Request Body:
+    {
+        "case_type": "Grave Threats",
+        "severity": 2,
+        "relationship": "Neighbor",
+        "num_complainants": 1,
+        "num_respondents": 1
+    }
+    
+    Response:
+    {
+        "success": true,
+        "likely_settlement": "Amicable Settlement",
+        "predicted_hearings": 2,
+        "predicted_days": 14,
+        "confidence_reason": "Lowest predicted hearings among all settlement types",
+        "all_predictions": {...}
+    }
+    """
+    
+    def post(self, request):
+        data = request.data
+        
+        # Required fields
+        case_type = data.get("case_type")
+        severity = data.get("severity")
+        relationship = data.get("relationship", "Neighbor")
+        num_complainants = data.get("num_complainants", 1)
+        num_respondents = data.get("num_respondents", 1)
+        lockdown_status = data.get("lockdown_status", "Normal")
+        
+        # Validate
+        if not case_type or severity is None:
+            return Response(
+                {"success": False, "error": "case_type and severity are required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Get predictions for all settlement types
+        result = predict_case_outcomes(
+            case_type=case_type,
+            severity=severity,
+            relationship=relationship,
+            num_complainants=num_complainants,
+            num_respondents=num_respondents,
+            lockdown_status=lockdown_status
+        )
+        
+        if not result.get("success"):
+            return Response(result, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        predictions = result.get("predictions", {})
+        
+        if not predictions:
+            return Response(
+                {"success": False, "error": "No predictions available"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+        # Find the settlement type with the lowest predicted hearings
+        # (fewer hearings = faster resolution = more likely)
+        best_settlement = min(
+            predictions.items(),
+            key=lambda x: x[1].get("predicted_hearings", float('inf'))
+        )
+        
+        settlement_name = best_settlement[0]
+        settlement_data = best_settlement[1]
+        
+        return Response({
+            "success": True,
+            "likely_settlement": settlement_name,
+            "predicted_hearings": settlement_data.get("predicted_hearings"),
+            "predicted_days": settlement_data.get("predicted_days"),
+            "predicted_weeks": settlement_data.get("predicted_weeks"),
+            "confidence_reason": "Lowest predicted hearings among all settlement types",
+            "all_predictions": predictions,
+            "input_summary": result.get("input_summary", {})
+        }, status=status.HTTP_200_OK)
+
+

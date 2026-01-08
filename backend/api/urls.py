@@ -44,6 +44,7 @@ urlpatterns = [
     path('delete-case/', CaseViews.CaseDeleteView.as_view(), name='delete-case'),
     path('update-case/<str:pk>/', CaseViews.UpdateCaseInfoView.as_view(), name='update-case'),
     path('single-case/', CaseViews.SingleCaseView.as_view(), name='single-case'),
+    path('case-priority/', CaseViews.CasePriorityView.as_view(), name='case-priority'),
 
     path('relationship-list/', CaseViews.RelationshipListView.as_view(), name='relationship-list'),
     path('settlement-types/', CaseViews.SettlementTypeListView.as_view(), name='settlement-type-list'),
@@ -51,6 +52,16 @@ urlpatterns = [
     path('hearing-cases/', HearingViews.HearingCaseView.as_view(), name='hearing-case-list'),
     path('update-hearings/<str:pk>/', HearingViews.SetCaseHearingsView.as_view(), name='update-hearings'),
     path('update-single-hearing/<int:pk>/', HearingViews.UpdateHearingView.as_view(), name='update-hearing'),
+    
+    # Scheduling endpoints
+    path('check-time-conflict/', HearingViews.CheckTimeConflictView.as_view(), name='check-time-conflict'),
+    path('optimal-slot/', HearingViews.GetOptimalSlotView.as_view(), name='optimal-slot'),
+    
+    # Advanced scheduling & analytics (Phase 3)
+    path('calendar-heatmap/', HearingViews.CalendarHeatMapView.as_view(), name='calendar-heatmap'),
+    path('lupon-workload/', HearingViews.LuponWorkloadView.as_view(), name='lupon-workload'),
+    path('early-warning/', HearingViews.EarlyWarningView.as_view(), name='early-warning'),
+    path('lupon-match/', HearingViews.LuponCaseMatchingView.as_view(), name='lupon-match'),
 
     path('document-templates/', DocumentViews.DocumentTemplateListCreateView.as_view(), name='document-template-list-create'),
     path('templates/<int:pk>/generate/', DocumentViews.GenerateDocumentView.as_view(), name='generate-document'),
@@ -60,8 +71,11 @@ urlpatterns = [
 
     path("", include("case_documents.urls")),
 
-    # AI Model Prediction Endpoints
+    # AI Model Endpoints
     path('predict-case/', AIModelViews.PredictCaseView.as_view(), name='predict-case'),
     path('model-info/', AIModelViews.ModelInfoView.as_view(), name='model-info'),
+    path('trigger-retrain/', AIModelViews.TriggerRetrainView.as_view(), name='trigger-retrain'),
+    path('predict-settlement/', AIModelViews.SettlementPredictionView.as_view(), name='predict-settlement'),
 
-] 
+]
+
