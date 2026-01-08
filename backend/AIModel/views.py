@@ -119,3 +119,58 @@ class ModelInfoView(APIView):
             return Response(result, status=status.HTTP_200_OK)
         else:
             return Response(result, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+
+class TriggerRetrainView(APIView):
+    """
+    API endpoint to trigger model retraining.
+    
+    POST /api/trigger-retrain/
+    
+    Request Body (optional):
+    {
+        "epochs": 50,  // Optional, default 50
+        "validation_split": 0.2  // Optional, default 0.2
+    }
+    
+    Response:
+    {
+        "success": true,
+        "message": "Successfully fine-tuned on 42 cases",
+        "samples_trained": 42,
+        "metrics": {
+            "final_loss": 0.0123,
+            "val_loss": 0.0145,
+            "epochs_trained": 35,
+            "backup_location": "/path/to/backup"
+        }
+    }
+    """
+    
+    def post(self, request):
+        from .retrain_model import fine_tune_model
+        
+        data = request.data
+        epochs = data.get("epochs", 50)
+        validation_split = data.get("validation_split", 0.2)
+        
+        print(f"[TriggerRetrain] Starting retrain with epochs={epochs}, validation_split={validation_split}")
+        
+        try:
+            result = fine_tune_model(
+                epochs=epochs,
+                validation_split=validation_split
+            )
+            
+            if result.get("success"):
+                return Response(result, status=status.HTTP_200_OK)
+            else:
+                return Response(result, status=status.HTTP_400_BAD_REQUEST)
+                
+        except Exception as e:
+            print(f"[TriggerRetrain] Error: {e}")
+            return Response(
+                {"success": False, "error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
