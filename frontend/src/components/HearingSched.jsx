@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { RefreshCcw, Check, ChevronsUpDown, CalendarIcon } from "lucide-react";
+import { RefreshCcw, Check, ChevronsUpDown, CalendarIcon, Loader2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
 import { Label } from "./ui/label";
@@ -29,6 +29,15 @@ import {
 import { dateFormatter } from "@/lib/helpers";
 import { Calendar } from "./ui/calendar";
 import { useCaseStore } from "@/store/useCaseStore";
+import axios from "axios";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
+
+// Available time slots for hearings
+const TIME_SLOTS = [
+  "08:00", "09:00", "10:00", "11:00",
+  "13:00", "14:00", "15:00", "16:00"
+];
 
 export function HearingSched({ predicted, luponMembers }) {
   const predicted_hearings = predicted || 3;
@@ -37,12 +46,14 @@ export function HearingSched({ predicted, luponMembers }) {
   const [openCalendar, setOpenCalendar] = useState(null);
   const [mode, setMode] = useState("standard");
   const [expediteInterval, setExpediteInterval] = useState(null);
+  const [loadingTimeSlot, setLoadingTimeSlot] = useState(null);
 
   const currentYear = new Date().getFullYear();
 
-  const hearings = () => {
+  // Helper to generate hearings array
+  const generateHearings = (count) => {
     const h_info = [];
-    for (let i = 0; i < predicted_hearings; i++) {
+    for (let i = 0; i < count; i++) {
       h_info.push({
         hearing_number: i + 1,
         hearing_date: null,
@@ -53,7 +64,39 @@ export function HearingSched({ predicted, luponMembers }) {
     return h_info;
   };
 
-  const [hearingInfo, setHearingInfo] = useState(hearings);
+  const [hearingInfo, setHearingInfo] = useState(() => generateHearings(predicted_hearings));
+
+  // Sync hearing count when predicted changes
+  useEffect(() => {
+    setHearingInfo((prevInfo) => {
+      const newCount = predicted_hearings;
+      const currentCount = prevInfo.length;
+
+      if (newCount === currentCount) return prevInfo;
+
+      if (newCount > currentCount) {
+        // Add more hearings
+        const newHearings = [...prevInfo];
+        for (let i = currentCount; i < newCount; i++) {
+          newHearings.push({
+            hearing_number: i + 1,
+            hearing_date: null,
+            time: null,
+            lupon_member_id: null,
+          });
+        }
+        // Recalculate dates if not in custom mode
+        if (mode !== "custom" && newHearings[0]?.hearing_date) {
+          const interval = mode === "standard" ? 7 : (expediteInterval || 7);
+          return recalculateDates(newHearings[0].hearing_date, interval, newHearings);
+        }
+        return newHearings;
+      } else {
+        // Remove extra hearings
+        return prevInfo.slice(0, newCount);
+      }
+    });
+  }, [predicted_hearings]);
 
   const addDaysSkippingSunday = (date, daysToAdd) => {
     let newDate = new Date(date);
@@ -77,7 +120,7 @@ export function HearingSched({ predicted, luponMembers }) {
 
     // Ensure the base date itself isn't a Sunday
     if (baseDate.getDay() === 0) {
-        baseDate.setDate(baseDate.getDate() + 1);
+      baseDate.setDate(baseDate.getDate() + 1);
     }
 
     newHearings[0].hearing_date = baseDate;
@@ -93,32 +136,117 @@ export function HearingSched({ predicted, luponMembers }) {
     return newHearings;
   };
 
+  // Auto-assign Lupon member (first available for the day)
+  const getDefaultLupon = (date) => {
+    if (!luponMembers || luponMembers.length === 0) return null;
+
+    // Get day of week
+    const dayName = new Date(date).toLocaleDateString('en-US', { weekday: 'long' });
+
+    // Find first lupon available on this day
+    for (const member of luponMembers) {
+      const schedules = member.schedules || member.sched || [];
+      if (Array.isArray(schedules) && schedules.some(s =>
+        (typeof s === 'string' && s === dayName) || s.day === dayName
+      )) {
+        return member.id;
+      }
+    }
+
+    // Fallback to first lupon
+    return luponMembers[0]?.id || null;
+  };
+
   useEffect(() => {
     if (mode === "custom") return;
 
     const interval = mode === "standard" ? 7 : expediteInterval;
-    
-    if (interval) {
-        const today = new Date();
-        const startingDate = addDaysSkippingSunday(today, interval);
-        const newHearingData = recalculateDates(startingDate, interval, hearingInfo);
-        setHearingInfo(newHearingData);
-        setHearings(newHearingData);
-        
-    }
-  }, [mode, expediteInterval]);
 
-  const handleDateSelect = (index, date) => {
+    if (interval) {
+      const today = new Date();
+      const startingDate = addDaysSkippingSunday(today, interval);
+      const newHearingData = recalculateDates(startingDate, interval, hearingInfo);
+
+      // Immediately assign defaults (9 AM and first lupon)
+      for (let i = 0; i < newHearingData.length; i++) {
+        if (newHearingData[i].hearing_date) {
+          // Set default time to 9 AM
+          if (!newHearingData[i].time) {
+            newHearingData[i].time = "09:00";
+          }
+          // Set default lupon
+          if (!newHearingData[i].lupon_member_id && luponMembers?.length > 0) {
+            newHearingData[i].lupon_member_id = getDefaultLupon(newHearingData[i].hearing_date);
+          }
+        }
+      }
+
+      setHearingInfo(newHearingData);
+      setHearings(newHearingData);
+    }
+  }, [mode, expediteInterval, luponMembers]);
+
+  // Fetch optimal time slot for a given date
+  const fetchOptimalTime = async (date, index) => {
+    if (!date) return "09:00"; // Default to 9 AM
+
+    setLoadingTimeSlot(index);
+    try {
+      const dateStr = new Date(date).toISOString().split('T')[0];
+      const response = await axios.get(`${API_URL}/optimal-slot/`, {
+        params: { date: dateStr }
+      });
+
+      // API returns { optimal_time: "09:00", all_slots: [...], load_status: "light" }
+      if (response.data?.optimal_time) {
+        return response.data.optimal_time;
+      }
+      // Fallback to 9 AM
+      return "09:00";
+    } catch (error) {
+      console.error("Error fetching optimal time:", error);
+      // Fallback: suggest 9 AM if API fails
+      return "09:00";
+    } finally {
+      setLoadingTimeSlot(null);
+    }
+  };
+
+  // Auto-assign times for all hearings
+  const autoAssignTimes = async (hearingsData) => {
+    const updatedHearings = [...hearingsData];
+
+    for (let i = 0; i < updatedHearings.length; i++) {
+      if (updatedHearings[i].hearing_date && !updatedHearings[i].time) {
+        const optimalTime = await fetchOptimalTime(updatedHearings[i].hearing_date, i);
+        updatedHearings[i].time = optimalTime;
+      }
+    }
+
+    return updatedHearings;
+  };
+
+  const handleDateSelect = async (index, date) => {
     let newHearingInfo = [...hearingInfo];
     newHearingInfo[index].hearing_date = date;
 
     // If NOT in custom mode and we changed the first date, cascade changes
     if (mode !== "custom" && index === 0) {
-        const interval = mode === "standard" ? 7 : expediteInterval;
-        if (interval) {
-            newHearingInfo = recalculateDates(date, interval, newHearingInfo);
-        }
+      const interval = mode === "standard" ? 7 : expediteInterval;
+      if (interval) {
+        newHearingInfo = recalculateDates(date, interval, newHearingInfo);
+      }
     }
+
+    // Auto-assign time for the selected date
+    const optimalTime = await fetchOptimalTime(date, index);
+    newHearingInfo[index].time = optimalTime;
+
+    // If dates were cascaded, assign times for all
+    if (mode !== "custom" && index === 0) {
+      newHearingInfo = await autoAssignTimes(newHearingInfo);
+    }
+
     setHearings(newHearingInfo);
     setHearingInfo(newHearingInfo);
     setOpenCalendar(null);
@@ -146,9 +274,8 @@ export function HearingSched({ predicted, luponMembers }) {
         <div className="flex flex-col sm:flex-row gap-4">
           {/* Standard Mode */}
           <label
-            className={`group flex items-center p-2 border border-gray-300 bg-white rounded-lg cursor-pointer hover:border-redBase transition w-full sm:w-auto ${
-              mode === "standard" ? "ring-2 ring-red-50" : ""
-            }`}
+            className={`group flex items-center p-2 border border-gray-300 bg-white rounded-lg cursor-pointer hover:border-redBase transition w-full sm:w-auto ${mode === "standard" ? "ring-2 ring-red-50" : ""
+              }`}
           >
             <input
               type="radio"
@@ -168,9 +295,8 @@ export function HearingSched({ predicted, luponMembers }) {
 
           {/* Expedite Mode */}
           <label
-            className={`group flex items-center p-2 border border-gray-300 bg-white rounded-lg cursor-pointer hover:border-redBase transition w-full sm:w-auto ${
-              mode === "expedite" ? "ring-2 ring-red-50" : ""
-            }`}
+            className={`group flex items-center p-2 border border-gray-300 bg-white rounded-lg cursor-pointer hover:border-redBase transition w-full sm:w-auto ${mode === "expedite" ? "ring-2 ring-red-50" : ""
+              }`}
           >
             <input
               type="radio"
@@ -214,9 +340,8 @@ export function HearingSched({ predicted, luponMembers }) {
 
           {/* Custom mode */}
           <label
-            className={`group flex items-center p-2 border border-gray-300 bg-white rounded-lg cursor-pointer hover:border-redBase transition w-full sm:w-auto ${
-              mode === "custom" ? "ring-2 ring-red-50" : ""
-            }`}
+            className={`group flex items-center p-2 border border-gray-300 bg-white rounded-lg cursor-pointer hover:border-redBase transition w-full sm:w-auto ${mode === "custom" ? "ring-2 ring-red-50" : ""
+              }`}
           >
             <input
               type="radio"
@@ -290,7 +415,7 @@ export function HearingSched({ predicted, luponMembers }) {
                           : null
                       }
                       //Disable Sundays AND any date <= Today
-                      disabled={(date) => 
+                      disabled={(date) =>
                         date.getDay() === 0 || date < new Date()
                       }
                       captionLayout="dropdown"
@@ -298,7 +423,7 @@ export function HearingSched({ predicted, luponMembers }) {
                       toYear={currentYear + 10}
                       onSelect={(date) => {
                         handleDateSelect(i, date)
-                    }}
+                      }}
                     />
                   </PopoverContent>
                 </Popover>
@@ -335,17 +460,15 @@ export function HearingSched({ predicted, luponMembers }) {
                       className="max-w-max min-w-full justify-between"
                     >
                       {hearingInfo[i]?.lupon_member_id
-                        ? `${
-                            luponMembers.find(
-                              (lupon) =>
-                                lupon.id === hearingInfo[i].lupon_member_id
-                            )?.first_name
-                          } ${
-                            luponMembers.find(
-                              (lupon) =>
-                                lupon.id === hearingInfo[i].lupon_member_id
-                            )?.last_name
-                          }`
+                        ? `${luponMembers.find(
+                          (lupon) =>
+                            lupon.id === hearingInfo[i].lupon_member_id
+                        )?.first_name
+                        } ${luponMembers.find(
+                          (lupon) =>
+                            lupon.id === hearingInfo[i].lupon_member_id
+                        )?.last_name
+                        }`
                         : "Select lupon member..."}
                       <ChevronsUpDown className="opacity-50" />
                     </Button>

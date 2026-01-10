@@ -77,5 +77,9 @@ urlpatterns = [
     path('trigger-retrain/', AIModelViews.TriggerRetrainView.as_view(), name='trigger-retrain'),
     path('predict-settlement/', AIModelViews.SettlementPredictionView.as_view(), name='predict-settlement'),
 
+    # Google Calendar Integration
+    path('google-calendar/', include('google_calendar.urls')),
+
 ]
+
 

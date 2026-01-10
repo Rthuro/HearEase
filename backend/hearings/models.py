@@ -38,9 +38,13 @@ class Hearing(models.Model):
         default="pending_schedule"
     )
     hearing_number = models.IntegerField(blank=True, null=True)
+    
+    # --- Google Calendar sync
+    google_event_id = models.CharField(max_length=255, blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Hearing for Case #{self.case.id} on {self.hearing_date} ({self.get_hearing_status_display()})"
+

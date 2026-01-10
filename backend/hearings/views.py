@@ -12,8 +12,8 @@ from datetime import datetime, timedelta
 
 User = get_user_model()
 
-# Time slots available for hearings
-TIME_SLOTS = ["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00"]
+# Time slots available for hearings (09:00 is the default)
+TIME_SLOTS = ["09:00", "10:00", "11:00", "08:00", "13:00", "14:00", "15:00", "16:00"]
 
 
 def get_available_slots(date, exclude_hearing_id=None):
