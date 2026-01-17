@@ -298,3 +298,139 @@ if __name__ == "__main__":
     # Allow running directly for testing
     result = fine_tune_model()
     print(f"\nResult: {result}")
+
+
+def increment_resolved_count():
+    """
+    Increment the resolved cases counter.
+    Called when a case is marked as resolved.
+    Returns True if threshold reached and retraining triggered.
+    """
+    import django
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'hearease_main.settings')
+    django.setup()
+    
+    from .models import RetrainConfig, TrainingHistory
+    
+    config = RetrainConfig.get_config()
+    
+    if not config.auto_retrain_enabled:
+        return False
+    
+    # Increment counter
+    config.cases_since_last_train += 1
+    config.save()
+    
+    print(f"[AutoRetrain] Cases since last train: {config.cases_since_last_train}/{config.threshold_cases}")
+    
+    # Check if threshold reached
+    if config.cases_since_last_train >= config.threshold_cases:
+        print(f"[AutoRetrain] Threshold reached! Triggering automatic retrain...")
+        return check_and_trigger_retrain()
+    
+    return False
+
+
+def check_and_trigger_retrain(force=False, triggered_by='automatic', user=None):
+    """
+    Check if retraining conditions are met and trigger if so.
+    
+    Args:
+        force: If True, ignore threshold and retrain anyway
+        triggered_by: 'automatic' or 'manual'
+        user: User who triggered (for manual)
+    
+    Returns:
+        dict: Result of retraining attempt
+    """
+    import django
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'hearease_main.settings')
+    django.setup()
+    
+    from .models import RetrainConfig, TrainingHistory
+    from cases.models import Case
+    
+    config = RetrainConfig.get_config()
+    
+    # Check if we should retrain
+    should_retrain = force or (
+        config.auto_retrain_enabled and 
+        config.cases_since_last_train >= config.threshold_cases
+    )
+    
+    if not should_retrain and not force:
+        return {
+            "success": False,
+            "message": f"Threshold not reached ({config.cases_since_last_train}/{config.threshold_cases})",
+            "triggered": False
+        }
+    
+    # Check minimum resolved cases
+    resolved_count = Case.objects.filter(case_status='resolved').count()
+    if resolved_count < 5:
+        return {
+            "success": False,
+            "message": f"Need at least 5 resolved cases. Currently have {resolved_count}.",
+            "triggered": False
+        }
+    
+    # Trigger retraining
+    print(f"[AutoRetrain] Starting {'automatic' if triggered_by == 'automatic' else 'manual'} retraining...")
+    
+    result = fine_tune_model(
+        epochs=config.default_epochs,
+        validation_split=config.default_validation_split
+    )
+    
+    # Log to TrainingHistory
+    TrainingHistory.objects.create(
+        triggered_by=triggered_by,
+        triggered_by_user=user,
+        samples_trained=result.get("samples_trained", 0),
+        final_loss=result.get("metrics", {}).get("final_loss"),
+        val_loss=result.get("metrics", {}).get("val_loss"),
+        epochs_trained=result.get("metrics", {}).get("epochs_trained", 0),
+        success=result.get("success", False),
+        message=result.get("message", ""),
+        backup_location=result.get("metrics", {}).get("backup_location", "")
+    )
+    
+    # Reset counter on success
+    if result.get("success"):
+        config.cases_since_last_train = 0
+        config.save()
+        print(f"[AutoRetrain] Success! Counter reset to 0.")
+    
+    result["triggered"] = True
+    return result
+
+
+def get_training_status():
+    """
+    Get current training status and configuration.
+    """
+    import django
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'hearease_main.settings')
+    django.setup()
+    
+    from .models import RetrainConfig, TrainingHistory
+    from cases.models import Case
+    
+    config = RetrainConfig.get_config()
+    last_training = TrainingHistory.objects.filter(success=True).first()
+    resolved_count = Case.objects.filter(case_status='resolved').count()
+    
+    return {
+        "auto_retrain_enabled": config.auto_retrain_enabled,
+        "threshold_cases": config.threshold_cases,
+        "cases_since_last_train": config.cases_since_last_train,
+        "total_resolved_cases": resolved_count,
+        "ready_to_retrain": resolved_count >= 5,
+        "threshold_reached": config.cases_since_last_train >= config.threshold_cases,
+        "last_training": {
+            "trained_at": last_training.trained_at.isoformat() if last_training else None,
+            "samples": last_training.samples_trained if last_training else 0,
+            "triggered_by": last_training.triggered_by if last_training else None,
+        } if last_training else None
+    }
+

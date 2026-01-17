@@ -155,10 +155,24 @@ class CaseView(APIView):
         except Case.DoesNotExist:
             return Response({"error": "Case not found"}, status=status.HTTP_404_NOT_FOUND)
 
+        # Check if status is changing to resolved
+        old_status = case.case_status
+        new_status = request.data.get("case_status", old_status)
+        
         serializer = CaseSerializer(case, data=request.data, partial=True)
 
         if serializer.is_valid():
             serializer.save()
+            
+            # Trigger auto-retrain check if case was just resolved
+            if old_status != "resolved" and new_status == "resolved":
+                try:
+                    from AIModel.retrain_model import increment_resolved_count
+                    increment_resolved_count()
+                    print(f"[Case] Case #{pk} resolved - auto-retrain counter incremented")
+                except Exception as e:
+                    print(f"[Case] Auto-retrain check failed: {e}")
+            
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -199,10 +213,24 @@ class UpdateCaseInfoView(APIView):
         except Case.DoesNotExist:
             return Response({"error": "Case not found."}, status=status.HTTP_404_NOT_FOUND)
 
+        # Check if status is changing to resolved
+        old_status = case.case_status
+        new_status = request.data.get("case_status", old_status)
+
         serializer = CaseSerializer(case, data=request.data, partial=True)
 
         if serializer.is_valid():
             case = serializer.save()
+            
+            # Trigger auto-retrain check if case was just resolved
+            if old_status != "resolved" and new_status == "resolved":
+                try:
+                    from AIModel.retrain_model import increment_resolved_count
+                    increment_resolved_count()
+                    print(f"[Case] Case #{pk} resolved - auto-retrain counter incremented")
+                except Exception as e:
+                    print(f"[Case] Auto-retrain check failed: {e}")
+            
             response_data = CaseSerializer(case).data
             return Response(response_data, status=status.HTTP_200_OK)
 

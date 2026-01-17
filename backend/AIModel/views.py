@@ -123,14 +123,13 @@ class ModelInfoView(APIView):
 
 class TriggerRetrainView(APIView):
     """
-    API endpoint to trigger model retraining.
+    API endpoint to trigger model retraining (manual).
     
     POST /api/trigger-retrain/
     
     Request Body (optional):
     {
-        "epochs": 50,  // Optional, default 50
-        "validation_split": 0.2  // Optional, default 0.2
+        "force": true  // Force retrain even if threshold not met
     }
     
     Response:
@@ -138,28 +137,24 @@ class TriggerRetrainView(APIView):
         "success": true,
         "message": "Successfully fine-tuned on 42 cases",
         "samples_trained": 42,
-        "metrics": {
-            "final_loss": 0.0123,
-            "val_loss": 0.0145,
-            "epochs_trained": 35,
-            "backup_location": "/path/to/backup"
-        }
+        "triggered": true,
+        "metrics": {...}
     }
     """
     
     def post(self, request):
-        from .retrain_model import fine_tune_model
+        from .retrain_model import check_and_trigger_retrain
         
         data = request.data
-        epochs = data.get("epochs", 50)
-        validation_split = data.get("validation_split", 0.2)
+        force = data.get("force", True)  # Manual trigger usually forces
         
-        print(f"[TriggerRetrain] Starting retrain with epochs={epochs}, validation_split={validation_split}")
+        print(f"[TriggerRetrain] Manual retrain triggered (force={force})")
         
         try:
-            result = fine_tune_model(
-                epochs=epochs,
-                validation_split=validation_split
+            result = check_and_trigger_retrain(
+                force=force,
+                triggered_by='manual',
+                user=request.user if request.user.is_authenticated else None
             )
             
             if result.get("success"):
@@ -173,6 +168,74 @@ class TriggerRetrainView(APIView):
                 {"success": False, "error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class TrainingStatusView(APIView):
+    """
+    API endpoint to get current training status and configuration.
+    
+    GET /api/training-status/
+    
+    Response:
+    {
+        "auto_retrain_enabled": true,
+        "threshold_cases": 10,
+        "cases_since_last_train": 3,
+        "total_resolved_cases": 42,
+        "ready_to_retrain": true,
+        "threshold_reached": false,
+        "last_training": {...}
+    }
+    """
+    
+    def get(self, request):
+        from .retrain_model import get_training_status
+        
+        try:
+            status_data = get_training_status()
+            return Response(status_data, status=status.HTTP_200_OK)
+        except Exception as e:
+            print(f"[TrainingStatus] Error: {e}")
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class UpdateRetrainConfigView(APIView):
+    """
+    API endpoint to update retraining configuration.
+    
+    POST /api/retrain-config/
+    {
+        "auto_retrain_enabled": true,
+        "threshold_cases": 15
+    }
+    """
+    
+    def post(self, request):
+        from .models import RetrainConfig
+        
+        data = request.data
+        config = RetrainConfig.get_config()
+        
+        if "auto_retrain_enabled" in data:
+            config.auto_retrain_enabled = data["auto_retrain_enabled"]
+        if "threshold_cases" in data:
+            config.threshold_cases = max(1, int(data["threshold_cases"]))
+        if "default_epochs" in data:
+            config.default_epochs = max(10, int(data["default_epochs"]))
+        
+        config.save()
+        
+        return Response({
+            "success": True,
+            "config": {
+                "auto_retrain_enabled": config.auto_retrain_enabled,
+                "threshold_cases": config.threshold_cases,
+                "default_epochs": config.default_epochs
+            }
+        }, status=status.HTTP_200_OK)
 
 
 class SettlementPredictionView(APIView):
