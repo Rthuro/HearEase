@@ -34,6 +34,7 @@ import { useLuponStore } from "@/store/useLuponStore";
 import { useGoogleCalendarStore } from "@/store/useGoogleCalendarStore";
 import { useAIModelStore } from "@/store/useAIModelStore";
 import { useSearchParams } from "react-router-dom";
+import { Switch } from "@/components/ui/switch";
 
 export function Settings() {
     const [user, setUser] = useState(null);
@@ -42,7 +43,6 @@ export function Settings() {
     const [integrations, switchIntegrations] = useState(false);
     const [aiModel, switchAIModel] = useState(false);
     const { members } = useLuponStore();
-    const { userLinkName } = useAuthenticationStore();
     const { barangays , streets, fetchBarangays, fetchStreets } = useAddressesStore();
     const { updateUser, fetchUser, sendOTP, verifyOTP } = useUserStore();
 
@@ -274,14 +274,16 @@ export function Settings() {
                     switchAccount(true)
                     switchNotifications(false)
                     switchIntegrations(false)
+                    switchAIModel(false)
                 }} className={`flex items-center gap-2 p-3 rounded-md ${account ? 'bg-red-50 text-redBase' : ''}`}>
                     <User2 className="size-4" />
                     Account Information
                 </button>
                 <button onClick={() => {
-                    switchNotifications(true)
                     switchAccount(false)
+                    switchNotifications(true)
                     switchIntegrations(false)
+                    switchAIModel(false)
                     }}
                     className={`flex items-center gap-2 p-3 rounded-md ${notifications ? "bg-red-50 text-redBase" : ""}`}>
                     <Bell className="size-4" />
@@ -289,9 +291,10 @@ export function Settings() {
                 </button>
                 {userRole === "admin" && (
                     <button onClick={() => {
-                        switchIntegrations(true)
                         switchAccount(false)
                         switchNotifications(false)
+                        switchIntegrations(true)
+                        switchAIModel(false)
                     }}
                     className={`flex items-center gap-2 p-3 rounded-md ${integrations ? "bg-red-50 text-redBase" : ""}`}
                     >
@@ -301,10 +304,10 @@ export function Settings() {
                 )}
                 {userRole === "admin" && (
                     <button onClick={() => {
-                        switchAIModel(true)
                         switchAccount(false)
                         switchNotifications(false)
                         switchIntegrations(false)
+                        switchAIModel(true)
                     }}
                         className={`flex items-center gap-2 p-3 rounded-md ${aiModel ? "bg-red-50 text-redBase" : ""}`}
                     >
@@ -326,7 +329,8 @@ export function Settings() {
                     <h2 className="text-xl font-medium">Account Information</h2>
                     <p className=" text-zinc-500">Manage your account information</p>
                 </div>
-
+                
+                {userRole !== "admin" && (
                 <div className="flex items-center justify-between bg-white p-4 border rounded-lg">
                     <div className="flex flex-col gap-1">
                         <p className="text-lg font-medium">Verify your account</p>
@@ -341,6 +345,7 @@ export function Settings() {
                         </DialogContent>
                     </Dialog>
                 </div>
+                )}
                 
 
                 <p className="text-lg font-medium">Profile</p>
