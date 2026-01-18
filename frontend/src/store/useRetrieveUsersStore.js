@@ -6,24 +6,28 @@ import toast from "react-hot-toast";
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
 
 export const getComplainants = async () => {
-    const response = await axios.get(`${API_URL}/complainants`);
+    const response = await axios.get(`${API_URL}/case-persons`, {
+        params: { type: "complainant" }
+    });
     return response.data;
 }
 
 export const getRespondents = async () => {
-    const response = await axios.get(`${API_URL}/respondents`);
+    const response = await axios.get(`${API_URL}/case-persons`, {
+        params: { type: "respondent" }  
+    });
     return response.data;
 }
 
 export const getCaseComplainants = async (ids) => {
-    const response = await axios.post(`${API_URL}/case-complainant/`, {
+    const response = await axios.post(`${API_URL}/case-persons/`, {
         ids: ids
     });
     return response.data;
 }
 
 export const getCaseRespondents = async (ids) => {
-    const response = await axios.post(`${API_URL}/case-respondent/`, {
+    const response = await axios.post(`${API_URL}/case-persons/`, {
         ids: ids
     });
     return response.data;
@@ -40,23 +44,10 @@ export const getAdmins = async () => {
 }
 
 export const getUser = async (email) => {
-    const response = await axios.post(`${API_URL}/find-user`, { 
+    const response = await axios.post(`${API_URL}/find-user/`, { 
         email: email
      });
     return response.data.user;
-}
-
-export const getCaseCoRespondents = async (corespondent_ids) => {
-    const response = await axios.post(`${API_URL}/get-case-co-respondents/`, {
-        ids: corespondent_ids
-    });
-    return response.data;
-}
-export const getCaseCoComplainants = async (cocomplainant_ids) => {
-    const response = await axios.post(`${API_URL}/get-case-co-complainants/`, {
-        ids: cocomplainant_ids
-    });
-    return response.data;
 }
 
 export const useRetrieveUsersStore = create( (set) => ({
@@ -65,6 +56,15 @@ export const useRetrieveUsersStore = create( (set) => ({
         try {
             const data = await getComplainants();
             set({ complainants: data })
+        } catch (error) {
+            toast.error(error);
+        }
+    },
+    userInformation: null,
+    fetchUser: async (email) => {
+        try {
+            const data = await getUser(email);
+            set({ userInformation: data })
         } catch (error) {
             toast.error(error);
         }

@@ -11,7 +11,7 @@ import { useEffect } from "react";
 
 export function AdminLayout() {
   const { userInfo, isAuthenticated } = useAuthenticationStore();
-  const { fetchCases} = useCaseStore();
+  const { cases, fetchCases} = useCaseStore();
   const { fetchHearings } = useHearingStore();
   const { fetchMembers } = useLuponStore();
 
@@ -26,7 +26,6 @@ export function AdminLayout() {
     if (!isAuthenticated) {
       return <Navigate to="/Login" replace />;
     }
-  
 
   return (
     <>

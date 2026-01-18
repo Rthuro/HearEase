@@ -44,9 +44,10 @@ class CalendarSyncLog(models.Model):
     hearing = models.ForeignKey(
         "hearings.Hearing",
         on_delete=models.CASCADE,
+        null=True,
         related_name="sync_logs"
     )
-    action = models.CharField(max_length=20, choices=ACTION_CHOICES)
+    action = models.CharField(max_length=20, choices=ACTION_CHOICES,default="create")
     google_event_id = models.CharField(max_length=255, blank=True, null=True)
     message = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)

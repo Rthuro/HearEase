@@ -4,31 +4,26 @@ from addresses import views as AddressViews
 from lupon_members import views as LuponViews
 from cases import views as CaseViews
 from hearings import views as HearingViews
-from complainants import views as ComplainantsViews
 from documents import views as DocumentViews
-from respondents import views as RespondentViews
 from AIModel import views as AIModelViews
+from case_persons import views as CasePersonViews
 
 urlpatterns = [
     path("register/", UserViews.RegisterView.as_view(), name="register"),
     path('auth/google/', UserViews.GoogleLoginView.as_view(), name='google-login'),
+
+    path('auth/send-otp/', UserViews.SendOTPView.as_view()),
+    path('auth/verify-otp/', UserViews.VerifyOTPView.as_view()),
+    path('verify-identity/', UserViews.VerifyIdentityView.as_view(), name='verify-identity'),
+
+    path('user/notifications/', UserViews.UserNotificationSettingsView.as_view(), name='user-notification-settings'),
 
     path('check-email/', UserViews.CheckEmailView.as_view(), name='check-email'),
     path('find-user/', UserViews.FindUserView.as_view(), name='find-user'),
     path('update-user/<int:pk>/', UserViews.UpdateUserView.as_view(), name='update-user'),
     path('admins/', UserViews.AdminView.as_view(), name='admins'),
 
-    path('complainants/', ComplainantsViews.ComplainantView.as_view(), name='complainants-list'),
-    path('complainant/<int:pk>/', ComplainantsViews.CoComplainantView.as_view(), name='complainant'),
-    path('update-complainant/<int:pk>/', ComplainantsViews.updateComplainantView.as_view(), name='update-complainant'),
-    path('case-complainant/', ComplainantsViews.CaseComplainantView.as_view(), name='case-complainant'),
-    path('get-case-complainants/', ComplainantsViews.GetCaseCoComplainantsView.as_view(), name='case-complainants-list'),
-
-    path('respondents/', RespondentViews.RespondentView.as_view(), name='respondents'),
-    path('respondent/<int:pk>/', RespondentViews.CoRespondentView.as_view(), name='respondent'),
-    path('update-respondent/<int:pk>/', RespondentViews.UpdateRespondentView.as_view(), name='update-respondent'),
-    path('get-case-respondents/', RespondentViews.GetCaseCoRespondentsView.as_view(), name='case-respondents-list'),
-    path('case-respondent/', RespondentViews.CaseRespondentView.as_view(), name='case-respondent'),
+    path('case-persons/', CasePersonViews.CasePersonView.as_view(), name='case-persons'),
 
     path('login/', UserViews.LoginView.as_view(), name='login'),
     path('barangays/', AddressViews.BarangayListView.as_view(), name='barangay-list'),
@@ -38,6 +33,7 @@ urlpatterns = [
     path('update-lupon/<int:pk>/', LuponViews.UpdateLuponView.as_view(), name='update-lupon'),
     path('delete-lupon/', LuponViews.LuponDeleteView.as_view(), name='delete-lupon'),
 
+    path('sync-user-cases/', CaseViews.SyncCasesView.as_view(), name='sync-user-cases'),
     path('cases/', CaseViews.CaseView.as_view(), name='create-case'),
     path('case-list/', CaseViews.CaseListView.as_view(), name='case-list'),
     path('case-types/', CaseViews.CaseTypeListView.as_view(), name='case-type-list'),

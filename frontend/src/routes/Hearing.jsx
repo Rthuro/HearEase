@@ -97,10 +97,6 @@ export default function Hearing() {
         fetchCaseComplainants(caseInfo?.complainants);
         fetchCaseRespondents(caseInfo?.respondents);
     }, [caseInfo])
-
-
-   
-    
     
     if(userRole == 'admin'){
         return (

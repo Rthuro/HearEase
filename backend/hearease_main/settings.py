@@ -71,10 +71,9 @@ INSTALLED_APPS = [
     'users',
     'lupon_members',
     'addresses',
+    'case_persons',
     'cases',
     'hearings',
-    'respondents',
-    'complainants',
     'documents',
     'case_documents',
     'api',
@@ -94,6 +93,12 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication', 
+    ],
+}
 
 ROOT_URLCONF = 'hearease_main.urls'
 
@@ -187,3 +192,7 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'users.User'
 CORS_ALLOW_ALL_ORIGINS = True
+
+RESEND_API_KEY = os.getenv('RESEND_API_KEY')
+SMSGATE_USERNAME = os.getenv('SMSGATE_USERNAME')
+SMSGATE_PASSWORD = os.getenv('SMSGATE_PASSWORD')

@@ -1,8 +1,7 @@
 from django.db import models
 from users.models import User
-from complainants.models import Complainant
-from respondents.models import Respondent
 from lupon_members.models import LuponMember
+from case_persons.models import CasePerson
 
 
 class CaseType(models.Model):
@@ -57,8 +56,8 @@ class Case(models.Model):
         Relationship, on_delete=models.SET_NULL, null=True, related_name="cases"
     )
 
-    complainants = models.ManyToManyField(Complainant, related_name="cases_as_complainant")
-    respondents = models.ManyToManyField(Respondent, related_name="cases_as_respondent")
+    complainants = models.ManyToManyField(CasePerson, related_name="cases_as_complainant")
+    respondents = models.ManyToManyField(CasePerson, related_name="cases_as_respondent")
 
     case_status = models.CharField(
         max_length=20,

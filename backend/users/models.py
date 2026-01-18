@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.conf import settings
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -63,5 +64,37 @@ class User(AbstractUser):
     objects = CustomUserManager()
     def __str__(self):
         return self.email
+
+class OTP(models.Model):
+    OTP_TYPE_CHOICES = [ ("email", "Email"), ("phone", "Phone") ]
+
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    code = models.CharField(max_length=6)
+    otp_type = models.CharField(max_length=10, choices=OTP_TYPE_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+
+    def __str__(self):
+        return f"{self.user.email} - {self.code}"
+
+class NotificationPreference(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE, 
+        related_name="notification_preferences"
+    )
+
+    allow_email = models.BooleanField(default=True)
+    allow_sms = models.BooleanField(default=True)
+    allow_push = models.BooleanField(default=True)
+
+    # Granular Settings (Optional:specific control)
+    # notify_on_hearing_update = models.BooleanField(default=True)
+    # notify_on_case_update = models.BooleanField(default=True)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Settings for {self.user.email}"
 
  

@@ -1,14 +1,21 @@
 import { create } from "zustand";
-// import useAuthenticationStore from "./useAuthenticationStore";
 import axios from "axios";
 import toast from "react-hot-toast";
 import useHearingStore from "./useHearingStore";
 
 const { fetchHearings } = useHearingStore.getState();
-// const { userInfo, userRole } = useAuthenticationStore.getState();
+
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
 const LOCAL_STORAGE_KEY = "authData";
 
+export const getUser = async () => {
+    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+    const data = JSON.parse(stored);
+    const response = await axios.post(`${API_URL}/find-user/`, {
+        email: data.userInfo.email
+    });
+    return response.data;
+};
 
 export const getCaseTypes = async () => {
     const response = await axios.get(`${API_URL}/case-types/`);
@@ -38,21 +45,23 @@ export const addCase = async (caseData) => {
 };
 
 export const getCases = async () => {
-    const userData = await getUser();
+    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+    const data = JSON.parse(stored);
 
     const response = await axios.post(`${API_URL}/case-list/`, {
-        is_user: userData.user.is_user,
-        first_name: userData.user.first_name,
-        last_name: userData.user.last_name
+        first_name: data.userInfo.first_name,
+        middle_name: data.userInfo.middle_name,
+        last_name: data.userInfo.last_name
     });
     return response.data;
 };
 
-export const getUser = async () => {
-    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-    const data = JSON.parse(stored);
-    const response = await axios.post(`${API_URL}/find-user/`, {
-        email: data.userInfo.email
+export const getCaseList = async () => {
+    const userData = await getUser();
+    const response = await axios.get(`${API_URL}/case-list/`, {
+        params: { 
+            is_admin: userData.user.is_admin,
+            email: userData.user.email }
     });
     return response.data;
 };
@@ -321,9 +330,20 @@ export const useCaseStore = create((set, get) => ({
         }
     },
 
-    fetchCases: async () => {
+    relatedCases: {},
+    fetchUserRelatedCase: async () => {
         try {
             const data = await getCases();
+            set({ relatedCases: data })
+
+        } catch (error) {
+            set({ loading: false, error: error.message });
+        }
+    },
+
+    fetchCases: async () => {
+        try {
+            const data = await getCaseList();
             set({ cases: data })
 
         } catch (error) {
@@ -375,7 +395,7 @@ export const useCaseStore = create((set, get) => ({
         switch (update) {
             case 'complainant': {
                 try {
-                    const res = await axios.put(`${API_URL}/update-complainant/${id}/`, data);
+                    const res = await axios.put(`${API_URL}/case-persons/${id}/`, data);
 
                     if (forResubmission) {
                         await axios.put(`${API_URL}/update-case/${id}/`, {
@@ -399,7 +419,7 @@ export const useCaseStore = create((set, get) => ({
             case 'respondent':
                 {
                     try {
-                        const res = await axios.put(`${API_URL}/update-respondent/${id}/`, data);
+                        const res = await axios.put(`${API_URL}/case-persons/${id}/`, data);
 
                         if (forResubmission) {
                             await axios.put(`${API_URL}/update-case/${id}/`, {

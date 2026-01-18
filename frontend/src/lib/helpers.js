@@ -1,4 +1,3 @@
-import { barangays } from "./barangays";
 import { natureOfComplaints } from "@/test/data";
 
 export function dateFormatter(date) {
@@ -6,11 +5,6 @@ export function dateFormatter(date) {
     return d.toLocaleDateString('en-US');
 }
 
-export const getBarangayNames = () => barangays.map(b => b.name);
-
-export const getStreets = (barangayName) => {
-    return barangays.find(b => b.name === barangayName)?.streets || [];
-}
 
 export function getFirstHearingDate(scheduledDate = new Date()) {
   const date = new Date(scheduledDate);
@@ -32,3 +26,26 @@ export const formatedBday = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 };
+
+export const maskString = (str) => {
+    if (!str) return "";
+    if (str.length <= 1) return str; 
+    return str.charAt(0) + "*".repeat(str.length - 1);
+};
+
+export const getStreets = (streetsList, barangay) => {
+        return streetsList.filter(s => s.barangay === barangay).map(s => s.name);
+}
+// get street by barangay id
+// {selectedStreet ? selectedStreet :
+// getStreets(streets, getBarangay(barangays, selectedBarangay)?.id)[0]
+// }
+export const getBarangayName = (barangayList, barangayName) => {
+        const barangay = barangayList.find(b => b.name === barangayName);
+        return barangay ? barangay.name : "";
+}
+export const getBarangay = (barangayList, barangayName) => {
+        const barangay = barangayList.find(b => b.name === barangayName);
+        return barangay;
+}
+
