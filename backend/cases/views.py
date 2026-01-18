@@ -4,16 +4,17 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from django.db import transaction
+from case_persons.serializers import CasePersonSerializer
+from case_persons.models import CasePerson
 from .models import Case, SettlementType, CaseType, Relationship
-from respondents.models import Respondent
-from complainants.models import Complainant
-from complainants.serializers import ComplainantSerializer
 from .serializers import CaseSerializer, CaseTypeSerializer, SettlementTypeSerializer, RelationshipSerializer
 from hearings.models import Hearing
 from django.contrib.auth import get_user_model
 from django.db.models.functions import TruncMonth
 from django.db.models import Count
 from datetime import datetime
+from django.db.models.functions import Trim 
 
 User = get_user_model()
 
@@ -50,7 +51,7 @@ class CaseView(APIView):
                 if "T" in raw_bd:
                     complainant["birth_date"] = raw_bd.split("T")[0]
 
-            check_complainant = Complainant.objects.filter(
+            check_complainant = CasePerson.objects.filter(
                 first_name__iexact=complainant.get("first_name"),
                 last_name__iexact=complainant.get("last_name"),
             ).first()
@@ -58,7 +59,7 @@ class CaseView(APIView):
             if check_complainant:
                 complainants_ids.append(check_complainant.id)
             else:
-                complainant_obj = Complainant.objects.create(**complainant)
+                complainant_obj = CasePerson.objects.create(**complainant)
                 complainants_ids.append(complainant_obj.id)
         
 
@@ -71,7 +72,7 @@ class CaseView(APIView):
                 if "T" in raw_bd:
                     respondent["birth_date"] = raw_bd.split("T")[0]
 
-            check_respondent = Respondent.objects.filter(
+            check_respondent = CasePerson.objects.filter(
                 first_name__iexact=respondent.get("first_name"),
                 last_name__iexact=respondent.get("last_name"),
             ).first()
@@ -79,7 +80,7 @@ class CaseView(APIView):
             if check_respondent:
                 respondents_ids.append(check_respondent.id)
             else:
-                respondent_obj = Respondent.objects.create(**respondent)
+                respondent_obj = CasePerson.objects.create(**respondent)
                 respondents_ids.append(respondent_obj.id)        
 
         case_data = {
@@ -139,10 +140,11 @@ class CaseView(APIView):
         role = request.query_params.get("role")
         email = request.query_params.get("email")
 
-        user_id = User.objects.filter(username=email).first()
+        user_id = User.objects.filter(email=email).first()
+        user_as_complainant = CasePerson.objects.filter(email=email).first()
 
         if role == "user":
-            cases = Case.objects.filter(complainant_user_id=user_id)
+            cases = Case.objects.filter(complainants=user_as_complainant.id)
         else:
             cases = Case.objects.all().select_related("case_type", "settlement_type", "respondent_user", "complainant_user")
 
@@ -164,23 +166,136 @@ class CaseView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class CaseListView(APIView):
-    def post(self, request):
-        is_user = request.data.get("is_user")
-        first_name = request.data.get("first_name")
-        last_name = request.data.get("last_name")
+    def get(self, request):
+        is_admin_param = request.query_params.get("is_admin", "false")
+        is_admin = str(is_admin_param).lower() == "true"
 
-        user_id = Complainant.objects.filter(first_name=first_name, last_name=last_name).first()
-
+        email = request.query_params.get("email")
         cases = []
 
-        if is_user and user_id:
-            cases = Case.objects.filter(complainants=user_id.id).order_by("-date_filed")
-        elif not is_user:
+        if not email:
+            return Response([], status=status.HTTP_200_OK)
+
+        case_person = CasePerson.objects.filter(email=email).first()
+        
+        if is_admin:
             cases = Case.objects.all().select_related("case_type", "settlement_type").order_by("-date_filed")
+        
+        elif not is_admin and case_person:
+            cases = Case.objects.filter(complainants=case_person).order_by("-date_filed")
+
+        else:
+            cases = []
 
         serializer = CaseSerializer(cases, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
+          
+    def post(self, request):
+        first_name = request.data.get("first_name", "")
+        last_name = request.data.get("last_name", "")
+        middle_name = request.data.get("middle_name", "")
+
+        # print(f"Searching for: {first_name} (Middle: {middle_name}) {last_name}")
+
+        # print(f"CasePersons:", CasePerson.objects.all())
+        base_matches = CasePerson.objects.annotate(
+            clean_first=Trim('first_name'),
+            clean_last=Trim('last_name'),
+            clean_middle=Trim('middle_name')
+        ).filter(
+            clean_first__iexact=first_name,
+            clean_last__iexact=last_name,
+            email__isnull=True
+        )
+
+        # print("Base Matches IDs:", base_matches)
+
+        final_persons = []
+
+        if middle_name:
+            matches = base_matches.filter(clean_middle=middle_name)
+            for match in matches:
+                final_persons.append(match.id)
+        else:
+            matches = base_matches.filter(clean_middle__isnull=True)
+            for match in matches:
+                final_persons.append(match.id)
+
+        # print("Matching IDs:", list(final_persons))
+
+        if not final_persons:
+            return Response([], status=status.HTTP_200_OK)
+
+        cases_as_complainant = Case.objects.filter(complainants__in=final_persons)
+        cases_as_respondent = Case.objects.filter(respondents__in=final_persons)
+
+        all_cases = (cases_as_complainant | cases_as_respondent).distinct().order_by("-date_filed")
+
+        serializer = CaseSerializer(all_cases, many=True)
+        final_persons = CasePersonSerializer(base_matches.filter(id__in=final_persons), many=True).data
+        return Response({
+            "cases": serializer.data,
+            "match_persons": final_persons
+        }, status=status.HTTP_200_OK)
+
+class SyncCasesView(APIView):
+    def post(self, request):
+        case_persons_data = request.data.get("case_persons", [])
+        
+        if not case_persons_data:
+            return Response({"error": "No case persons provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+        reference_person_id = None
+        other_person_ids = []
+
+        for person_data in case_persons_data:
+            p_id = person_data.get("id")
+            if not p_id: continue
+            
+            is_complete = all([
+                person_data.get("first_name"),
+                person_data.get("middle_name"),
+                person_data.get("last_name")
+            ])
+
+            if is_complete and reference_person_id is None:
+                reference_person_id = p_id
+            else:
+                other_person_ids.append(p_id)
+
+        if reference_person_id is None and other_person_ids:
+            reference_person_id = other_person_ids.pop(0)
+
+        if reference_person_id is None:
+            return Response({"error": "No complete name found in case_persons"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            
+            with transaction.atomic():
+                cases_complainants = Case.objects.filter(complainants__id__in=other_person_ids).distinct()
+
+                for case in cases_complainants:
+                    case.complainants.add(reference_person_id)
+                    case.complainants.remove(*other_person_ids)
+
+                cases_respondents = Case.objects.filter(respondents__id__in=other_person_ids).distinct()
+                    
+                for case in cases_respondents:
+                    case.respondents.add(reference_person_id)
+                    case.respondents.remove(*other_person_ids)
+
+                CasePerson.objects.filter(id=reference_person_id).update(
+                email=request.data.get("email") )
+
+                if other_person_ids:
+                    CasePerson.objects.filter(id__in=other_person_ids).delete()
+            return Response({
+                "message": "Sync successful",
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
 class CaseDeleteView(APIView):
     def delete(self, request):
         case_id = request.data.get("case_id")

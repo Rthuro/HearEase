@@ -16,7 +16,8 @@ warnings.filterwarnings('ignore')
 import tensorflow as tf
 tf.get_logger().setLevel('ERROR')
 
-from tensorflow.keras.models import load_model
+# from tensorflow.keras.models import load_model
+from keras.models import load_model
 
 # Get the directory where this module is located
 MODULE_DIR = os.path.dirname(os.path.abspath(__file__))

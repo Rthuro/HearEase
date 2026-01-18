@@ -1,13 +1,12 @@
 from django.shortcuts import render
 from .models import Hearing
 from cases.models import Case
-from complainants.models import Complainant
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
 from .serializers import HearingSerializer
 from django.contrib.auth import get_user_model
-
+from case_persons.models import CasePerson
 User = get_user_model()
 
 # Create your views here.
@@ -15,12 +14,11 @@ User = get_user_model()
 class HearingView(APIView):
     def get(self, request):
         role = request.query_params.get("role")
-        first_name = request.query_params.get("first_name")
-        last_name = request.query_params.get("last_name")
+        email = request.query_params.get("email")
 
         if role == "user":
             try:
-                user_id = Complainant.objects.filter(first_name=first_name, last_name=last_name).first().id
+                user_id = CasePerson.objects.filter(email=email).first().id
                 cases = Case.objects.filter(complainants=user_id)
             except AttributeError:
                 cases = Case.objects.none()
