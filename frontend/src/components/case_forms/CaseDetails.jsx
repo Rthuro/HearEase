@@ -51,7 +51,7 @@ export function CaseDetails(){
         <div className="flex flex-col items-center gap-4">
             <p className=" text-center  text-2xl mb-3">Case Details</p>
             <div className="grid grid-cols-2 gap-3 max-w-[500px] min-w-[400px]">
-              <div className="grid grid-cols-1 gap-2">
+              <div className="grid grid-cols-1 col-span-2 gap-2">
                 <Label htmlFor="natureComplaint">Nature of Complaint
                     <span className="text-redBase">*</span>
                 </Label>
@@ -61,7 +61,7 @@ export function CaseDetails(){
                     role="combobox"
                     aria-expanded={open}
                     variant="outline"
-                    className="max-w-max min-w-[250px] justify-between"
+                    className="w-full min-w-[250px] justify-between"
                   >
                     {caseTypes.find(
                       (type) => type.id === formData.caseDetails.nature_of_complaint_code.value
@@ -103,7 +103,7 @@ export function CaseDetails(){
                 </PopoverContent>
               </Popover>
               </div>
-              <div className="grid grid-cols-1 gap-2">
+              {/* <div className="grid grid-cols-1 gap-2">
                   <Label htmlFor="severity">Severity
                   </Label>
                   <Input id="severity" type="number"  disabled 
@@ -112,7 +112,7 @@ export function CaseDetails(){
                         (type) => type.id === formData.caseDetails.nature_of_complaint_code.value
                       )?.severity || ""
                   } />
-              </div>
+              </div> */}
               <div className="grid grid-cols-1 col-span-2 gap-2">
                 <Label htmlFor="settlement">Relationship
                     <span className="text-redBase">*</span>

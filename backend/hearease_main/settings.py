@@ -78,6 +78,7 @@ INSTALLED_APPS = [
     'case_documents',
     'api',
     'AIModel',
+    'google_calendar',
     
 ] 
 
