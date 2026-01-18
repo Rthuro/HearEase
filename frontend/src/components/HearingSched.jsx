@@ -155,6 +155,42 @@ export function HearingSched({ predicted, luponMembers }) {
     return newDate;
   };
 
+  // Find the first available date for a specific Lupon (starting from minDate)
+  const getFirstAvailableDateForLupon = (luponId, minDate = new Date()) => {
+    if (!luponId || !luponMembers?.length) return addDaysSkippingSunday(minDate, 7);
+
+    const lupon = luponMembers.find(m => m.id === luponId);
+    if (!lupon) return addDaysSkippingSunday(minDate, 7);
+
+    const schedules = lupon.schedules || lupon.sched || [];
+    if (!Array.isArray(schedules) || schedules.length === 0) {
+      // No specific schedule = available any day except Sunday
+      return addDaysSkippingSunday(minDate, 7);
+    }
+
+    // Find which days this Lupon works
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const workDays = schedules.map(s => typeof s === 'string' ? s : s.day);
+
+    // Start from minDate + 7 days (at least 1 week notice)
+    let checkDate = new Date(minDate);
+    checkDate.setDate(checkDate.getDate() + 7);
+
+    // Find the next day that the Lupon works (max 14 days search)
+    for (let i = 0; i < 14; i++) {
+      const dayName = dayNames[checkDate.getDay()];
+      if (workDays.includes(dayName) && checkDate.getDay() !== 0) {
+        return checkDate;
+      }
+      checkDate.setDate(checkDate.getDate() + 1);
+    }
+
+    // Fallback: just use 7 days from today (skip Sunday)
+    return addDaysSkippingSunday(minDate, 7);
+  };
+
+  // Recalculate dates for all hearings
+  // For Standard mode: all hearings exactly 7 days apart (same day of week)
   const recalculateDates = (startFromDate, interval, currentInfo) => {
     const newHearings = [...currentInfo];
 
@@ -172,8 +208,16 @@ export function HearingSched({ predicted, luponMembers }) {
     for (let i = 1; i < newHearings.length; i++) {
       const prevDate = newHearings[i - 1].hearing_date;
       if (prevDate) {
-        let nextDate = addDaysSkippingSunday(new Date(prevDate), interval);
-        newHearings[i].hearing_date = nextDate;
+        // For Standard mode (7-day interval), use exact 7 days to maintain same day of week
+        if (interval === 7) {
+          let nextDate = new Date(prevDate);
+          nextDate.setDate(nextDate.getDate() + 7); // Exact 7 days = same day of week
+          newHearings[i].hearing_date = nextDate;
+        } else {
+          // For Expedite/Custom: use the skip-Sunday logic
+          let nextDate = addDaysSkippingSunday(new Date(prevDate), interval);
+          newHearings[i].hearing_date = nextDate;
+        }
       }
     }
     return newHearings;
@@ -257,28 +301,40 @@ export function HearingSched({ predicted, luponMembers }) {
 
     if (interval) {
       const today = new Date();
-      const startingDate = addDaysSkippingSunday(today, interval);
-      const newHearingData = recalculateDates(startingDate, interval, hearingInfo);
 
-      // Assign defaults based on mode
       if (mode === "standard") {
-        // STANDARD MODE: Same Lupon for ALL hearings
-        const recommendedLupon = getDefaultLupon(newHearingData[0]?.hearing_date);
+        // STANDARD MODE: First pick Lupon, then find date they work
+        // Step 1: Get the least busy Lupon globally
+        const recommendedLupon = getStandardModeRecommendation()[0]?.id || null;
 
+        // Step 2: Find the first date that Lupon works (at least 7 days from now)
+        const startingDate = recommendedLupon
+          ? getFirstAvailableDateForLupon(recommendedLupon, today)
+          : addDaysSkippingSunday(today, 7);
+
+        // Step 3: Calculate all hearing dates (exactly 7 days apart = same day of week)
+        const newHearingData = recalculateDates(startingDate, 7, hearingInfo);
+
+        // Step 4: Assign the SAME Lupon to ALL hearings
         for (let i = 0; i < newHearingData.length; i++) {
           if (newHearingData[i].hearing_date) {
             if (!newHearingData[i].time) {
               newHearingData[i].time = "09:00";
             }
             // All hearings get the SAME Lupon in standard mode
-            // Reassign all to ensure consistency
-            if (luponMembers?.length > 0) {
+            if (luponMembers?.length > 0 && recommendedLupon) {
               newHearingData[i].lupon_member_id = recommendedLupon;
             }
           }
         }
+
+        setHearingInfo(newHearingData);
+        setHearings(newHearingData);
       } else {
         // EXPEDITE MODE: Each hearing gets Lupon available on THAT day
+        const startingDate = addDaysSkippingSunday(today, interval);
+        const newHearingData = recalculateDates(startingDate, interval, hearingInfo);
+
         // ALWAYS reassign when interval changes to reflect correct availability
         for (let i = 0; i < newHearingData.length; i++) {
           if (newHearingData[i].hearing_date) {
@@ -291,10 +347,10 @@ export function HearingSched({ predicted, luponMembers }) {
             }
           }
         }
-      }
 
-      setHearingInfo(newHearingData);
-      setHearings(newHearingData);
+        setHearingInfo(newHearingData);
+        setHearings(newHearingData);
+      }
     }
   }, [mode, expediteInterval, luponMembers, Object.keys(luponWorkloads).length]);
 
