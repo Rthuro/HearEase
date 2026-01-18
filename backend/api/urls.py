@@ -72,6 +72,8 @@ urlpatterns = [
     path('model-info/', AIModelViews.ModelInfoView.as_view(), name='model-info'),
     path('trigger-retrain/', AIModelViews.TriggerRetrainView.as_view(), name='trigger-retrain'),
     path('predict-settlement/', AIModelViews.SettlementPredictionView.as_view(), name='predict-settlement'),
+    path('training-status/', AIModelViews.TrainingStatusView.as_view(), name='training-status'),
+    path('retrain-config/', AIModelViews.UpdateRetrainConfigView.as_view(), name='retrain-config'),
 
     # Google Calendar Integration
     path('google-calendar/', include('google_calendar.urls')),

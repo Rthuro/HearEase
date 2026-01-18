@@ -9,14 +9,14 @@ import { useState } from "react"
 import { CalendarIcon } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger, DropdownMenuCheckboxItem  } from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger, DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu"
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from "@/components/ui/table"
 import { getStreets } from "@/lib/helpers";
 import { useLuponStore } from "@/store/useLuponStore"
@@ -28,9 +28,9 @@ import { invalidContactNumber } from "@/lib/helpers";
 import { useRetrieveUsersStore } from "@/store/useRetrieveUsersStore"
 import { Link } from "react-router-dom"
 
-export function LuponManagement(){
+export function LuponManagement() {
     const { barangays, fetchBarangays } = useAddressesStore();
-    const { formData, setFormData,  members, fetchMembers, addMember } = useLuponStore();
+    const { formData, setFormData, members, fetchMembers, addMember } = useLuponStore();
     const { admin_list, fetchAdmins } = useRetrieveUsersStore();
     const [openCalendar, setOpenCalendar] = useState(false);
     const minDate = new Date("1900-01-01");
@@ -66,7 +66,7 @@ export function LuponManagement(){
             }
         }
 
-        if(formData.sched.value.length <= 0){
+        if (formData.sched.value.length <= 0) {
             toast.error("Please fill in lupon schedule.");
             return;
         }
@@ -78,98 +78,98 @@ export function LuponManagement(){
     const memberData = members.map(member => ({
         name: `${member.first_name} ${member.middle_name ? member.middle_name + ' ' : ''}${member.last_name}`,
         address: `${member.street}, ${member.barangay}`,
-        schedule: member.sched.join(", "),
+        schedule: (member.sched || []).join(", "),
         url: `/Admin/Lupon/${member.id}`
     }));
 
-   const membersSchedules = {
-        Monday: members.filter(member => member.sched.includes("Monday")),
-        Tuesday: members.filter(member => member.sched.includes("Tuesday")),
-        Wednesday: members.filter(member => member.sched.includes("Wednesday")),
-        Thursday: members.filter(member => member.sched.includes("Thursday")),
-        Friday: members.filter(member => member.sched.includes("Friday")),
-        Saturday: members.filter(member => member.sched.includes("Saturday")),
-        Sunday: members.filter(member => member.sched.includes("Sunday")),
+    const membersSchedules = {
+        Monday: members.filter(member => (member.sched || []).includes("Monday")),
+        Tuesday: members.filter(member => (member.sched || []).includes("Tuesday")),
+        Wednesday: members.filter(member => (member.sched || []).includes("Wednesday")),
+        Thursday: members.filter(member => (member.sched || []).includes("Thursday")),
+        Friday: members.filter(member => (member.sched || []).includes("Friday")),
+        Saturday: members.filter(member => (member.sched || []).includes("Saturday")),
+        Sunday: members.filter(member => (member.sched || []).includes("Sunday")),
     };
 
     console.log(admin_list)
 
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-    return(
+    return (
         <div className="p-6 flex flex-col gap-2">
             <PageSync page="Lupon Management" />
-                <div className="border rounded-lg overflow-hidden bg-white">
-                    <Table>
-                        <TableHeader>
+            <div className="border rounded-lg overflow-hidden bg-white">
+                <Table>
+                    <TableHeader>
                         <TableRow>
                             {Object.keys(membersSchedules).map((day) => (
-                            <TableHead key={day} className="text-left px-4 py-2">
-                                {day}
-                            </TableHead>
+                                <TableHead key={day} className="text-left px-4 py-2">
+                                    {day}
+                                </TableHead>
                             ))}
                         </TableRow>
-                        </TableHeader>
+                    </TableHeader>
 
-                        <TableBody>
+                    <TableBody>
                         <TableRow>
                             {Object.keys(membersSchedules).map((day) => (
-                            <TableCell key={day} className="px-4 py-2 align-top">
-                                {membersSchedules[day].length > 0 ? (
-                                <ul className="space-y-1">
-                                    {membersSchedules[day].map((m) => (
-                                    <li key={m.id} className="text-sm">
-                                        {m.first_name}{" "}
-                                        {m.middle_name ? m.middle_name + " " : ""}
-                                        {m.last_name}
-                                    </li>
-                                    ))}
-                                </ul>
-                                ) : (
-                                <span className="text-zinc-400">—</span>
-                                )}
-                            </TableCell>
+                                <TableCell key={day} className="px-4 py-2 align-top">
+                                    {membersSchedules[day].length > 0 ? (
+                                        <ul className="space-y-1">
+                                            {membersSchedules[day].map((m) => (
+                                                <li key={m.id} className="text-sm">
+                                                    {m.first_name}{" "}
+                                                    {m.middle_name ? m.middle_name + " " : ""}
+                                                    {m.last_name}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    ) : (
+                                        <span className="text-zinc-400">—</span>
+                                    )}
+                                </TableCell>
                             ))}
                         </TableRow>
-                        </TableBody>
-                    </Table>
-                </div>
+                    </TableBody>
+                </Table>
+            </div>
             <section className="flex flex-col gap-3 mt-3 bg-white border border-zinc-200 rounded-lg p-6">
-                    <p> <span className="font-medium text-redBase">{members?.length}</span> Lupon Members</p>
+                <p> <span className="font-medium text-redBase">{members?.length}</span> Lupon Members</p>
 
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                            <Search className="text-zinc-400 ml-3" size={16} />
-                            <Input type="text" placeholder="Search lupon member..." className="w-72 -ml-6 pl-8" />
-                        </div>
-                        <Dialog>
-                            <form>
-                                <DialogTrigger asChild>
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                        <Search className="text-zinc-400 ml-3" size={16} />
+                        <Input type="text" placeholder="Search lupon member..." className="w-72 -ml-6 pl-8" />
+                    </div>
+                    <Dialog>
+                        <form>
+                            <DialogTrigger asChild>
                                 <Button className={cn('bg-redBase font-normal')}>Add New Member</Button>
-                                </DialogTrigger>
-                                <DialogContent className="sm:max-w-fit">
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-fit">
                                 <DialogHeader>
                                     <DialogTitle>Add New Member</DialogTitle>
                                     <DialogDescription>
-                                
+
                                     </DialogDescription>
                                 </DialogHeader>
-                                <div className="grid grid-cols-2 gap-4 overflow-y-scroll max-h-[400px] px-2 mb-4">                                
+                                <div className="grid grid-cols-2 gap-4 overflow-y-scroll max-h-[400px] px-2 mb-4">
                                     <div className="grid grid-cols-1 gap-2">
                                         <Label htmlFor="first_name">First Name
                                             <span className="text-redBase">*</span></Label>
-                                        <Input id="first_name" type="text" className="w-72" 
-                                        value={formData.first_name.value}
-                                        onChange ={ (e) => {
-                                            setFormData('first_name', e.target.value);
-                                        }}
-                                        required/>
+                                        <Input id="first_name" type="text" className="w-72"
+                                            value={formData.first_name.value}
+                                            onChange={(e) => {
+                                                setFormData('first_name', e.target.value);
+                                            }}
+                                            required />
                                     </div>
                                     <div className="grid grid-cols-1 gap-2">
                                         <Label htmlFor="middle_name">Middle Name
                                         </Label>
                                         <Input id="middle_name" type="text" className="w-72"
                                             value={formData.middle_name.value}
-                                            onChange ={ (e) => {
+                                            onChange={(e) => {
                                                 setFormData('middle_name', e.target.value);
                                             }}
                                         />
@@ -177,26 +177,26 @@ export function LuponManagement(){
                                     <div className="grid grid-cols-1 gap-2">
                                         <Label htmlFor="last_name">Last Name
                                             <span className="text-redBase">*</span></Label>
-                                        <Input id="last_name" type="text" className="w-72" 
-                                        value={formData.last_name.value}
-                                        onChange ={ (e) => {
-                                            setFormData('last_name', e.target.value);
-                                        }}
-                                        required/>
-                                    </div>        
+                                        <Input id="last_name" type="text" className="w-72"
+                                            value={formData.last_name.value}
+                                            onChange={(e) => {
+                                                setFormData('last_name', e.target.value);
+                                            }}
+                                            required />
+                                    </div>
                                     <div className="grid grid-cols-1 gap-2">
                                         <Label htmlFor="birth_date">Birthday
                                             <span className="text-redBase">*</span>
                                         </Label>
-                                        <Popover open={openCalendar}  onOpenChange={setOpenCalendar} id="birth_date">
+                                        <Popover open={openCalendar} onOpenChange={setOpenCalendar} id="birth_date">
                                             <PopoverTrigger asChild>
                                                 <Button
                                                     variant="outline"
                                                     id="date"
                                                     className="w-72 justify-between font-normal"
                                                 >
-                                                    {formData.birth_date.value ? 
-                                                    formData.birth_date.value.toLocaleDateString() : "Select date"}
+                                                    {formData.birth_date.value ?
+                                                        formData.birth_date.value.toLocaleDateString() : "Select date"}
                                                     <CalendarIcon />
                                                 </Button>
                                             </PopoverTrigger>
@@ -222,18 +222,18 @@ export function LuponManagement(){
                                         <DropdownMenu id="sex">
                                             <DropdownMenuTrigger asChild>
                                                 <Button variant="outline">
-                                                {formData.sex.value || "Select"} 
+                                                    {formData.sex.value || "Select"}
                                                 </Button>
                                             </DropdownMenuTrigger>
 
                                             <DropdownMenuContent className="w-56">
                                                 <DropdownMenuRadioGroup
-                                                value={formData.sex.value}
-                                                onValueChange={(value) => 
-                                                    setFormData('sex', value)}
+                                                    value={formData.sex.value}
+                                                    onValueChange={(value) =>
+                                                        setFormData('sex', value)}
                                                 >
-                                                <DropdownMenuRadioItem value="Male">Male</DropdownMenuRadioItem>
-                                                <DropdownMenuRadioItem value="Female">Female</DropdownMenuRadioItem>
+                                                    <DropdownMenuRadioItem value="Male">Male</DropdownMenuRadioItem>
+                                                    <DropdownMenuRadioItem value="Female">Female</DropdownMenuRadioItem>
                                                 </DropdownMenuRadioGroup>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
@@ -242,19 +242,19 @@ export function LuponManagement(){
                                         <Label htmlFor="contact">Contact Number
                                             <span className="text-redBase">*</span>
                                         </Label>
-                                        <Input id="contact" type="tel" 
+                                        <Input id="contact" type="tel"
                                             placeholder="09876543210"
                                             className="w-72"
-                                            inputMode="numeric"         
-                                            pattern="[0-9]*"              
-                                            maxLength={11} 
+                                            inputMode="numeric"
+                                            pattern="[0-9]*"
+                                            maxLength={11}
                                             value={formData.contact_number.value}
-                                            onChange={ (e) => {
+                                            onChange={(e) => {
                                                 setFormData('contact_number', e.target.value);
                                             }}
                                         />
                                     </div>
-                                    
+
                                     <div className="grid grid-cols-1 col-span-2 gap-2">
                                         <Label htmlFor="address">Address
                                         </Label>
@@ -267,28 +267,28 @@ export function LuponManagement(){
                                                 <DropdownMenu id="barangay">
                                                     <DropdownMenuTrigger asChild>
                                                         <Button variant="outline">
-                                                            { barangays.find(b => b.name === formData.barangay.value)?.name || 'Select'}
+                                                            {barangays.find(b => b.name === formData.barangay.value)?.name || 'Select'}
                                                         </Button>
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent className="w-72">
                                                         <DropdownMenuRadioGroup
-                                                        value={formData.barangay.value}
-                                                        onValueChange={(value) => {
-                                                            setFormData("barangay", value);
-                                                            // Automatically reset streets when barangay changes
-                                                            const streets = getStreets(value);
-                                                            if (streets.length > 0) {
-                                                            setFormData("street", streets[0]);
-                                                            } else {
-                                                            setFormData("street", "");
-                                                            }
-                                                        }}
+                                                            value={formData.barangay.value}
+                                                            onValueChange={(value) => {
+                                                                setFormData("barangay", value);
+                                                                // Automatically reset streets when barangay changes
+                                                                const streets = getStreets(value);
+                                                                if (streets.length > 0) {
+                                                                    setFormData("street", streets[0]);
+                                                                } else {
+                                                                    setFormData("street", "");
+                                                                }
+                                                            }}
                                                         >
-                                                        {barangays.map((b) => (
-                                                            <DropdownMenuRadioItem key={b.id} value={b.name}>
-                                                            {b.name}
-                                                            </DropdownMenuRadioItem>
-                                                        ))}
+                                                            {barangays.map((b) => (
+                                                                <DropdownMenuRadioItem key={b.id} value={b.name}>
+                                                                    {b.name}
+                                                                </DropdownMenuRadioItem>
+                                                            ))}
                                                         </DropdownMenuRadioGroup>
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
@@ -304,12 +304,12 @@ export function LuponManagement(){
                                                         </Button>
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent className="w-72">
-                                                        <DropdownMenuRadioGroup 
-                                                        value={formData.street.value} onValueChange={(value) => setFormData('street', value)}>
+                                                        <DropdownMenuRadioGroup
+                                                            value={formData.street.value} onValueChange={(value) => setFormData('street', value)}>
 
-                                                        {getStreets(formData.barangay.value).map(street => (
-                                                            <DropdownMenuRadioItem key={street} value={street}>{street}</DropdownMenuRadioItem>
-                                                        ))}
+                                                            {getStreets(formData.barangay.value).map(street => (
+                                                                <DropdownMenuRadioItem key={street} value={street}>{street}</DropdownMenuRadioItem>
+                                                            ))}
 
                                                         </DropdownMenuRadioGroup>
                                                     </DropdownMenuContent>
@@ -319,124 +319,124 @@ export function LuponManagement(){
                                         <div className="grid grid-cols-1 gap-2 mt-2">
                                             <Label htmlFor="additional_info">Additional Information</Label>
                                             <Input id="additional_info" type="text" className="w-full"
-                                            value={formData.additional_info.value}
-                                            onChange={(e) => 
-                                                setFormData('additional_info', e.target.value)}
+                                                value={formData.additional_info.value}
+                                                onChange={(e) =>
+                                                    setFormData('additional_info', e.target.value)}
                                             />
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-1 gap-2 mt-2 col-span-2">
-                                            <Label htmlFor="schedule">Schedule
-                                                <span className="text-redBase">*</span>
-                                            </Label>
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="outline" className={cn('justify-start')}>{formData.sched.value.length > 0 ? formData.sched.value.join(", ") : "Select"}</Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent className="w-56">
-                                                    {days.map((day) => (
-                                                        <DropdownMenuCheckboxItem
+                                        <Label htmlFor="schedule">Schedule
+                                            <span className="text-redBase">*</span>
+                                        </Label>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="outline" className={cn('justify-start')}>{formData.sched.value.length > 0 ? formData.sched.value.join(", ") : "Select"}</Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent className="w-56">
+                                                {days.map((day) => (
+                                                    <DropdownMenuCheckboxItem
                                                         key={day}
                                                         checked={formData.sched.value.includes(day)}
                                                         onCheckedChange={(checked) => {
-                                                            if (checked) {  
+                                                            if (checked) {
                                                                 setFormData('sched', [...formData.sched.value, day]);
                                                             } else {
                                                                 setFormData('sched', formData.sched.value.filter(d => d !== day));
                                                             }
                                                         }}
-                                                        >
-                                                            {day}
-                                                        </DropdownMenuCheckboxItem>
-                                                    ))}
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
+                                                    >
+                                                        {day}
+                                                    </DropdownMenuCheckboxItem>
+                                                ))}
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </div>
                                 </div>
 
                                 <DialogFooter>
                                     <DialogClose asChild>
-                                    <Button variant="outline">Cancel</Button>
+                                        <Button variant="outline">Cancel</Button>
                                     </DialogClose>
                                     <Button onClick={handleSubmit} type="submit">Add Member</Button>
                                 </DialogFooter>
-                                </DialogContent>
-                            </form>
-                        </Dialog>
-                        
-                    </div>
-                    <CustomTable 
-                        headers={["Name", "Address", "Schedule", "Action"]}
-                        datas={memberData}
-                        emptyDataMessage="No lupon members found."
-                    />
+                            </DialogContent>
+                        </form>
+                    </Dialog>
+
+                </div>
+                <CustomTable
+                    headers={["Name", "Address", "Schedule", "Action"]}
+                    datas={memberData}
+                    emptyDataMessage="No lupon members found."
+                />
             </section>
 
             <section className="flex flex-col gap-3 mt-3 bg-white border border-zinc-200 rounded-lg p-6">
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold">Admins</h2>
                     <Dialog>
-                        <DialogTrigger asChild>     
+                        <DialogTrigger asChild>
                             <Button className="!bg-redBase">Add New Admin</Button>
                         </DialogTrigger>
                         <DialogContent className={cn('w-2/3')}>
-                                <DialogHeader>
-                                    <DialogTitle>Add New Admin</DialogTitle>
-                                    <DialogDescription>Add email and password.</DialogDescription>
-                                </DialogHeader>
-                                <div className="grid grid-cols-2 gap-4  max-h-[350px] px-3 py-2 mb-4 ">                                
-                                        <div className="grid grid-cols-1 gap-2">
-                                            <Label htmlFor="email">Email
-                                            </Label>
-                                            <Input id="email" type="email" 
-                                            required/>
-                                        </div>
-                                        <div className="grid grid-cols-1 gap-2">
-                                            <Label htmlFor="password">Password
-                                            </Label>
-                                            <Input id="password" type="password" 
-                                            required/>
-                                        </div>
+                            <DialogHeader>
+                                <DialogTitle>Add New Admin</DialogTitle>
+                                <DialogDescription>Add email and password.</DialogDescription>
+                            </DialogHeader>
+                            <div className="grid grid-cols-2 gap-4  max-h-[350px] px-3 py-2 mb-4 ">
+                                <div className="grid grid-cols-1 gap-2">
+                                    <Label htmlFor="email">Email
+                                    </Label>
+                                    <Input id="email" type="email"
+                                        required />
                                 </div>
-                                <DialogFooter>
-                                    <DialogClose asChild>
+                                <div className="grid grid-cols-1 gap-2">
+                                    <Label htmlFor="password">Password
+                                    </Label>
+                                    <Input id="password" type="password"
+                                        required />
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <DialogClose asChild>
                                     <Button variant="outline">Cancel</Button>
-                                    </DialogClose>
-                                    <Button type="button">Add Admin</Button>
-                                </DialogFooter>
-                            </DialogContent>
+                                </DialogClose>
+                                <Button type="button">Add Admin</Button>
+                            </DialogFooter>
+                        </DialogContent>
                     </Dialog>
                 </div>
                 <div className="border rounded-lg overflow-hidden">
-                        <Table>
-                            <TableHeader>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Email</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead></TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {admin_list?.map(a => (
                                 <TableRow>
-                                    <TableHead>Email</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead></TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {admin_list?.map( a => (
-                                    <TableRow>
-                                        <TableCell>
-                                            {a.email}
-                                        </TableCell>
-                                        <TableCell>
-                                            {a.is_active ? "Active":"Not Active"}
-                                        </TableCell>
-                                        <TableCell className="py-4">
-                                            {/* <Link
+                                    <TableCell>
+                                        {a.email}
+                                    </TableCell>
+                                    <TableCell>
+                                        {a.is_active ? "Active" : "Not Active"}
+                                    </TableCell>
+                                    <TableCell className="py-4">
+                                        {/* <Link
                                                 to={`/Admin/Admin/${a.id}`}
                                                 className="text-redBase bg-red-100 px-3 py-2 rounded-lg text-sm"
                                             >
                                                 Details
                                             </Link> */}
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
                 </div>
             </section>
         </div>

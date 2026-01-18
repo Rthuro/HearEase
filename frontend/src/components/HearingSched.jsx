@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { RefreshCcw, Check, ChevronsUpDown, CalendarIcon, Loader2 } from "lucide-react";
+import { RefreshCcw, Check, ChevronsUpDown, CalendarIcon, Loader2, Users } from "lucide-react";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
 import { Label } from "./ui/label";
@@ -39,6 +39,13 @@ const TIME_SLOTS = [
   "13:00", "14:00", "15:00", "16:00"
 ];
 
+// Workload level badge colors
+const LOAD_COLORS = {
+  light: "bg-green-100 text-green-700",
+  moderate: "bg-amber-100 text-amber-700",
+  heavy: "bg-red-100 text-red-700"
+};
+
 export function HearingSched({ predicted, luponMembers }) {
   const predicted_hearings = predicted || 3;
   const { setHearings } = useCaseStore();
@@ -48,7 +55,43 @@ export function HearingSched({ predicted, luponMembers }) {
   const [expediteInterval, setExpediteInterval] = useState(null);
   const [loadingTimeSlot, setLoadingTimeSlot] = useState(null);
 
+  // Workload state for smart Lupon assignment
+  const [luponWorkloads, setLuponWorkloads] = useState({});
+  const [suggestedLuponId, setSuggestedLuponId] = useState(null);
+  const [loadingWorkload, setLoadingWorkload] = useState(false);
+
   const currentYear = new Date().getFullYear();
+
+  // Fetch Lupon workload data on mount
+  useEffect(() => {
+    const fetchLuponWorkload = async () => {
+      setLoadingWorkload(true);
+      try {
+        const response = await axios.get(`${API_URL}/lupon-workload/`);
+        const { workloads, suggested_member } = response.data;
+
+        // Create a map of member_id -> workload info
+        const workloadMap = {};
+        workloads.forEach(w => {
+          workloadMap[w.member_id] = w;
+        });
+        setLuponWorkloads(workloadMap);
+
+        // Set the suggested (least busy) member
+        if (suggested_member) {
+          setSuggestedLuponId(suggested_member.member_id);
+        }
+      } catch (error) {
+        console.error("Error fetching Lupon workload:", error);
+      } finally {
+        setLoadingWorkload(false);
+      }
+    };
+
+    if (luponMembers?.length > 0) {
+      fetchLuponWorkload();
+    }
+  }, [luponMembers]);
 
   // Helper to generate hearings array
   const generateHearings = (count) => {
@@ -136,25 +179,75 @@ export function HearingSched({ predicted, luponMembers }) {
     return newHearings;
   };
 
-  // Auto-assign Lupon member (first available for the day)
-  const getDefaultLupon = (date) => {
-    if (!luponMembers || luponMembers.length === 0) return null;
+  // Get Lupons available on a specific day based on their schedules
+  const getAvailableLuponsForDate = (date) => {
+    if (!luponMembers || luponMembers.length === 0 || !date) return [];
 
-    // Get day of week
     const dayName = new Date(date).toLocaleDateString('en-US', { weekday: 'long' });
 
-    // Find first lupon available on this day
-    for (const member of luponMembers) {
+    return luponMembers.filter(member => {
       const schedules = member.schedules || member.sched || [];
-      if (Array.isArray(schedules) && schedules.some(s =>
+      // If no schedules defined, assume always available
+      if (!Array.isArray(schedules) || schedules.length === 0) return true;
+      return schedules.some(s =>
         (typeof s === 'string' && s === dayName) || s.day === dayName
-      )) {
-        return member.id;
-      }
+      );
+    });
+  };
+
+  // Get least busy Lupon from a list, returns array if there's a tie
+  const getLeastBusyLupons = (memberList) => {
+    if (!memberList || memberList.length === 0) return [];
+
+    // Sort by workload
+    const sorted = [...memberList].sort((a, b) => {
+      const wA = luponWorkloads[a.id]?.total_hearings || 0;
+      const wB = luponWorkloads[b.id]?.total_hearings || 0;
+      return wA - wB;
+    });
+
+    // Get all members with the same (lowest) workload
+    const minWorkload = luponWorkloads[sorted[0]?.id]?.total_hearings || 0;
+    return sorted.filter(m => (luponWorkloads[m.id]?.total_hearings || 0) === minWorkload);
+  };
+
+  // Get recommended Lupon(s) for STANDARD mode (global least busy)
+  const getStandardModeRecommendation = () => {
+    if (!luponMembers || luponMembers.length === 0) return [];
+    return getLeastBusyLupons(luponMembers);
+  };
+
+  // Get recommended Lupon for a specific date (for EXPEDITE/CUSTOM mode)
+  const getLuponForDate = (date) => {
+    if (!date) return null;
+
+    // Get Lupons available on this day
+    const available = getAvailableLuponsForDate(date);
+
+    if (available.length > 0) {
+      // Return the least busy among available
+      const leastBusy = getLeastBusyLupons(available);
+      return leastBusy[0]?.id || null;
     }
 
-    // Fallback to first lupon
-    return luponMembers[0]?.id || null;
+    // Fallback: return globally least busy if none scheduled for this day
+    const globalLeastBusy = getLeastBusyLupons(luponMembers);
+    return globalLeastBusy[0]?.id || luponMembers[0]?.id || null;
+  };
+
+  // Main function to get default Lupon based on current mode
+  const getDefaultLupon = (date, isFirstHearing = false) => {
+    if (!luponMembers || luponMembers.length === 0) return null;
+
+    if (mode === "standard") {
+      // STANDARD MODE: Same Lupon for all hearings
+      // Just pick the globally least busy one
+      const recommended = getStandardModeRecommendation();
+      return recommended[0]?.id || luponMembers[0]?.id || null;
+    } else {
+      // EXPEDITE / CUSTOM MODE: Per-date assignment based on schedule + workload
+      return getLuponForDate(date);
+    }
   };
 
   useEffect(() => {
@@ -167,16 +260,33 @@ export function HearingSched({ predicted, luponMembers }) {
       const startingDate = addDaysSkippingSunday(today, interval);
       const newHearingData = recalculateDates(startingDate, interval, hearingInfo);
 
-      // Immediately assign defaults (9 AM and first lupon)
-      for (let i = 0; i < newHearingData.length; i++) {
-        if (newHearingData[i].hearing_date) {
-          // Set default time to 9 AM
-          if (!newHearingData[i].time) {
-            newHearingData[i].time = "09:00";
+      // Assign defaults based on mode
+      if (mode === "standard") {
+        // STANDARD MODE: Same Lupon for ALL hearings
+        const recommendedLupon = getDefaultLupon(newHearingData[0]?.hearing_date);
+
+        for (let i = 0; i < newHearingData.length; i++) {
+          if (newHearingData[i].hearing_date) {
+            if (!newHearingData[i].time) {
+              newHearingData[i].time = "09:00";
+            }
+            // All hearings get the SAME Lupon in standard mode
+            if (!newHearingData[i].lupon_member_id && luponMembers?.length > 0) {
+              newHearingData[i].lupon_member_id = recommendedLupon;
+            }
           }
-          // Set default lupon
-          if (!newHearingData[i].lupon_member_id && luponMembers?.length > 0) {
-            newHearingData[i].lupon_member_id = getDefaultLupon(newHearingData[i].hearing_date);
+        }
+      } else {
+        // EXPEDITE MODE: Each hearing gets Lupon available on THAT day
+        for (let i = 0; i < newHearingData.length; i++) {
+          if (newHearingData[i].hearing_date) {
+            if (!newHearingData[i].time) {
+              newHearingData[i].time = "09:00";
+            }
+            // Each hearing gets the best Lupon for ITS specific date
+            if (!newHearingData[i].lupon_member_id && luponMembers?.length > 0) {
+              newHearingData[i].lupon_member_id = getLuponForDate(newHearingData[i].hearing_date);
+            }
           }
         }
       }
@@ -184,7 +294,7 @@ export function HearingSched({ predicted, luponMembers }) {
       setHearingInfo(newHearingData);
       setHearings(newHearingData);
     }
-  }, [mode, expediteInterval, luponMembers]);
+  }, [mode, expediteInterval, luponMembers, Object.keys(luponWorkloads).length]);
 
   // Fetch optimal time slot for a given date
   const fetchOptimalTime = async (date, index) => {
@@ -245,6 +355,24 @@ export function HearingSched({ predicted, luponMembers }) {
     // If dates were cascaded, assign times for all
     if (mode !== "custom" && index === 0) {
       newHearingInfo = await autoAssignTimes(newHearingInfo);
+    }
+
+    // Auto-assign Lupon based on mode
+    if (mode === "standard") {
+      // STANDARD: Same Lupon for all hearings
+      const recommendedLupon = getDefaultLupon(newHearingInfo[0]?.hearing_date);
+      for (let j = 0; j < newHearingInfo.length; j++) {
+        if (!newHearingInfo[j].lupon_member_id) {
+          newHearingInfo[j].lupon_member_id = recommendedLupon;
+        }
+      }
+    } else {
+      // EXPEDITE/CUSTOM: Each hearing gets Lupon available on THAT day
+      for (let j = 0; j < newHearingInfo.length; j++) {
+        if (newHearingInfo[j].hearing_date && !newHearingInfo[j].lupon_member_id) {
+          newHearingInfo[j].lupon_member_id = getLuponForDate(newHearingInfo[j].hearing_date);
+        }
+      }
     }
 
     setHearings(newHearingInfo);
@@ -447,7 +575,16 @@ export function HearingSched({ predicted, luponMembers }) {
 
               {/* Lupon Selector */}
               <div className="grid grid-cols-1 gap-2 col-span-2">
-                <Label htmlFor={`lupon-${i}`}>Assigned Lupon Member</Label>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor={`lupon-${i}`}>Assigned Lupon Member</Label>
+                  {loadingWorkload ? (
+                    <Loader2 className="h-3 w-3 animate-spin text-gray-400" />
+                  ) : mode === "standard" ? (
+                    <span className="text-xs text-blue-500">(same for all hearings)</span>
+                  ) : (
+                    <span className="text-xs text-gray-400">(by date availability)</span>
+                  )}
+                </div>
                 <Popover
                   open={openPopover === i}
                   onOpenChange={(o) => setOpenPopover(o ? i : null)}
@@ -459,17 +596,24 @@ export function HearingSched({ predicted, luponMembers }) {
                       variant="outline"
                       className="max-w-max min-w-full justify-between"
                     >
-                      {hearingInfo[i]?.lupon_member_id
-                        ? `${luponMembers.find(
-                          (lupon) =>
-                            lupon.id === hearingInfo[i].lupon_member_id
-                        )?.first_name
-                        } ${luponMembers.find(
-                          (lupon) =>
-                            lupon.id === hearingInfo[i].lupon_member_id
-                        )?.last_name
-                        }`
-                        : "Select lupon member..."}
+                      {hearingInfo[i]?.lupon_member_id ? (
+                        <div className="flex items-center gap-2">
+                          <span>
+                            {luponMembers.find(l => l.id === hearingInfo[i].lupon_member_id)?.first_name}{' '}
+                            {luponMembers.find(l => l.id === hearingInfo[i].lupon_member_id)?.last_name}
+                          </span>
+                          {luponWorkloads[hearingInfo[i].lupon_member_id] && (
+                            <span className={cn(
+                              "text-xs px-1.5 py-0.5 rounded-full",
+                              LOAD_COLORS[luponWorkloads[hearingInfo[i].lupon_member_id].load_level]
+                            )}>
+                              {luponWorkloads[hearingInfo[i].lupon_member_id].load_level}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        "Select lupon member..."
+                      )}
                       <ChevronsUpDown className="opacity-50" />
                     </Button>
                   </PopoverTrigger>
@@ -482,29 +626,66 @@ export function HearingSched({ predicted, luponMembers }) {
                       <CommandList>
                         <CommandEmpty>No lupon members found.</CommandEmpty>
                         <CommandGroup>
-                          {luponMembers.map((lupon) => (
-                            <CommandItem
-                              key={lupon.id}
-                              value={lupon.id}
-                              onSelect={() => {
-                                const newHearingInfo = [...hearingInfo];
-                                newHearingInfo[i].lupon_member_id = lupon.id;
-                                setHearingInfo(newHearingInfo);
-                                setHearings(newHearingInfo);
-                                setOpenPopover(null);
-                              }}
-                            >
-                              {lupon.first_name} {lupon.last_name}
-                              <Check
-                                className={cn(
-                                  "ml-auto",
-                                  hearingInfo[i]?.lupon_member_id === lupon.id
-                                    ? "opacity-100"
-                                    : "opacity-0"
-                                )}
-                              />
-                            </CommandItem>
-                          ))}
+                          {luponMembers
+                            .map(lupon => ({
+                              ...lupon,
+                              workload: luponWorkloads[lupon.id] || null
+                            }))
+                            .sort((a, b) => {
+                              // Sort by workload (least busy first)
+                              const wA = a.workload?.total_hearings || 0;
+                              const wB = b.workload?.total_hearings || 0;
+                              return wA - wB;
+                            })
+                            .map((lupon) => (
+                              <CommandItem
+                                key={lupon.id}
+                                value={lupon.id}
+                                onSelect={() => {
+                                  const newHearingInfo = [...hearingInfo];
+
+                                  if (mode === "standard") {
+                                    // STANDARD MODE: Apply same Lupon to ALL hearings
+                                    // One Lupon oversees the entire case
+                                    for (let j = 0; j < newHearingInfo.length; j++) {
+                                      newHearingInfo[j].lupon_member_id = lupon.id;
+                                    }
+                                  } else {
+                                    // EXPEDITE/CUSTOM: Only change this specific hearing
+                                    newHearingInfo[i].lupon_member_id = lupon.id;
+                                  }
+
+                                  setHearingInfo(newHearingInfo);
+                                  setHearings(newHearingInfo);
+                                  setOpenPopover(null);
+                                }}
+                              >
+                                <div className="flex items-center gap-2 flex-1">
+                                  <span>{lupon.first_name} {lupon.last_name}</span>
+                                  {lupon.workload && (
+                                    <span className={cn(
+                                      "text-xs px-1.5 py-0.5 rounded-full",
+                                      LOAD_COLORS[lupon.workload.load_level] || "bg-gray-100 text-gray-600"
+                                    )}>
+                                      {lupon.workload.total_hearings} cases
+                                    </span>
+                                  )}
+                                  {lupon.id === suggestedLuponId && (
+                                    <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                                      Recommended
+                                    </span>
+                                  )}
+                                </div>
+                                <Check
+                                  className={cn(
+                                    "ml-auto",
+                                    hearingInfo[i]?.lupon_member_id === lupon.id
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  )}
+                                />
+                              </CommandItem>
+                            ))}
                         </CommandGroup>
                       </CommandList>
                     </Command>

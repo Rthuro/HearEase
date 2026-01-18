@@ -7,9 +7,9 @@ export function dateFormatter(date) {
 
 
 export function getFirstHearingDate(scheduledDate = new Date()) {
-  const date = new Date(scheduledDate);
-  date.setDate(date.getDate() + 7); 
-  return date;
+    const date = new Date(scheduledDate);
+    date.setDate(date.getDate() + 7);
+    return date;
 }
 
 export function invalidContactNumber(number) {
@@ -17,35 +17,44 @@ export function invalidContactNumber(number) {
     return !regex.test(number);
 }
 
-export function getNatureLabel(code){
-    return natureOfComplaints.find(n => n.code === code )?.label;
+export function getNatureLabel(code) {
+    return natureOfComplaints.find(n => n.code === code)?.label;
 }
 
 export const formatedBday = (dateString) => {
-    if(!dateString) return '-';
+    if (!dateString) return '-';
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 };
 
 export const maskString = (str) => {
     if (!str) return "";
-    if (str.length <= 1) return str; 
+    if (str.length <= 1) return str;
     return str.charAt(0) + "*".repeat(str.length - 1);
 };
 
 export const getStreets = (streetsList, barangay) => {
-        return streetsList.filter(s => s.barangay === barangay).map(s => s.name);
+    // Handle single-param call (backwards compatibility)
+    if (barangay === undefined && typeof streetsList === 'string') {
+        // Called with just barangay name - return empty array as fallback
+        // (The component should be fixed to pass streets list too)
+        return [];
+    }
+    if (!streetsList || !Array.isArray(streetsList)) {
+        return [];
+    }
+    return streetsList.filter(s => s.barangay === barangay).map(s => s.name);
 }
 // get street by barangay id
 // {selectedStreet ? selectedStreet :
 // getStreets(streets, getBarangay(barangays, selectedBarangay)?.id)[0]
 // }
 export const getBarangayName = (barangayList, barangayName) => {
-        const barangay = barangayList.find(b => b.name === barangayName);
-        return barangay ? barangay.name : "";
+    const barangay = barangayList.find(b => b.name === barangayName);
+    return barangay ? barangay.name : "";
 }
 export const getBarangay = (barangayList, barangayName) => {
-        const barangay = barangayList.find(b => b.name === barangayName);
-        return barangay;
+    const barangay = barangayList.find(b => b.name === barangayName);
+    return barangay;
 }
 

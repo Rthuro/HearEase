@@ -55,8 +55,8 @@ class GoogleCallbackView(APIView):
         print(f"[Google OAuth] Callback received - code: {bool(code)}, error: {error}")
         
         if error:
-            # Redirect to frontend with error
-            return redirect(f"http://localhost:5173/settings?google_error={error}")
+            # Redirect to frontend with error (using hash routing)
+            return redirect(f"http://localhost:5173/#/Admin/Settings?google_error={error}")
         
         if not code:
             return Response(
@@ -78,7 +78,7 @@ class GoogleCallbackView(APIView):
             print(f"[Google OAuth] Admin user: {admin_user.email if admin_user else 'None'}")
             
             if not admin_user:
-                return redirect("http://localhost:5173/settings?google_error=no_admin")
+                return redirect("http://localhost:5173/#/Admin/Settings?google_error=no_admin")
             
             # Get calendar service and create/get calendar
             print("[Google OAuth] Creating calendar service...")
@@ -102,14 +102,14 @@ class GoogleCallbackView(APIView):
             )
             print("[Google OAuth] Token saved successfully!")
             
-            # Redirect to frontend with success
-            return redirect("http://localhost:5173/settings?google_connected=true")
+            # Redirect to frontend with success (using hash routing)
+            return redirect("http://localhost:5173/#/Admin/Settings?google_connected=true")
             
         except Exception as e:
             import traceback
             print(f"[Google OAuth] ERROR: {e}")
             print(traceback.format_exc())
-            return redirect(f"http://localhost:5173/settings?google_error={str(e)[:50]}")
+            return redirect(f"http://localhost:5173/#/Admin/Settings?google_error={str(e)[:50]}")
 
 
 class GoogleConnectionStatusView(APIView):
