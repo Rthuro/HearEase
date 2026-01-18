@@ -97,9 +97,15 @@ export function Calendar() {
             borderColor = "#4B5563";
         }
 
+        // Build title with Case ID and Hearing number
+        const caseId = hearing.case_number || hearing.case || "?";
+        const caseIdShort = typeof caseId === 'string' && caseId.length > 12
+          ? caseId.substring(0, 12) + "..."
+          : caseId;
+
         return {
           id: hearing.id,
-          title: `Hearing #${hearing.hearing_number || "?"}`,
+          title: `#${caseIdShort} - Hearing #${hearing.hearing_number || "?"}`,
           start: hearing.hearing_date + (hearing.time ? `T${hearing.time}` : ""),
           backgroundColor,
           borderColor,
@@ -208,32 +214,71 @@ export function Calendar() {
         height="auto"
       />
 
-      {/* Hearing Details Dialog */}
+      {/* Hearing Details Dialog - Enhanced like Google Calendar */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>
-              Hearing #{selectedHearing?.hearing_number || "N/A"} Details
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <span className="text-2xl">📋</span>
+              Hearing #{selectedHearing?.hearing_number || "N/A"}
+              {selectedHearing?.case_type_label && (
+                <span className="text-base font-normal text-gray-500">
+                  - {selectedHearing.case_type_label}
+                </span>
+              )}
             </DialogTitle>
+            <p className="text-sm text-gray-500">
+              {selectedHearing?.hearing_date && new Date(selectedHearing.hearing_date).toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              })}
+              {selectedHearing?.time && ` · ${selectedHearing.time}`}
+            </p>
           </DialogHeader>
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <span className="font-medium">Date:</span>
-              <span>{selectedHearing?.hearing_date || "Not set"}</span>
 
-              <span className="font-medium">Time:</span>
-              <span>{selectedHearing?.time || "Not set"}</span>
+          <div className="border-t border-gray-200 pt-4">
+            <p className="text-sm font-medium text-gray-700 mb-3">HearEase Hearing Details</p>
+            <div className="space-y-2 text-sm">
+              <div className="flex gap-2">
+                <span className="font-medium text-gray-600 w-32">Case:</span>
+                <span className="font-mono text-xs bg-gray-100 px-2 py-0.5 rounded">
+                  #{selectedHearing?.case_number || selectedHearing?.case || "N/A"}
+                </span>
+              </div>
 
-              <span className="font-medium">Status:</span>
-              <span className="capitalize">
-                {selectedHearing?.hearing_status?.replace(/_/g, " ") || "Unknown"}
-              </span>
+              <div className="flex gap-2">
+                <span className="font-medium text-gray-600 w-32">Type:</span>
+                <span>{selectedHearing?.case_type_label || "Not specified"}</span>
+              </div>
 
-              <span className="font-medium">Case ID:</span>
-              <span className="truncate">{selectedHearing?.case || "N/A"}</span>
+              <div className="flex gap-2">
+                <span className="font-medium text-gray-600 w-32">Hearing Number:</span>
+                <span>{selectedHearing?.hearing_number || "N/A"}</span>
+              </div>
 
-              <span className="font-medium">Remarks:</span>
-              <span>{selectedHearing?.remarks || "None"}</span>
+              <div className="flex gap-2">
+                <span className="font-medium text-gray-600 w-32">Status:</span>
+                <span className={`capitalize px-2 py-0.5 rounded text-xs font-medium ${selectedHearing?.hearing_status === 'scheduled' ? 'bg-blue-100 text-blue-700' :
+                    selectedHearing?.hearing_status === 'completed' ? 'bg-green-100 text-green-700' :
+                      selectedHearing?.hearing_status === 'pending_schedule' ? 'bg-amber-100 text-amber-700' :
+                        selectedHearing?.hearing_status === 'pending_decision' ? 'bg-red-100 text-red-700' :
+                          'bg-gray-100 text-gray-600'
+                  }`}>
+                  {selectedHearing?.hearing_status?.replace(/_/g, " ") || "Unknown"}
+                </span>
+              </div>
+
+              <div className="flex gap-2">
+                <span className="font-medium text-gray-600 w-32">Assigned Lupon:</span>
+                <span>{selectedHearing?.lupon_member_name || "Unassigned"}</span>
+              </div>
+
+              <div className="flex gap-2">
+                <span className="font-medium text-gray-600 w-32">Remarks:</span>
+                <span className="text-gray-500">{selectedHearing?.remarks || "No remarks"}</span>
+              </div>
             </div>
           </div>
         </DialogContent>
