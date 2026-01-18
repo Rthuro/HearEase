@@ -25,7 +25,7 @@ export function Greetings() {
     }
 
   return (
-    <section className='flex flex-col w-2/3 '>
+    <section className='flex flex-col w-full '>
     <div className='flex items-center bg-redBase px-6 py-6 rounded-lg justify-between relative shadow-sm'>
         <div className="flex flex-col gap-2 text-white">
             <p className="text-3xl font-bold">Hello {username}!</p>

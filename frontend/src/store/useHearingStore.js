@@ -15,8 +15,7 @@ export const getHearings = async () => {
     const response = await axios.get(`${API_URL}/hearings/`, {
         params: { 
           role: data.userRole,
-          first_name: userData.user.first_name,
-          last_name: userData.user.last_name
+          email: userData.email
         }
     });
 

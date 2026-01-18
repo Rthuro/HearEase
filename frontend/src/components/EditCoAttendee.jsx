@@ -30,7 +30,7 @@ import { useCoAttendeesStore } from "@/store/useCoAttendeesStore";
 import { dateFormatter } from "@/lib/helpers";
 
 export function EditCoAttendee({co_attendees, type, attendeeInfo}){
-    const { barangays } = useAddressesStore();
+    const { barangays, streets } = useAddressesStore();
     const [openCalendar, setOpenCalendar] = useState(false);
     const { updateCoAttendeeInfo } = useCoAttendeesStore();
     const minDate = new Date("1900-01-01");
@@ -174,7 +174,7 @@ export function EditCoAttendee({co_attendees, type, attendeeInfo}){
                                             onValueChange={(value) => {
                                                 setInfo({...info, barangay: value});
                                         
-                                                const streets = getStreets(value);
+                                                const streets = getStreets(streets,value);
                                                 if (streets.length > 0) {
                                                 setInfo({...info, street: streets[0]});
                                                 } else {
@@ -205,7 +205,7 @@ export function EditCoAttendee({co_attendees, type, attendeeInfo}){
                                             <DropdownMenuRadioGroup
                                             value={info?.street} onValueChange={(value) => setInfo({...info, street: value})}>
 
-                                            {getStreets(info?.barangay).map(street => (
+                                            {getStreets(streets, info?.barangay).map(street => (
                                                 <DropdownMenuRadioItem key={street} value={street}>{street}</DropdownMenuRadioItem>
                                             ))}
 

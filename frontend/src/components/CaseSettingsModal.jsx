@@ -24,9 +24,11 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Input } from "@/components/ui/input"; // Optional, for confirmation input
+import { Input } from "@/components/ui/input"; 
+import { useCaseStore } from "@/store/useCaseStore";
 
 export function CaseSettingsModal({ caseData, onDelete, onUpdate }) {
+  const {deleteCase} = useCaseStore();
   const [open, setOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteInput, setDeleteInput] = useState("");
@@ -40,7 +42,7 @@ export function CaseSettingsModal({ caseData, onDelete, onUpdate }) {
   // Secure Delete Logic
   const handleDelete = () => {
     if (deleteInput === "DELETE") {
-      onDelete(caseData.id);
+      deleteCase(caseData.id);
       setOpen(false);
     }
   };
