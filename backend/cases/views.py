@@ -155,10 +155,24 @@ class CaseView(APIView):
         except Case.DoesNotExist:
             return Response({"error": "Case not found"}, status=status.HTTP_404_NOT_FOUND)
 
+        # Check if status is changing to resolved
+        old_status = case.case_status
+        new_status = request.data.get("case_status", old_status)
+        
         serializer = CaseSerializer(case, data=request.data, partial=True)
 
         if serializer.is_valid():
             serializer.save()
+            
+            # Trigger auto-retrain check if case was just resolved
+            if old_status != "resolved" and new_status == "resolved":
+                try:
+                    from AIModel.retrain_model import increment_resolved_count
+                    increment_resolved_count()
+                    print(f"[Case] Case #{pk} resolved - auto-retrain counter incremented")
+                except Exception as e:
+                    print(f"[Case] Auto-retrain check failed: {e}")
+            
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -199,10 +213,24 @@ class UpdateCaseInfoView(APIView):
         except Case.DoesNotExist:
             return Response({"error": "Case not found."}, status=status.HTTP_404_NOT_FOUND)
 
+        # Check if status is changing to resolved
+        old_status = case.case_status
+        new_status = request.data.get("case_status", old_status)
+
         serializer = CaseSerializer(case, data=request.data, partial=True)
 
         if serializer.is_valid():
             case = serializer.save()
+            
+            # Trigger auto-retrain check if case was just resolved
+            if old_status != "resolved" and new_status == "resolved":
+                try:
+                    from AIModel.retrain_model import increment_resolved_count
+                    increment_resolved_count()
+                    print(f"[Case] Case #{pk} resolved - auto-retrain counter incremented")
+                except Exception as e:
+                    print(f"[Case] Auto-retrain check failed: {e}")
+            
             response_data = CaseSerializer(case).data
             return Response(response_data, status=status.HTTP_200_OK)
 
@@ -265,4 +293,114 @@ class ReportView(APIView):
             })
 
         return Response(result)
+
+
+class CasePriorityView(APIView):
+    """
+    Calculate and return cases sorted by priority score.
+    
+    GET /api/case-priority/
+    
+    Query params:
+    - status: Filter by case status (optional)
+    - limit: Number of cases to return (default: 20)
+    
+    Response:
+    [
+        {
+            "case_id": "...",
+            "priority_score": 85,
+            "priority_level": "high",
+            "case_type": "Grave Threats",
+            "severity": 3,
+            "age_days": 14,
+            "hearing_count": 2,
+            "reasons": ["High severity", "Case aging"]
+        }
+    ]
+    """
+    
+    def get(self, request):
+        status_filter = request.query_params.get("status")
+        limit = int(request.query_params.get("limit", 20))
+        
+        # Build query
+        cases_query = Case.objects.exclude(
+            case_status__in=["resolved", "rejected", "cancelled"]
+        ).select_related("case_type", "relationship")
+        
+        if status_filter:
+            cases_query = cases_query.filter(case_status=status_filter)
+        
+        # Calculate priority for each case
+        prioritized_cases = []
+        now = datetime.now()
+        
+        for case in cases_query:
+            score = 0
+            reasons = []
+            
+            # Severity weight (30 points per level)
+            severity = case.case_type.severity if case.case_type else 1
+            severity_points = severity * 30
+            score += severity_points
+            if severity >= 3:
+                reasons.append("High severity")
+            
+            # Relationship urgency (Family cases get priority)
+            relationship_name = case.relationship.relationship if case.relationship else ""
+            if relationship_name.lower() == "family":
+                score += 15
+                reasons.append("Family dispute - urgent")
+            elif relationship_name.lower() in ["neighbor", "ex-partner"]:
+                score += 10
+                reasons.append("High-conflict relationship")
+            else:
+                score += 5
+            
+            # Case aging (older cases get more priority, max 30 points)
+            if case.date_filed:
+                age_days = (now - case.date_filed.replace(tzinfo=None)).days
+                age_points = min(age_days, 30)
+                score += age_points
+                if age_days >= 14:
+                    reasons.append(f"Case aging ({age_days} days)")
+            else:
+                age_days = 0
+            
+            # Hearing count - cases with many hearings might be stuck
+            hearing_count = Hearing.objects.filter(case=case).count()
+            predicted = case.predicted_hearings or 3
+            if hearing_count > predicted:
+                overrun_points = (hearing_count - predicted) * 10
+                score += min(overrun_points, 20)
+                reasons.append(f"Exceeding predicted hearings ({hearing_count}/{predicted})")
+            
+            # Determine priority level
+            if score >= 70:
+                priority_level = "high"
+            elif score >= 45:
+                priority_level = "medium"
+            else:
+                priority_level = "low"
+            
+            prioritized_cases.append({
+                "case_id": case.id,
+                "priority_score": score,
+                "priority_level": priority_level,
+                "case_type": case.case_type.case_name if case.case_type else "Unknown",
+                "severity": severity,
+                "relationship": relationship_name,
+                "age_days": age_days,
+                "hearing_count": hearing_count,
+                "predicted_hearings": predicted,
+                "case_status": case.case_status,
+                "reasons": reasons if reasons else ["Standard priority"]
+            })
+        
+        # Sort by priority score (highest first)
+        prioritized_cases.sort(key=lambda x: x["priority_score"], reverse=True)
+        
+        return Response(prioritized_cases[:limit], status=status.HTTP_200_OK)
+
 
