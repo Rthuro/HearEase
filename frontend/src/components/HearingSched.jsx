@@ -271,20 +271,22 @@ export function HearingSched({ predicted, luponMembers }) {
               newHearingData[i].time = "09:00";
             }
             // All hearings get the SAME Lupon in standard mode
-            if (!newHearingData[i].lupon_member_id && luponMembers?.length > 0) {
+            // Reassign all to ensure consistency
+            if (luponMembers?.length > 0) {
               newHearingData[i].lupon_member_id = recommendedLupon;
             }
           }
         }
       } else {
         // EXPEDITE MODE: Each hearing gets Lupon available on THAT day
+        // ALWAYS reassign when interval changes to reflect correct availability
         for (let i = 0; i < newHearingData.length; i++) {
           if (newHearingData[i].hearing_date) {
             if (!newHearingData[i].time) {
               newHearingData[i].time = "09:00";
             }
             // Each hearing gets the best Lupon for ITS specific date
-            if (!newHearingData[i].lupon_member_id && luponMembers?.length > 0) {
+            if (luponMembers?.length > 0) {
               newHearingData[i].lupon_member_id = getLuponForDate(newHearingData[i].hearing_date);
             }
           }
@@ -359,7 +361,7 @@ export function HearingSched({ predicted, luponMembers }) {
 
     // Auto-assign Lupon based on mode
     if (mode === "standard") {
-      // STANDARD: Same Lupon for all hearings
+      // STANDARD: Same Lupon for all hearings (only set if not already assigned)
       const recommendedLupon = getDefaultLupon(newHearingInfo[0]?.hearing_date);
       for (let j = 0; j < newHearingInfo.length; j++) {
         if (!newHearingInfo[j].lupon_member_id) {
@@ -368,10 +370,17 @@ export function HearingSched({ predicted, luponMembers }) {
       }
     } else {
       // EXPEDITE/CUSTOM: Each hearing gets Lupon available on THAT day
-      for (let j = 0; j < newHearingInfo.length; j++) {
-        if (newHearingInfo[j].hearing_date && !newHearingInfo[j].lupon_member_id) {
-          newHearingInfo[j].lupon_member_id = getLuponForDate(newHearingInfo[j].hearing_date);
+      // ALWAYS recalculate when dates change to reflect the correct availability
+      if (mode !== "custom" && index === 0) {
+        // Dates were cascaded, reassign ALL Lupons based on new dates
+        for (let j = 0; j < newHearingInfo.length; j++) {
+          if (newHearingInfo[j].hearing_date) {
+            newHearingInfo[j].lupon_member_id = getLuponForDate(newHearingInfo[j].hearing_date);
+          }
         }
+      } else {
+        // Custom mode or individual date change - only update the changed date
+        newHearingInfo[index].lupon_member_id = getLuponForDate(date);
       }
     }
 
@@ -626,66 +635,74 @@ export function HearingSched({ predicted, luponMembers }) {
                       <CommandList>
                         <CommandEmpty>No lupon members found.</CommandEmpty>
                         <CommandGroup>
-                          {luponMembers
-                            .map(lupon => ({
-                              ...lupon,
-                              workload: luponWorkloads[lupon.id] || null
-                            }))
-                            .sort((a, b) => {
-                              // Sort by workload (least busy first)
-                              const wA = a.workload?.total_hearings || 0;
-                              const wB = b.workload?.total_hearings || 0;
-                              return wA - wB;
-                            })
-                            .map((lupon) => (
-                              <CommandItem
-                                key={lupon.id}
-                                value={lupon.id}
-                                onSelect={() => {
-                                  const newHearingInfo = [...hearingInfo];
+                          {/* Calculate recommended Lupon for THIS hearing */}
+                          {(() => {
+                            // Determine which Lupon is recommended for this hearing date
+                            const recommendedForThisDate = mode === "standard"
+                              ? suggestedLuponId  // Global recommendation for standard
+                              : getLuponForDate(hearingInfo[i]?.hearing_date); // Date-specific for expedite/custom
 
-                                  if (mode === "standard") {
-                                    // STANDARD MODE: Apply same Lupon to ALL hearings
-                                    // One Lupon oversees the entire case
-                                    for (let j = 0; j < newHearingInfo.length; j++) {
-                                      newHearingInfo[j].lupon_member_id = lupon.id;
+                            return luponMembers
+                              .map(lupon => ({
+                                ...lupon,
+                                workload: luponWorkloads[lupon.id] || null
+                              }))
+                              .sort((a, b) => {
+                                // Sort by workload (least busy first)
+                                const wA = a.workload?.total_hearings || 0;
+                                const wB = b.workload?.total_hearings || 0;
+                                return wA - wB;
+                              })
+                              .map((lupon) => (
+                                <CommandItem
+                                  key={lupon.id}
+                                  value={lupon.id}
+                                  onSelect={() => {
+                                    const newHearingInfo = [...hearingInfo];
+
+                                    if (mode === "standard") {
+                                      // STANDARD MODE: Apply same Lupon to ALL hearings
+                                      // One Lupon oversees the entire case
+                                      for (let j = 0; j < newHearingInfo.length; j++) {
+                                        newHearingInfo[j].lupon_member_id = lupon.id;
+                                      }
+                                    } else {
+                                      // EXPEDITE/CUSTOM: Only change this specific hearing
+                                      newHearingInfo[i].lupon_member_id = lupon.id;
                                     }
-                                  } else {
-                                    // EXPEDITE/CUSTOM: Only change this specific hearing
-                                    newHearingInfo[i].lupon_member_id = lupon.id;
-                                  }
 
-                                  setHearingInfo(newHearingInfo);
-                                  setHearings(newHearingInfo);
-                                  setOpenPopover(null);
-                                }}
-                              >
-                                <div className="flex items-center gap-2 flex-1">
-                                  <span>{lupon.first_name} {lupon.last_name}</span>
-                                  {lupon.workload && (
-                                    <span className={cn(
-                                      "text-xs px-1.5 py-0.5 rounded-full",
-                                      LOAD_COLORS[lupon.workload.load_level] || "bg-gray-100 text-gray-600"
-                                    )}>
-                                      {lupon.workload.total_hearings} cases
-                                    </span>
-                                  )}
-                                  {lupon.id === suggestedLuponId && (
-                                    <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">
-                                      Recommended
-                                    </span>
-                                  )}
-                                </div>
-                                <Check
-                                  className={cn(
-                                    "ml-auto",
-                                    hearingInfo[i]?.lupon_member_id === lupon.id
-                                      ? "opacity-100"
-                                      : "opacity-0"
-                                  )}
-                                />
-                              </CommandItem>
-                            ))}
+                                    setHearingInfo(newHearingInfo);
+                                    setHearings(newHearingInfo);
+                                    setOpenPopover(null);
+                                  }}
+                                >
+                                  <div className="flex items-center gap-2 flex-1">
+                                    <span>{lupon.first_name} {lupon.last_name}</span>
+                                    {lupon.workload && (
+                                      <span className={cn(
+                                        "text-xs px-1.5 py-0.5 rounded-full",
+                                        LOAD_COLORS[lupon.workload.load_level] || "bg-gray-100 text-gray-600"
+                                      )}>
+                                        {lupon.workload.total_hearings} cases
+                                      </span>
+                                    )}
+                                    {lupon.id === recommendedForThisDate && (
+                                      <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                                        Recommended
+                                      </span>
+                                    )}
+                                  </div>
+                                  <Check
+                                    className={cn(
+                                      "ml-auto",
+                                      hearingInfo[i]?.lupon_member_id === lupon.id
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    )}
+                                  />
+                                </CommandItem>
+                              ));
+                          })()}
                         </CommandGroup>
                       </CommandList>
                     </Command>
