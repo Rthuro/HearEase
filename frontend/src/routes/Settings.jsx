@@ -2,9 +2,9 @@ import { Label } from "@/components/ui/label";
 import { PageSync } from "@/components/PageSync";
 import { useEffect, useState } from "react";
 import {
-  Card,
-  CardContent,
-  CardFooter,
+    Card,
+    CardContent,
+    CardFooter,
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -14,18 +14,18 @@ import PhoneVerification from "@/components/PhoneVerification";
 import useAuthenticationStore from "@/store/useAuthenticationStore";
 import AccountVerification from "@/components/AccountVerification";
 import {
-  Dialog,
-  DialogContent,
-  DialogTrigger,
+    Dialog,
+    DialogContent,
+    DialogTrigger,
 } from "@/components/ui/dialog"
 import { useAddressesStore } from "@/store/useAddressStore";
 import { getBarangayName, getStreets, getBarangay } from "@/lib/helpers";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuRadioGroup,
+    DropdownMenuRadioItem,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import NotificationSettings from "@/components/NotificationSettings";
 import { User2, Bell, LockKeyhole, LogOut, Calendar, RefreshCw, Check, X, Loader2, Brain, Settings2 } from "lucide-react";
@@ -43,7 +43,7 @@ export function Settings() {
     const [integrations, switchIntegrations] = useState(false);
     const [aiModel, switchAIModel] = useState(false);
     const { members } = useLuponStore();
-    const { barangays , streets, fetchBarangays, fetchStreets } = useAddressesStore();
+    const { barangays, streets, fetchBarangays, fetchStreets } = useAddressesStore();
     const { updateUser, fetchUser, sendOTP, verifyOTP } = useUserStore();
 
     const [firstName, setFirstName] = useState(user?.first_name || "");
@@ -55,7 +55,7 @@ export function Settings() {
     const [openCalendar, setOpenCalendar] = useState(false);
     const minDate = new Date("1900-01-01");
     const maxDate = new Date();
-    
+
     // Address States
     const [selectedBarangay, setSelectedBarangay] = useState(user?.barangay || "");
     const [selectedStreet, setSelectedStreet] = useState(user?.street || "");
@@ -66,11 +66,11 @@ export function Settings() {
 
     const [timeLeft, setTimeLeft] = useState(0);
     useEffect(() => {
-    
+
         if (timeLeft === 0) return;
 
         const intervalId = setInterval(() => {
-        setTimeLeft((prevTime) => prevTime - 1);
+            setTimeLeft((prevTime) => prevTime - 1);
         }, 1000);
 
         return () => clearInterval(intervalId);
@@ -83,20 +83,20 @@ export function Settings() {
             setUser(userData);
             setLoader(false);
         };
-        
+
         fetchData();
     }, []);
 
     useEffect(() => {
         setLoader(true);
-        if(barangays.length === 0) {
+        if (barangays.length === 0) {
             fetchBarangays();
         }
-        if  (streets.length === 0) {
+        if (streets.length === 0) {
             fetchStreets();
         }
 
-        if(user && streets.length > 0 && barangays.length > 0) {
+        if (user && streets.length > 0 && barangays.length > 0) {
             setLoader(false);
             setFirstName(user.first_name || "");
             setMiddleName(user.middle_name || "");
@@ -107,25 +107,25 @@ export function Settings() {
             setAdditionalInfo(user.additional_info || "");
             setContactNumber(user.contact_number || "");
             setEmail(user.email || "");
-        } 
+        }
     }, [user, streets, barangays]);
 
-    const hasChanges = 
-        firstName !== (user?.first_name || "") || 
-        middleName !== (user?.middle_name || "") || 
+    const hasChanges =
+        firstName !== (user?.first_name || "") ||
+        middleName !== (user?.middle_name || "") ||
         lastName !== (user?.last_name || "") ||
         sex !== (user?.sex || "") ||
         selectedBarangay !== (user?.barangay || "") ||
         selectedStreet !== (user?.street || "") ||
         additionalInfo !== (user?.additional_info || "");
 
-    const emailHasChanges = 
+    const emailHasChanges =
         email !== (user?.email || "");
 
     const handleUpdate = async (section) => {
         let updatedData = null;
 
-        if( section === "profile"){
+        if (section === "profile") {
             updatedData = {
                 first_name: firstName,
                 middle_name: middleName,
@@ -137,13 +137,13 @@ export function Settings() {
             };
         }
 
-        if( section === "contact"){
-             if( isNaN(contactNumber) ) {
+        if (section === "contact") {
+            if (isNaN(contactNumber)) {
                 toast.error("Contact number should contain only numbers.");
                 return;
             }
 
-            if(contactNumber.length !== 11 || !contactNumber.startsWith("09")) {
+            if (contactNumber.length !== 11 || !contactNumber.startsWith("09")) {
                 toast.error("Please enter a valid contact number in the format 09XXXXXXXXX.");
                 return;
             }
@@ -154,7 +154,7 @@ export function Settings() {
             };
         }
 
-        if( section === "email"){
+        if (section === "email") {
             updatedData = {
                 email: email,
                 is_email_verified: false,
@@ -166,7 +166,7 @@ export function Settings() {
     };
 
     const handleReset = (section) => {
-        if( section === "profile"){
+        if (section === "profile") {
             setFirstName(user.first_name || "");
             setMiddleName(user.middle_name || "");
             setLastName(user.last_name || "");
@@ -176,11 +176,11 @@ export function Settings() {
             setAdditionalInfo(user.additional_info || "");
         }
 
-        if( section === "contact"){
+        if (section === "contact") {
             setContactNumber(user.contact_number || "");
         }
 
-        if( section === "email"){
+        if (section === "email") {
             setEmail(user.email || "");
         }
     }
@@ -188,11 +188,11 @@ export function Settings() {
     const [emailCode, setEmailCode] = useState("");
     const [emailStep, setEmailStep] = useState("start");
     const [emailLoading, setEmailLoading] = useState(false);
-    
+
     const handleSendEmailOTP = async () => {
         await sendOTP(null, "email");
         setEmailStep("input");
-        setTimeLeft(600); 
+        setTimeLeft(600);
     }
 
     const handleVerifyEmailOTP = async (code) => {
@@ -203,9 +203,9 @@ export function Settings() {
 
         setEmailLoading(true);
         await verifyOTP(code, "email");
-        
+
         setEmailStep("start")
-        setEmailLoading(false); 
+        setEmailLoading(false);
         fetchUser().then((data) => setUser(data));
     }
 
@@ -234,7 +234,10 @@ export function Settings() {
         checkStatus,
         connectGoogleCalendar,
         disconnect,
-        syncAll
+        syncAll,
+        syncSettings,
+        fetchSyncSettings,
+        updateSyncSettings
     } = useGoogleCalendarStore();
 
     const stored = localStorage.getItem("authData");
@@ -244,6 +247,9 @@ export function Settings() {
     useEffect(() => {
         // Check Google Calendar status
         checkStatus();
+
+        // Fetch sync settings
+        fetchSyncSettings();
 
         // Fetch AI model status
         fetchAIStatus();
@@ -284,7 +290,7 @@ export function Settings() {
                     switchNotifications(true)
                     switchIntegrations(false)
                     switchAIModel(false)
-                    }}
+                }}
                     className={`flex items-center gap-2 p-3 rounded-md ${notifications ? "bg-red-50 text-redBase" : ""}`}>
                     <Bell className="size-4" />
                     Notifications
@@ -296,7 +302,7 @@ export function Settings() {
                         switchIntegrations(true)
                         switchAIModel(false)
                     }}
-                    className={`flex items-center gap-2 p-3 rounded-md ${integrations ? "bg-red-50 text-redBase" : ""}`}
+                        className={`flex items-center gap-2 p-3 rounded-md ${integrations ? "bg-red-50 text-redBase" : ""}`}
                     >
                         <Calendar className="size-4" />
                         Integrations
@@ -317,40 +323,40 @@ export function Settings() {
                 )}
 
             </div>
-            { loader ? (
+            {loader ? (
                 <div className="flex-1 flex items-center justify-center">
                     <Loader2 className="animate-spin size-6 text-redBase" />
                 </div>
             ) : null}
-            
-            { !loader && account && (
-            <div className="flex-1 flex flex-col gap-4 px-6 py-6">
-                <div className="flex flex-col gap-2">
-                    <h2 className="text-xl font-medium">Account Information</h2>
-                    <p className=" text-zinc-500">Manage your account information</p>
-                </div>
-                
-                {userRole !== "admin" && (
-                <div className="flex items-center justify-between bg-white p-4 border rounded-lg">
-                    <div className="flex flex-col gap-1">
-                        <p className="text-lg font-medium">Verify your account</p>
-                        <p className="text-sm text-zinc-500">Please verify your account to access all features.</p>
-                    </div>
-                    <Dialog>
-                        <DialogTrigger asChild>
-                            <Button className="bg-redBase">Verify Now</Button>
-                        </DialogTrigger>
-                        <DialogContent className="sw-fit">
-                            <AccountVerification />     
-                        </DialogContent>
-                    </Dialog>
-                </div>
-                )}
-                
 
-                <p className="text-lg font-medium">Profile</p>
-                <Card className="py-3 rounded-sm gap-2 mb-3">
-                    <CardContent className="px-0">
+            {!loader && account && (
+                <div className="flex-1 flex flex-col gap-4 px-6 py-6">
+                    <div className="flex flex-col gap-2">
+                        <h2 className="text-xl font-medium">Account Information</h2>
+                        <p className=" text-zinc-500">Manage your account information</p>
+                    </div>
+
+                    {userRole !== "admin" && (
+                        <div className="flex items-center justify-between bg-white p-4 border rounded-lg">
+                            <div className="flex flex-col gap-1">
+                                <p className="text-lg font-medium">Verify your account</p>
+                                <p className="text-sm text-zinc-500">Please verify your account to access all features.</p>
+                            </div>
+                            <Dialog>
+                                <DialogTrigger asChild>
+                                    <Button className="bg-redBase">Verify Now</Button>
+                                </DialogTrigger>
+                                <DialogContent className="sw-fit">
+                                    <AccountVerification />
+                                </DialogContent>
+                            </Dialog>
+                        </div>
+                    )}
+
+
+                    <p className="text-lg font-medium">Profile</p>
+                    <Card className="py-3 rounded-sm gap-2 mb-3">
+                        <CardContent className="px-0">
                             <div className="flex flex-col gap-3">
                                 <div className="grid grid-cols-2 gap-2 px-3">
                                     <Label htmlFor="firstName">First Name</Label>
@@ -390,125 +396,125 @@ export function Settings() {
                                     <DropdownMenu id="sex">
                                         <DropdownMenuTrigger asChild>
                                             <Button variant="outline">
-                                            {sex || "Select"} 
+                                                {sex || "Select"}
                                             </Button>
                                         </DropdownMenuTrigger>
 
                                         <DropdownMenuContent className="w-56">
                                             <DropdownMenuRadioGroup
-                                            value={sex}
-                                            onValueChange={(value) => 
-                                                setSex(value)}
+                                                value={sex}
+                                                onValueChange={(value) =>
+                                                    setSex(value)}
                                             >
-                                            <DropdownMenuRadioItem value="Male">Male</DropdownMenuRadioItem>
-                                            <DropdownMenuRadioItem value="Female">Female</DropdownMenuRadioItem>
+                                                <DropdownMenuRadioItem value="Male">Male</DropdownMenuRadioItem>
+                                                <DropdownMenuRadioItem value="Female">Female</DropdownMenuRadioItem>
                                             </DropdownMenuRadioGroup>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </div>
-                                <Separator/>
-                            <Separator />
-                            <div className="grid grid-cols-2 gap-2 px-3">
-                                <Label htmlFor="barangay">Barangay</Label>
-                                <DropdownMenu id="barangay">
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="outline">
-                                        {getBarangayName(barangays, selectedBarangay) || 'Select'}
+                                <Separator />
+                                <Separator />
+                                <div className="grid grid-cols-2 gap-2 px-3">
+                                    <Label htmlFor="barangay">Barangay</Label>
+                                    <DropdownMenu id="barangay">
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="outline">
+                                                {getBarangayName(barangays, selectedBarangay) || 'Select'}
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent className="w-72">
+                                            <DropdownMenuRadioGroup
+                                                value={selectedBarangay}
+                                                onValueChange={(value) => {
+                                                    const streetsForBarangay = getStreets(streets, value);
+
+                                                    setSelectedBarangay(value);
+                                                    setSelectedStreet(streetsForBarangay[0] || "");
+                                                }}>
+
+                                                {barangays.map(b => (
+                                                    <DropdownMenuRadioItem key={b.name} value={b.id}>{b.name}
+                                                    </DropdownMenuRadioItem>
+                                                ))}
+
+                                            </DropdownMenuRadioGroup>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </div>
+                                <Separator />
+                                <div className="grid grid-cols-2 gap-2 px-3">
+                                    <Label htmlFor="street">Street</Label>
+                                    <DropdownMenu id="street">
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="outline">
+                                                {selectedStreet || 'Select'
+                                                }
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent className="w-72">
+                                            <DropdownMenuRadioGroup
+                                                value={selectedStreet} onValueChange={(value) =>
+                                                    setSelectedStreet(value)}>
+
+                                                {getStreets(streets, getBarangay(barangays, selectedBarangay)?.id).map(street => (
+                                                    <DropdownMenuRadioItem key={street}
+                                                        value={street}>{street}
+                                                    </DropdownMenuRadioItem>
+                                                ))
+                                                }
+                                            </DropdownMenuRadioGroup>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </div>
+                                <Separator />
+                                <div className="grid grid-cols-2 gap-2 px-3">
+                                    <Label htmlFor="additionalInfo">Additional Info</Label>
+                                    <Input
+                                        id="additionalInfo"
+                                        type="text"
+                                        placeholder="Additional Info"
+                                        value={additionalInfo}
+                                        onChange={(e) => setAdditionalInfo(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
+                        </CardContent>
+
+                        <CardFooter className="flex-col gap-2 items-end">
+                            {hasChanges ? (
+                                <div className="flex gap-2">
+                                    <Button onClick={() => handleReset("profile")} variant="outline" className="w-fit">
+                                        Cancel
                                     </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-72">
-                                    <DropdownMenuRadioGroup 
-                                    value={selectedBarangay} 
-                                    onValueChange={(value) => {
-                                        const streetsForBarangay = getStreets(streets, value);
-
-                                        setSelectedBarangay(value);
-                                        setSelectedStreet(streetsForBarangay[0] || "");
-                                    }}>
-
-                                    {barangays.map(b => (
-                                        <DropdownMenuRadioItem key={b.name} value={b.id}>{b.name}
-                                        </DropdownMenuRadioItem>
-                                    ))}
-
-                                    </DropdownMenuRadioGroup>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                            </div>
-                            <Separator />
-                            <div className="grid grid-cols-2 gap-2 px-3">
-                                <Label htmlFor="street">Street</Label>
-                                <DropdownMenu id="street">
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="outline">
-                                        {selectedStreet  || 'Select'
-                                        }
+                                    <Button onClick={() => handleUpdate("profile")} className="w-fit">
+                                        {loading ? (
+                                            <>
+                                                <Loader2 className="animate-spin size-5 " />
+                                                Saving...
+                                            </>
+                                        ) : ("Save")}
                                     </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-72">
-                                    <DropdownMenuRadioGroup 
-                                    value={selectedStreet} onValueChange={(value) => 
-                                    setSelectedStreet(value)}>
-
-                                    { getStreets(streets,  getBarangay(barangays, selectedBarangay)?.id).map(street => (
-                                            <DropdownMenuRadioItem key={street} 
-                                            value={street}>{street}
-                                            </DropdownMenuRadioItem>
-                                        ))
-                                    }
-                                    </DropdownMenuRadioGroup>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                            </div>
-                            <Separator />
-                            <div className="grid grid-cols-2 gap-2 px-3">
-                                <Label htmlFor="additionalInfo">Additional Info</Label>
-                                <Input
-                                    id="additionalInfo"
-                                    type="text"
-                                    placeholder="Additional Info"
-                                    value={additionalInfo}
-                                    onChange={(e) => setAdditionalInfo(e.target.value)}
-                                />
-                            </div>
-                        </div>
-
-                    </CardContent>
-                    
-                    <CardFooter className="flex-col gap-2 items-end">
-                        { hasChanges ? (
-                            <div className="flex gap-2">
-                                <Button onClick={() => handleReset("profile")} variant="outline" className="w-fit">
-                                    Cancel
-                                </Button> 
-                                <Button onClick={() => handleUpdate("profile")} className="w-fit">
-                                        { loading ? (
-                                        <>
-                                            <Loader2 className="animate-spin size-5 " />
-                                        Saving...
-                                        </>
-                                    ) : ("Save")}
-                                </Button> 
-                            </div>
+                                </div>
                             ) : (
                                 <Button variant="secondary" className="w-fit" disabled>
-                                Save
-                            </Button>
+                                    Save
+                                </Button>
                             )}
-                    </CardFooter>
-                </Card>
+                        </CardFooter>
+                    </Card>
 
-                <div className="flex flex-col gap-2">
-                    <h2 className="text-xl font-medium">Contact Verification</h2>
-                    <p className="text-zinc-500">
-                        Manage and verify your contact details. This is important for communication and notifications.
-                    </p>
-                </div>
+                    <div className="flex flex-col gap-2">
+                        <h2 className="text-xl font-medium">Contact Verification</h2>
+                        <p className="text-zinc-500">
+                            Manage and verify your contact details. This is important for communication and notifications.
+                        </p>
+                    </div>
 
-                <PhoneVerification user={user} setUser={setUser} handleUpdate={handleUpdate} handleReset={handleReset} formatTime={formatTime} />
-                
-                <Card className="py-3 rounded-sm gap-2 mb-3">
-                    <CardContent className="px-0">
+                    <PhoneVerification user={user} setUser={setUser} handleUpdate={handleUpdate} handleReset={handleReset} formatTime={formatTime} />
+
+                    <Card className="py-3 rounded-sm gap-2 mb-3">
+                        <CardContent className="px-0">
                             <div id="contact" className="flex flex-col gap-3">
                                 <div className="grid grid-cols-2 gap-2 px-3">
                                     <Label htmlFor="email" className="flex items-center gap-2">
@@ -525,7 +531,7 @@ export function Settings() {
                                             )
                                         )}
                                     </Label>
-                                        
+
                                     <Input
                                         id="email"
                                         type="email"
@@ -538,38 +544,38 @@ export function Settings() {
                                 <div className="flex gap-2 items-end justify-end px-3">
                                     {!user?.is_email_verified && user?.email ? (
                                         <Button size="sm" className="bg-redBase hover:bg-red-700 text-white"
-                                        onClick={handleSendEmailOTP}
-                                        disabled={loading}>
+                                            onClick={handleSendEmailOTP}
+                                            disabled={loading}>
                                             {loading ? "Sending..." : "Verify Now"}
                                         </Button>
-                                        ) :  null}
-                                    
+                                    ) : null}
+
                                     {emailHasChanges ? (
-                                            <>
-                                                <Button size="sm"
+                                        <>
+                                            <Button size="sm"
                                                 onClick={() => handleUpdate("email")}>
-                                                    Save
-                                                </Button> 
-                                                <Button variant="outline" size="sm" 
+                                                Save
+                                            </Button>
+                                            <Button variant="outline" size="sm"
                                                 onClick={() => handleReset("email")}>
-                                                    Cancel
-                                                </Button> 
-                                                    
-                                            </>
-                                        ) : <Button variant="secondary" size="sm" disabled>
-                                                    Save
-                                        </Button> }
+                                                Cancel
+                                            </Button>
+
+                                        </>
+                                    ) : <Button variant="secondary" size="sm" disabled>
+                                        Save
+                                    </Button>}
                                 </div>
                             </div>
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                    </Card>
 
-                {emailStep === "input" && (
-                    <div className="flex flex-col gap-2">
-                        <div className="w-fit flex flex-col gap-1">
-                            <p className="font-medium text-lg">Verification Code</p>
-                            <p className="text-sm text-zinc-600">Verification code has been sent to {user?.email}. Please enter the code below to verify your email. </p>
-                        </div>
+                    {emailStep === "input" && (
+                        <div className="flex flex-col gap-2">
+                            <div className="w-fit flex flex-col gap-1">
+                                <p className="font-medium text-lg">Verification Code</p>
+                                <p className="text-sm text-zinc-600">Verification code has been sent to {user?.email}. Please enter the code below to verify your email. </p>
+                            </div>
                             <Card className="py-3 rounded-sm gap-2 mb-3">
                                 <CardContent className="px-0">
                                     <div id="contact" className="flex flex-col gap-3 ">
@@ -577,7 +583,7 @@ export function Settings() {
                                             <Label htmlFor="emailCode" className="flex items-center gap-2">
                                                 Email Verification Code
                                             </Label>
-                                                
+
                                             <Input
                                                 id="emailCode"
                                                 type="text"
@@ -591,14 +597,14 @@ export function Settings() {
                                         <div className="flex items-center justify-between px-3">
                                             <p className="text-zinc-600 text-sm mt-4 text-center">
                                                 Didn't receive a code?{" "}
-                                                
+
                                                 {timeLeft > 0 ? (
                                                     <span className="text-zinc-400 cursor-not-allowed font-medium">
                                                         Resend in {formatTime(timeLeft)}
                                                     </span>
                                                 ) : (
-                                                    <button 
-                                                        className="text-redBase underline font-medium hover:text-red-700 transition-colors" 
+                                                    <button
+                                                        className="text-redBase underline font-medium hover:text-red-700 transition-colors"
                                                         onClick={handleSendEmailOTP}
                                                         disabled={loading}
                                                     >
@@ -608,24 +614,24 @@ export function Settings() {
                                             </p>
                                             <div className="flex gap-3">
                                                 <Button size="sm" className="bg-redBase hover:bg-red-700 text-white self-end"
-                                                onClick={() => handleVerifyEmailOTP(emailCode)} disabled={emailLoading || emailCode.length < 6}>
+                                                    onClick={() => handleVerifyEmailOTP(emailCode)} disabled={emailLoading || emailCode.length < 6}>
                                                     {emailLoading ? "Verifying..." : "Confirm"}
                                                 </Button>
-                                                <Button variant="outline" size="sm" onClick={() => {setEmailStep("start"); setEmailCode(""); setEmailLoading(false); } }>
+                                                <Button variant="outline" size="sm" onClick={() => { setEmailStep("start"); setEmailCode(""); setEmailLoading(false); }}>
                                                     Cancel
                                                 </Button>
                                             </div>
-                                            
+
                                         </div>
                                     </div>
                                 </CardContent>
                             </Card>
                         </div>)}
-                    </div>
-                
+                </div>
+
             )}
 
-            { !account && notifications && (
+            {!account && notifications && (
                 <NotificationSettings />
             )}
 
@@ -720,6 +726,76 @@ export function Settings() {
                                 )}
                             </div>
                         </div>
+
+                        {/* Auto-Sync Settings (only show when connected) */}
+                        {connected && (
+                            <div className="border rounded-lg p-4 mt-4">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                            <Settings2 className="size-5 text-green-600" />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-medium">Auto-Sync Settings</h3>
+                                            <p className="text-sm text-gray-500">
+                                                Automatically sync hearings when created or updated
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    {/* Main Auto-Sync Toggle */}
+                                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+                                        <div>
+                                            <p className="font-medium">Enable Auto-Sync</p>
+                                            <p className="text-sm text-gray-500">
+                                                Automatically sync hearings to Google Calendar
+                                            </p>
+                                        </div>
+                                        <Switch
+                                            checked={syncSettings?.auto_sync_enabled || false}
+                                            onCheckedChange={(checked) => {
+                                                updateSyncSettings({ auto_sync_enabled: checked });
+                                            }}
+                                        />
+                                    </div>
+
+                                    {/* Granular Settings */}
+                                    {syncSettings?.auto_sync_enabled && (
+                                        <div className="border-l-2 border-blue-300 pl-4 space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-sm">Sync on hearing creation</span>
+                                                <Switch
+                                                    checked={syncSettings?.sync_on_create || false}
+                                                    onCheckedChange={(checked) => {
+                                                        updateSyncSettings({ sync_on_create: checked });
+                                                    }}
+                                                />
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-sm">Sync on hearing update</span>
+                                                <Switch
+                                                    checked={syncSettings?.sync_on_update || false}
+                                                    onCheckedChange={(checked) => {
+                                                        updateSyncSettings({ sync_on_update: checked });
+                                                    }}
+                                                />
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-sm">Remove from calendar on delete</span>
+                                                <Switch
+                                                    checked={syncSettings?.sync_on_delete || false}
+                                                    onCheckedChange={(checked) => {
+                                                        updateSyncSettings({ sync_on_delete: checked });
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
 
                         <p className="text-xs text-gray-400">
                             When connected, all hearing schedules will automatically sync to a dedicated

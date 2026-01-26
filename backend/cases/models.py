@@ -81,6 +81,20 @@ class Case(models.Model):
         default="none",
     )
 
+    SUMMON_STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("sent", "Sent"),
+        ("received", "Received"),
+        ("none", "None"),
+    ]
+
+    summon_status = models.CharField(
+        max_length=20,
+        choices=SUMMON_STATUS_CHOICES,
+        default="none",
+        blank=True,
+    )
+
 
     def __str__(self):
         return f"Case #{self.id} - {self.case_type.case_name if self.case_type else 'Unknown'} ({self.get_case_status_display()})"

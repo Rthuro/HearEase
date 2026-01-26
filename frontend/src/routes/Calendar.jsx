@@ -1,10 +1,11 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { PageSync } from "@/components/PageSync";
 import useHearingStore from "@/store/useHearingStore";
+import { useGoogleCalendarStore } from "@/store/useGoogleCalendarStore";
 import { AlertTriangle, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,9 +44,13 @@ function CalendarLoading() {
 
 export function Calendar() {
   const { hearings, fetchHearings, loading } = useHearingStore();
+  const { holidays, fetchHolidays } = useGoogleCalendarStore();
   const [error, setError] = useState(null);
   const [selectedHearing, setSelectedHearing] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const calendarRef = useRef(null);
 
   // Fetch hearings on mount
   useEffect(() => {
@@ -59,6 +64,21 @@ export function Calendar() {
     };
     loadHearings();
   }, [fetchHearings]);
+
+  // Fetch holidays when month/year changes
+  useEffect(() => {
+    fetchHolidays(currentMonth, currentYear);
+  }, [currentMonth, currentYear, fetchHolidays]);
+
+  // Handle calendar navigation (month change)
+  const handleDatesSet = (dateInfo) => {
+    const newMonth = dateInfo.view.currentStart.getMonth() + 1;
+    const newYear = dateInfo.view.currentStart.getFullYear();
+    if (newMonth !== currentMonth || newYear !== currentYear) {
+      setCurrentMonth(newMonth);
+      setCurrentYear(newYear);
+    }
+  };
 
   // Transform hearings to calendar events
   const calendarEvents = useMemo(() => {
@@ -115,6 +135,32 @@ export function Calendar() {
         };
       });
   }, [hearings]);
+
+  // Transform holidays to calendar events
+  const holidayEvents = useMemo(() => {
+    if (!holidays || !Array.isArray(holidays)) return [];
+
+    return holidays.map((holiday, index) => ({
+      id: `holiday-${index}`,
+      title: `🇵🇭 ${holiday.name}`,
+      start: holiday.date,
+      allDay: true,
+      backgroundColor: holiday.type === "regular" ? "#DC2626" : "#991B1B", // Red for regular, dark red for special
+      borderColor: holiday.type === "regular" ? "#B91C1C" : "#7F1D1D",
+      textColor: "#FFFFFF",
+      extendedProps: {
+        isHoliday: true,
+        holidayType: holiday.type,
+        description: holiday.description,
+        ...holiday,
+      },
+    }));
+  }, [holidays]);
+
+  // Merge hearing events and holiday events
+  const allEvents = useMemo(() => {
+    return [...calendarEvents, ...holidayEvents];
+  }, [calendarEvents, holidayEvents]);
 
   // Count this month's hearings
   const thisMonthCount = useMemo(() => {
@@ -202,10 +248,12 @@ export function Calendar() {
       </div>
 
       <FullCalendar
+        ref={calendarRef}
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
         initialView="dayGridMonth"
-        events={calendarEvents}
+        events={allEvents}
         eventClick={handleEventClick}
+        datesSet={handleDatesSet}
         headerToolbar={{
           left: "prev,next today",
           center: "title",
@@ -261,10 +309,10 @@ export function Calendar() {
               <div className="flex gap-2">
                 <span className="font-medium text-gray-600 w-32">Status:</span>
                 <span className={`capitalize px-2 py-0.5 rounded text-xs font-medium ${selectedHearing?.hearing_status === 'scheduled' ? 'bg-blue-100 text-blue-700' :
-                    selectedHearing?.hearing_status === 'completed' ? 'bg-green-100 text-green-700' :
-                      selectedHearing?.hearing_status === 'pending_schedule' ? 'bg-amber-100 text-amber-700' :
-                        selectedHearing?.hearing_status === 'pending_decision' ? 'bg-red-100 text-red-700' :
-                          'bg-gray-100 text-gray-600'
+                  selectedHearing?.hearing_status === 'completed' ? 'bg-green-100 text-green-700' :
+                    selectedHearing?.hearing_status === 'pending_schedule' ? 'bg-amber-100 text-amber-700' :
+                      selectedHearing?.hearing_status === 'pending_decision' ? 'bg-red-100 text-red-700' :
+                        'bg-gray-100 text-gray-600'
                   }`}>
                   {selectedHearing?.hearing_status?.replace(/_/g, " ") || "Unknown"}
                 </span>

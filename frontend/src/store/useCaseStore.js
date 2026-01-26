@@ -39,7 +39,9 @@ export const addCase = async (caseData) => {
             return response.data;
         }
     } catch (error) {
-        console.error("Error adding case:", error.response?.data || error.message);
+        const errorMessage = error.response?.data?.error || error.message || "Unknown error";
+        console.error("Error adding case:", errorMessage, error.response?.data);
+        toast.error(`Failed to file case: ${errorMessage}`);
         return null;
     }
 };

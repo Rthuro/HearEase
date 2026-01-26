@@ -164,6 +164,7 @@ class SetCaseHearingsView(APIView):
 
         try:
             case = Case.objects.get(id=case_id)
+            created_hearings = []  # Track created hearings for sync
             
             for h_data in hearings_data:
 
@@ -186,7 +187,7 @@ class SetCaseHearingsView(APIView):
 
                 lupon_id = h_data.get("lupon_member_id")
                 
-                Hearing.objects.create(
+                hearing = Hearing.objects.create(
                     case=case,  
                     hearing_number=h_number,
                     hearing_date=clean_date, 
@@ -195,6 +196,15 @@ class SetCaseHearingsView(APIView):
                     remarks=current_remarks,
                     hearing_status=current_status,
                 )
+                created_hearings.append(hearing)
+
+            # Auto-sync created hearings to Google Calendar
+            try:
+                from google_calendar.views import sync_hearing_to_google
+                for hearing in created_hearings:
+                    sync_hearing_to_google(hearing, action="create")
+            except Exception as sync_error:
+                print(f"[Auto-Sync] Error syncing hearings: {sync_error}")
 
             return Response({"success": "Hearings successfully created."}, status=status.HTTP_200_OK)
 
@@ -238,6 +248,13 @@ class UpdateHearingView(APIView):
         if serializer.is_valid():
             hearing = serializer.save()
             print("Updated:", HearingSerializer(hearing).data)
+
+            # Auto-sync updated hearing to Google Calendar
+            try:
+                from google_calendar.views import sync_hearing_to_google
+                sync_hearing_to_google(hearing, action="update")
+            except Exception as sync_error:
+                print(f"[Auto-Sync] Error syncing hearing update: {sync_error}")
 
             return Response(HearingSerializer(hearing).data, status=status.HTTP_200_OK)
         

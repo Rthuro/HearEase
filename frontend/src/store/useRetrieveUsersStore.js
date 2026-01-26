@@ -14,7 +14,7 @@ export const getComplainants = async () => {
 
 export const getRespondents = async () => {
     const response = await axios.get(`${API_URL}/case-persons`, {
-        params: { type: "respondent" }  
+        params: { type: "respondent" }
     });
     return response.data;
 }
@@ -44,20 +44,20 @@ export const getAdmins = async () => {
 }
 
 export const getUser = async (email) => {
-    const response = await axios.post(`${API_URL}/find-user/`, { 
+    const response = await axios.post(`${API_URL}/find-user/`, {
         email: email
-     });
+    });
     return response.data.user;
 }
 
-export const useRetrieveUsersStore = create( (set) => ({
-    complainants: [],    
+export const useRetrieveUsersStore = create((set) => ({
+    complainants: [],
     fetchComplainants: async () => {
         try {
             const data = await getComplainants();
             set({ complainants: data })
         } catch (error) {
-            toast.error(error);
+            toast.error(error.message || "Failed to fetch complainants");
         }
     },
     userInformation: null,
@@ -66,7 +66,7 @@ export const useRetrieveUsersStore = create( (set) => ({
             const data = await getUser(email);
             set({ userInformation: data })
         } catch (error) {
-            toast.error(error);
+            toast.error(error.message || "Failed to fetch user");
         }
     },
     users: [],
@@ -75,7 +75,7 @@ export const useRetrieveUsersStore = create( (set) => ({
             const data = await getUsers();
             set({ users: data })
         } catch (error) {
-            toast.error(error);
+            toast.error(error.message || "Failed to fetch users");
         }
     },
     respondents: [],
@@ -84,7 +84,7 @@ export const useRetrieveUsersStore = create( (set) => ({
             const data = await getRespondents();
             set({ respondents: data })
         } catch (error) {
-            toast.error(error);
+            toast.error(error.message || "Failed to fetch respondents");
         }
     },
 
@@ -92,18 +92,28 @@ export const useRetrieveUsersStore = create( (set) => ({
     case_respondents: [],
     fetchCaseComplainants: async (ids) => {
         try {
+            if (!ids || ids.length === 0) {
+                set({ case_complainants: [] });
+                return;
+            }
             const data = await getCaseComplainants(ids);
             set({ case_complainants: data })
         } catch (error) {
-            toast.error(error);
+            console.error("Error fetching case complainants:", error);
+            set({ case_complainants: [] });
         }
     },
     fetchCaseRespondents: async (ids) => {
         try {
+            if (!ids || ids.length === 0) {
+                set({ case_respondents: [] });
+                return;
+            }
             const data = await getCaseRespondents(ids);
             set({ case_respondents: data })
         } catch (error) {
-            toast.error(error);
+            console.error("Error fetching case respondents:", error);
+            set({ case_respondents: [] });
         }
     },
 
@@ -113,7 +123,7 @@ export const useRetrieveUsersStore = create( (set) => ({
             const data = await getAdmins();
             set({ admin_list: data })
         } catch (error) {
-            toast.error(error);
+            toast.error(error.message || "Failed to fetch admins");
         }
     },
 }))
