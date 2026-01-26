@@ -261,17 +261,136 @@ class VerifyOTPView(APIView):
 reader = easyocr.Reader(['en'])
 
 class VerifyIdentityView(APIView):
+    """
+    Identity verification view that:
+    1. Extracts text from ID image using OCR
+    2. Matches extracted names against provided names
+    3. Verifies face match between ID photo and selfie
+    """
+    
+    def preprocess_for_ocr(self, img, strategy='adaptive'):
+        """
+        Apply different preprocessing strategies for OCR.
+        Returns preprocessed image.
+        """
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        
+        if strategy == 'adaptive':
+            # Adaptive thresholding - good for varying lighting
+            gray = cv2.GaussianBlur(gray, (3, 3), 0)
+            processed = cv2.adaptiveThreshold(
+                gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+                cv2.THRESH_BINARY, 11, 2
+            )
+        elif strategy == 'otsu':
+            # Otsu's thresholding - good for bimodal images
+            gray = cv2.equalizeHist(gray)
+            gray = cv2.bilateralFilter(gray, 9, 75, 75)
+            _, processed = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        elif strategy == 'clahe':
+            # CLAHE - Contrast Limited Adaptive Histogram Equalization
+            clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+            processed = clahe.apply(gray)
+        elif strategy == 'morph':
+            # Morphological operations - good for noisy images
+            gray = cv2.GaussianBlur(gray, (5, 5), 0)
+            _, processed = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
+            processed = cv2.morphologyEx(processed, cv2.MORPH_CLOSE, kernel)
+        else:
+            # No preprocessing - use grayscale as is
+            processed = gray
+            
+        return processed
+    
+    def extract_text_with_strategies(self, img_path, img_cv2):
+        """
+        Try multiple OCR strategies and return the one with most text.
+        """
+        strategies = ['clahe', 'adaptive', 'otsu', 'morph', 'none']
+        best_text = ""
+        best_result = []
+        
+        for strategy in strategies:
+            try:
+                processed = self.preprocess_for_ocr(img_cv2.copy(), strategy)
+                temp_path = img_path.replace('.jpg', f'_ocr_{strategy}.jpg')
+                cv2.imwrite(temp_path, processed)
+                
+                result = reader.readtext(temp_path, detail=0)
+                text = " ".join(result).upper()
+                
+                # Clean up temp file
+                if os.path.exists(temp_path):
+                    os.remove(temp_path)
+                
+                # Keep the result with most characters
+                if len(text) > len(best_text):
+                    best_text = text
+                    best_result = result
+                    
+            except Exception as e:
+                print(f"OCR strategy {strategy} failed: {e}")
+                continue
+        
+        return best_text, best_result
+    
+    def match_name_in_text(self, name, ocr_text):
+        """
+        Check if a name appears in OCR text using multiple matching strategies.
+        Returns (match_found, confidence_score)
+        """
+        if not name or not ocr_text:
+            return False, 0
+            
+        name = name.upper().strip()
+        ocr_text = ocr_text.upper()
+        
+        # Strategy 1: Direct substring match
+        if name in ocr_text:
+            return True, 100
+        
+        # Strategy 2: Fuzzy matching on the full text
+        from thefuzz import fuzz
+        ratio = fuzz.partial_ratio(name, ocr_text)
+        if ratio >= 75:
+            return True, ratio
+        
+        # Strategy 3: Word-by-word matching (handles OCR errors)
+        name_words = name.split()
+        ocr_words = ocr_text.split()
+        matched_words = 0
+        
+        for name_word in name_words:
+            if len(name_word) < 2:  # Skip single characters
+                continue
+            for ocr_word in ocr_words:
+                word_ratio = fuzz.ratio(name_word, ocr_word)
+                if word_ratio >= 80:
+                    matched_words += 1
+                    break
+        
+        if len(name_words) > 0 and matched_words >= len(name_words) * 0.5:
+            confidence = int((matched_words / len(name_words)) * 100)
+            return True, min(confidence, 95)
+        
+        return False, ratio
+
     def post(self, request):
         id_image = request.FILES.get('id_image')
         user_image = request.FILES.get('user_image')
 
         input_first_name = request.data.get('first_name', '').upper().strip()
         input_last_name = request.data.get('last_name', '').upper().strip()
-        print(f"DEBUG Input Names: First Name: {input_first_name}, Last Name: {input_last_name}")
+        input_middle_name = request.data.get('middle_name', '').upper().strip()
+        
+        print(f"DEBUG Input Names: First: {input_first_name}, Middle: {input_middle_name}, Last: {input_last_name}")
         print("-------------------------------")
+        
         if not id_image or not user_image:
             return Response({"error": "Missing images"}, status=400)
 
+        # Generate unique file names
         id_name = f"tmp_{uuid.uuid4()}_id.jpg"
         user_name = f"tmp_{uuid.uuid4()}_user.jpg"
 
@@ -280,6 +399,9 @@ class VerifyIdentityView(APIView):
 
         abs_id_path = default_storage.path(id_path)
         abs_user_path = default_storage.path(user_path)
+        
+        # Create a copy of ID image for OCR (keep original for face detection)
+        ocr_id_path = abs_id_path.replace('.jpg', '_ocr.jpg')
 
         try:
             id_img_cv2 = cv2.imread(abs_id_path)
@@ -288,59 +410,87 @@ class VerifyIdentityView(APIView):
             if id_img_cv2 is None or user_img_cv2 is None:
                 return Response({"error": "Failed to load image data"}, status=400)
             
-            gray = cv2.cvtColor(id_img_cv2, cv2.COLOR_BGR2GRAY)
-
-            # Increase contrast
-            gray = cv2.equalizeHist(gray)
-
-            # Denoise
-            gray = cv2.bilateralFilter(gray, 9, 75, 75)
-
-            # Threshold
-            _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-
-            cv2.imwrite(abs_id_path, thresh)
-
-            ocr_result = reader.readtext(abs_id_path, detail=0)
-            ocr_text = " ".join(ocr_result).upper()
+            # Save a copy for OCR processing (keep original clean for face detection)
+            cv2.imwrite(ocr_id_path, id_img_cv2)
+            
+            # ============ OCR TEXT EXTRACTION ============
+            ocr_text, ocr_result = self.extract_text_with_strategies(ocr_id_path, id_img_cv2.copy())
             
             print(f"DEBUG OCR TEXT: {ocr_text}")
+            print(f"DEBUG OCR WORDS: {ocr_result}")
 
-            last_name_score = fuzz.partial_ratio(input_last_name, ocr_text)
-            first_name_score = fuzz.partial_ratio(input_first_name, ocr_text)
+            # ============ NAME MATCHING ============
+            last_name_match, last_name_score = self.match_name_in_text(input_last_name, ocr_text)
+            first_name_match, first_name_score = self.match_name_in_text(input_first_name, ocr_text)
+            
+            # Middle name is optional - boost score if it matches
+            middle_name_match = False
+            middle_name_score = 0
+            if input_middle_name:
+                middle_name_match, middle_name_score = self.match_name_in_text(input_middle_name, ocr_text)
 
-            name_match_threshold = 50
-            names_match = (last_name_score >= name_match_threshold and 
-                           first_name_score >= name_match_threshold)
-            print(f"DEBUG NAME MATCH: {names_match} (Scores: Last Name {last_name_score}%, First Name {first_name_score}%)")
+            print(f"DEBUG NAME MATCH: Last={last_name_match}({last_name_score}%), First={first_name_match}({first_name_score}%), Middle={middle_name_match}({middle_name_score}%)")
+            
+            # Calculate overall name match
+            # Require either: (last name matches well) OR (first + last both have reasonable scores)
+            name_match_threshold = 60
+            names_match = (
+                (last_name_score >= name_match_threshold and first_name_score >= name_match_threshold) or
+                (last_name_score >= 80) or  # Strong last name match is often sufficient
+                (first_name_score >= 80 and last_name_score >= 50)  # Strong first name with weak last
+            )
+            
+            avg_score = (last_name_score + first_name_score) / 2
+            if input_middle_name and middle_name_match:
+                avg_score = (last_name_score + first_name_score + middle_name_score) / 3
             
             if not names_match:
                 return Response({
                     "error": "Name Mismatch",
-                    "details": f"Provided name doesn't match ID text. (Match Score: {last_name_score}%)",
-                    "ocr_preview": ocr_text[:50]
+                    "details": f"Provided name doesn't match ID text.",
+                    "scores": {
+                        "last_name": last_name_score,
+                        "first_name": first_name_score,
+                        "middle_name": middle_name_score if input_middle_name else None
+                    },
+                    "ocr_preview": ocr_text[:100]
                 }, status=422)
             
-            # DeepFace Verification
+            # ============ FACE VERIFICATION ============
+            # Use ORIGINAL ID image (not the preprocessed one) for face detection
             result = DeepFace.verify(
-                img1_path=abs_id_path, 
+                img1_path=abs_id_path,  # Original, unprocessed ID image
                 img2_path=abs_user_path,
-                detector_backend='opencv', # Fast and free
+                detector_backend='opencv',
                 enforce_detection=False
             )
 
             return Response({
                 "verified": result['verified'],
                 "similarity": 1 - result['distance'],
+                "name_match_score": avg_score,
                 "extracted_data": {
                     "last_name": input_last_name,
                     "given_names": input_first_name,
+                    "middle_name": input_middle_name if input_middle_name else None,
+                },
+                "ocr_confidence": {
+                    "last_name": last_name_score,
+                    "first_name": first_name_score,
+                    "middle_name": middle_name_score if input_middle_name else None
                 }
             })
 
         except Exception as e:
+            import traceback
+            print(f"DEBUG Error: {traceback.format_exc()}")
             return Response({"error": str(e)}, status=500)
         
         finally:
-            if os.path.exists(abs_id_path): os.remove(abs_id_path)
-            if os.path.exists(abs_user_path): os.remove(abs_user_path)
+            # Clean up all temporary files
+            for path in [abs_id_path, abs_user_path, ocr_id_path]:
+                if path and os.path.exists(path):
+                    try:
+                        os.remove(path)
+                    except:
+                        pass

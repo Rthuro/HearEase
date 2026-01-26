@@ -8,9 +8,11 @@ class CaseType(models.Model):
     case_name = models.CharField(max_length=100)
     severity = models.IntegerField(default=1)
     description = models.TextField(blank=True, null=True)
+    is_custom = models.BooleanField(default=False)  # Track user-created custom case types
 
     def __str__(self):
-        return f"{self.case_name} (Severity {self.severity})"
+        custom_marker = " [Custom]" if self.is_custom else ""
+        return f"{self.case_name} (Severity {self.severity}){custom_marker}"
 
 
 class SettlementType(models.Model):

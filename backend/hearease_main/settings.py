@@ -196,3 +196,8 @@ CORS_ALLOW_ALL_ORIGINS = True
 RESEND_API_KEY = os.getenv('RESEND_API_KEY')
 SMSGATE_USERNAME = os.getenv('SMSGATE_USERNAME')
 SMSGATE_PASSWORD = os.getenv('SMSGATE_PASSWORD')
+
+# File upload settings - increased for video uploads
+DATA_UPLOAD_MAX_MEMORY_SIZE = 55 * 1024 * 1024  # 55MB (slightly more than frontend 50MB limit)
+FILE_UPLOAD_MAX_MEMORY_SIZE = 55 * 1024 * 1024  # 55MB
+DATA_UPLOAD_MAX_NUMBER_FILES = 20  # Allow multiple file uploads

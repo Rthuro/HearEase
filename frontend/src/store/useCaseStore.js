@@ -59,9 +59,10 @@ export const getCases = async () => {
 export const getCaseList = async () => {
     const userData = await getUser();
     const response = await axios.get(`${API_URL}/case-list/`, {
-        params: { 
+        params: {
             is_admin: userData.user.is_admin,
-            email: userData.user.email }
+            email: userData.user.email
+        }
     });
     return response.data;
 };
@@ -142,6 +143,7 @@ export const useCaseStore = create((set, get) => ({
         },
         caseDetails: {
             nature_of_complaint_code: { value: null, required: true },
+            custom_case_type_name: { value: "", required: false },  // For "Other" case types
             severity: { value: null, required: false },
             relationship: { value: "", required: true },
             description: { value: "", required: true },
@@ -203,6 +205,7 @@ export const useCaseStore = create((set, get) => ({
                 },
                 caseDetails: {
                     nature_of_complaint_code: { value: "", required: true },
+                    custom_case_type_name: { value: "", required: false },
                     severity: { value: null, required: false },
                     relationship: { value: "", required: true },
                     description: { value: "", required: true },
@@ -230,13 +233,15 @@ export const useCaseStore = create((set, get) => ({
         const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
         const data = JSON.parse(stored);
 
-        const { formData, complainantList, respondentList } = get();       
+        const { formData, complainantList, respondentList } = get();
 
         const caseData = {
             id: get().case.case_number,
             complainants: complainantList,
             respondents: respondentList,
             case_type: formData.caseDetails.nature_of_complaint_code.value,
+            custom_case_type_name: formData.caseDetails.custom_case_type_name?.value || "",
+            custom_severity: formData.caseDetails.severity?.value || null,  // For custom case types
             description: formData.caseDetails.description.value,
             predicted_hearings: formData.caseDetails.predicted_number.value || 0,
             remarks: "",
@@ -513,7 +518,7 @@ export const useCaseStore = create((set, get) => ({
                 set({ loading: false });
                 return;
             };
-   
+
             const res_hearing = await axios.post(`${API_URL}/update-hearings/${case_id}/`, {
                 hearings: hearing_data,
             });
@@ -527,7 +532,7 @@ export const useCaseStore = create((set, get) => ({
 
             if (!(res_case.status === 200)) return;
 
-            if(res_case.status === 200 && res_hearing.status === 200) {
+            if (res_case.status === 200 && res_hearing.status === 200) {
                 set({ loading: false });
                 toast.success("Hearings successfully created.");
                 get().resetFormData();

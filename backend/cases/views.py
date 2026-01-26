@@ -85,13 +85,45 @@ class CaseView(APIView):
 
         case_data = {
             "id": data.get("id"),
-            "case_type_id": data.get("case_type"),
-            "settlement_type_id": data.get("settlement_type"),
             "description": data.get("description"),
             "remarks": data.get("remarks"),
             "predicted_hearings": data.get("predicted_hearings"),
             "case_status": data.get("case_status"),
         }
+
+        # Handle case_type - check if it's "other" (custom case type)
+        case_type_value = data.get("case_type")
+        custom_case_type_name = data.get("custom_case_type_name", "").strip()
+        custom_severity = data.get("custom_severity")
+        
+        if case_type_value == "other" and custom_case_type_name:
+            # Validate and set severity (default to 2 if not provided or invalid)
+            try:
+                severity = int(custom_severity) if custom_severity else 2
+                severity = max(1, min(3, severity))  # Clamp between 1-3
+            except (ValueError, TypeError):
+                severity = 2
+            
+            # Create a new custom case type with user-specified severity
+            custom_case_type, created = CaseType.objects.get_or_create(
+                case_name__iexact=custom_case_type_name,
+                defaults={
+                    "case_name": custom_case_type_name,
+                    "severity": severity,
+                    "description": "User-created custom case type",
+                    "is_custom": True
+                }
+            )
+            # If case type already exists, update severity if different
+            if not created and custom_case_type.severity != severity:
+                custom_case_type.severity = severity
+                custom_case_type.save()
+            
+            case_data["case_type_id"] = custom_case_type.id
+        else:
+            case_data["case_type_id"] = case_type_value
+        
+        case_data["settlement_type_id"] = data.get("settlement_type")
 
         new_case = Case.objects.create(**case_data)
 
