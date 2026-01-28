@@ -28,13 +28,19 @@ class GoogleAuthURLView(APIView):
     """
     Generate Google OAuth2 authorization URL.
     
-    GET /api/google-calendar/auth-url/
+    GET /api/google-calendar/auth-url/?email=user@email.com&role=admin
     """
     def get(self, request):
+        # Get user email and role from query params
+        user_email = request.query_params.get('email', '')
+        user_role = request.query_params.get('role', 'user')
+        
         auth_url, state = get_authorization_url()
         
-        # Store state in session for verification
+        # Store state with user info in session for verification
         request.session['google_oauth_state'] = state
+        request.session['google_oauth_user_email'] = user_email
+        request.session['google_oauth_user_role'] = user_role
         
         return Response({
             "auth_url": auth_url,
@@ -52,11 +58,24 @@ class GoogleCallbackView(APIView):
         code = request.query_params.get('code')
         error = request.query_params.get('error')
         
-        print(f"[Google OAuth] Callback received - code: {bool(code)}, error: {error}")
+        # Get user info from session
+        user_email = request.session.get('google_oauth_user_email', '')
+        user_role = request.session.get('google_oauth_user_role', 'user')
+        
+        print(f"[Google OAuth] Callback - email: {user_email}, role: {user_role}")
+        
+        # Determine redirect URL based on role
+        frontend_base = "http://localhost:5173/#"
+        if user_role == 'admin':
+            settings_url = f"{frontend_base}/Admin/Settings"
+        elif user_role == 'lupon':
+            settings_url = f"{frontend_base}/Lupon/Settings"
+        else:
+            # Regular user - need their user link name, fallback to generic
+            settings_url = f"{frontend_base}/u/Settings"
         
         if error:
-            # Redirect to frontend with error (using hash routing)
-            return redirect(f"http://localhost:5173/#/Admin/Settings?google_error={error}")
+            return redirect(f"{settings_url}?google_error={error}")
         
         if not code:
             return Response(
@@ -68,17 +87,23 @@ class GoogleCallbackView(APIView):
             # Exchange code for tokens
             print("[Google OAuth] Exchanging code for tokens...")
             tokens = exchange_code_for_tokens(code)
-            print(f"[Google OAuth] Tokens received - access: {bool(tokens.get('access_token'))}, refresh: {bool(tokens.get('refresh_token'))}")
+            print(f"[Google OAuth] Tokens received")
             
-            # Get or create user (for now, use the first admin)
-            admin_user = User.objects.filter(is_admin=True).first()
-            if not admin_user:
-                admin_user = User.objects.filter(is_superadmin=True).first()
+            # Find user by email (works for all user types)
+            user = None
+            if user_email:
+                user = User.objects.filter(email=user_email).first()
             
-            print(f"[Google OAuth] Admin user: {admin_user.email if admin_user else 'None'}")
+            if not user:
+                # Fallback to first admin if no specific user
+                user = User.objects.filter(is_admin=True).first()
+                if not user:
+                    user = User.objects.filter(is_superadmin=True).first()
             
-            if not admin_user:
-                return redirect("http://localhost:5173/#/Admin/Settings?google_error=no_admin")
+            print(f"[Google OAuth] User: {user.email if user else 'None'}")
+            
+            if not user:
+                return redirect(f"{settings_url}?google_error=no_user_found")
             
             # Get calendar service and create/get calendar
             print("[Google OAuth] Creating calendar service...")
@@ -90,9 +115,9 @@ class GoogleCallbackView(APIView):
             # Update token expiry with actual value
             token_expiry = credentials.expiry if credentials.expiry else datetime.utcnow()
             
-            # Save tokens
+            # Save tokens for this specific user
             GoogleCalendarToken.objects.update_or_create(
-                user=admin_user,
+                user=user,
                 defaults={
                     "access_token": tokens["access_token"],
                     "refresh_token": tokens["refresh_token"],
@@ -100,27 +125,42 @@ class GoogleCallbackView(APIView):
                     "calendar_id": calendar_id
                 }
             )
-            print("[Google OAuth] Token saved successfully!")
+            print(f"[Google OAuth] Token saved for {user.email}!")
             
-            # Redirect to frontend with success (using hash routing)
-            return redirect("http://localhost:5173/#/Admin/Settings?google_connected=true")
+            # Clear session
+            if 'google_oauth_user_email' in request.session:
+                del request.session['google_oauth_user_email']
+            if 'google_oauth_user_role' in request.session:
+                del request.session['google_oauth_user_role']
+            
+            return redirect(f"{settings_url}?google_connected=true")
             
         except Exception as e:
             import traceback
             print(f"[Google OAuth] ERROR: {e}")
             print(traceback.format_exc())
-            return redirect(f"http://localhost:5173/#/Admin/Settings?google_error={str(e)[:50]}")
+            return redirect(f"{settings_url}?google_error={str(e)[:50]}")
 
 
 class GoogleConnectionStatusView(APIView):
     """
-    Check if Google Calendar is connected.
+    Check if Google Calendar is connected for a specific user.
     
-    GET /api/google-calendar/status/
+    GET /api/google-calendar/status/?email=user@email.com
     """
     def get(self, request):
-        # Check if any admin has connected
-        token = GoogleCalendarToken.objects.first()
+        user_email = request.query_params.get('email', '')
+        
+        if user_email:
+            # Check for specific user's token
+            user = User.objects.filter(email=user_email).first()
+            if user:
+                token = GoogleCalendarToken.objects.filter(user=user).first()
+            else:
+                token = None
+        else:
+            # Fallback: check any connected token
+            token = GoogleCalendarToken.objects.first()
         
         if token:
             return Response({
@@ -137,13 +177,24 @@ class GoogleConnectionStatusView(APIView):
 
 class GoogleDisconnectView(APIView):
     """
-    Disconnect Google Calendar.
+    Disconnect Google Calendar for a specific user.
     
     POST /api/google-calendar/disconnect/
+    { "email": "user@email.com" }
     """
     def post(self, request):
-        # Delete all tokens
-        deleted_count, _ = GoogleCalendarToken.objects.all().delete()
+        user_email = request.data.get('email', '')
+        
+        if user_email:
+            # Disconnect specific user's token
+            user = User.objects.filter(email=user_email).first()
+            if user:
+                deleted_count, _ = GoogleCalendarToken.objects.filter(user=user).delete()
+            else:
+                deleted_count = 0
+        else:
+            # Fallback: delete all tokens (admin action)
+            deleted_count, _ = GoogleCalendarToken.objects.all().delete()
         
         return Response({
             "disconnected": True,

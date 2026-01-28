@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .models import Hearing
+from .models import Hearing, NonWorkingDay
 from cases.models import Case
 from rest_framework.views import APIView
 from rest_framework import status
@@ -711,3 +711,256 @@ class LuponCaseMatchingView(APIView):
             ]
         }, status=status.HTTP_200_OK)
 
+
+# ============================================
+# Non-Working Day Management
+# ============================================
+
+def get_next_working_day(from_date):
+    """
+    Get the next working day (skipping Sundays and existing non-working days).
+    """
+    if isinstance(from_date, str):
+        from_date = datetime.strptime(from_date, "%Y-%m-%d").date()
+    
+    next_day = from_date + timedelta(days=1)
+    
+    # Skip Sundays and non-working days
+    while True:
+        if next_day.weekday() == 6:  # Sunday
+            next_day += timedelta(days=1)
+            continue
+        if NonWorkingDay.objects.filter(date=next_day).exists():
+            next_day += timedelta(days=1)
+            continue
+        break
+    
+    return next_day
+
+
+def reschedule_hearings_for_date(blocked_date):
+    """
+    Reschedule all hearings on blocked_date.
+    
+    Logic:
+    - If 1-2 hearings: try to fit into next day's open slots
+    - If 3+ hearings OR no open slots: cascade all hearings by 1 day
+    
+    Returns list of rescheduled hearing info.
+    """
+    if isinstance(blocked_date, str):
+        blocked_date = datetime.strptime(blocked_date, "%Y-%m-%d").date()
+    
+    # Get hearings on this date
+    hearings = Hearing.objects.filter(hearing_date=blocked_date).order_by('time')
+    hearing_count = hearings.count()
+    
+    if hearing_count == 0:
+        return []
+    
+    next_day = get_next_working_day(blocked_date)
+    rescheduled = []
+    
+    # Check available slots on next day
+    available_slots = [s for s in get_available_slots(next_day) if s["available"]]
+    
+    # Determine mode: insert vs cascade
+    use_insert_mode = hearing_count <= 2 and len(available_slots) >= hearing_count
+    
+    if use_insert_mode:
+        # Insert mode: fit hearings into available slots
+        for i, hearing in enumerate(hearings):
+            if i < len(available_slots):
+                old_date = hearing.hearing_date
+                old_time = hearing.time
+                
+                hearing.hearing_date = next_day
+                hearing.time = datetime.strptime(available_slots[i]["time"], "%H:%M").time()
+                hearing.hearing_status = "rescheduled"
+                hearing.save()
+                
+                rescheduled.append({
+                    "hearing_id": hearing.id,
+                    "case_id": hearing.case_id,
+                    "old_date": str(old_date),
+                    "old_time": str(old_time) if old_time else None,
+                    "new_date": str(hearing.hearing_date),
+                    "new_time": str(hearing.time),
+                    "mode": "insert"
+                })
+    else:
+        # Cascade mode: push all affected dates forward
+        # First, collect all dates that need cascading (from blocked_date onwards with hearings)
+        cascade_date = blocked_date
+        dates_to_process = []
+        
+        # Find consecutive dates with hearings that need to be pushed
+        while True:
+            if Hearing.objects.filter(hearing_date=cascade_date).exists():
+                dates_to_process.append(cascade_date)
+            cascade_date = get_next_working_day(cascade_date)
+            
+            # Stop if the next working day has no hearings (no more cascading needed)
+            # Or if we've processed too many dates (safety limit)
+            next_has_hearings = Hearing.objects.filter(hearing_date=cascade_date).exists()
+            if not next_has_hearings or len(dates_to_process) > 30:
+                break
+        
+        # Process dates in reverse order to avoid conflicts
+        for process_date in reversed(dates_to_process):
+            next_working = get_next_working_day(process_date)
+            
+            for hearing in Hearing.objects.filter(hearing_date=process_date):
+                old_date = hearing.hearing_date
+                old_time = hearing.time
+                
+                hearing.hearing_date = next_working
+                hearing.hearing_status = "rescheduled"
+                hearing.save()
+                
+                rescheduled.append({
+                    "hearing_id": hearing.id,
+                    "case_id": hearing.case_id,
+                    "old_date": str(old_date),
+                    "old_time": str(old_time) if old_time else None,
+                    "new_date": str(hearing.hearing_date),
+                    "new_time": str(hearing.time) if hearing.time else None,
+                    "mode": "cascade"
+                })
+    
+    # Sync rescheduled hearings to Google Calendar
+    try:
+        from google_calendar.views import sync_hearing_to_google
+        for hearing in hearings:
+            sync_hearing_to_google(hearing, action="update")
+    except Exception as e:
+        print(f"[Reschedule] Google Calendar sync error: {e}")
+    
+    return rescheduled
+
+
+class MarkNonWorkingDayView(APIView):
+    """
+    Mark a date as non-working and reschedule affected hearings.
+    
+    POST /api/non-working-day/
+    {
+        "date": "2026-01-30",
+        "reason": "typhoon",
+        "description": "Typhoon Signal #3"
+    }
+    """
+    def post(self, request):
+        data = request.data
+        date_str = data.get("date")
+        reason = data.get("reason", "holiday")
+        description = data.get("description", "")
+        
+        if not date_str:
+            return Response(
+                {"error": "date is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
+        except ValueError:
+            return Response(
+                {"error": "Invalid date format. Use YYYY-MM-DD"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Check if already marked
+        if NonWorkingDay.objects.filter(date=date_obj).exists():
+            return Response(
+                {"error": "This date is already marked as non-working"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Create non-working day record
+        non_working = NonWorkingDay.objects.create(
+            date=date_obj,
+            reason=reason,
+            description=description
+        )
+        
+        # Reschedule hearings
+        rescheduled = reschedule_hearings_for_date(date_obj)
+        
+        return Response({
+            "success": True,
+            "non_working_day": {
+                "id": non_working.id,
+                "date": str(non_working.date),
+                "reason": non_working.reason,
+                "reason_display": non_working.get_reason_display(),
+                "description": non_working.description
+            },
+            "rescheduled_count": len(rescheduled),
+            "rescheduled_hearings": rescheduled
+        }, status=status.HTTP_201_CREATED)
+
+
+class GetNonWorkingDaysView(APIView):
+    """
+    Get all non-working days (optionally filtered by month).
+    
+    GET /api/non-working-days/
+    GET /api/non-working-days/?month=2026-01
+    """
+    def get(self, request):
+        month_str = request.query_params.get("month")
+        
+        queryset = NonWorkingDay.objects.all()
+        
+        if month_str:
+            try:
+                year, month = map(int, month_str.split("-"))
+                queryset = queryset.filter(date__year=year, date__month=month)
+            except ValueError:
+                pass
+        
+        days = []
+        for day in queryset:
+            days.append({
+                "id": day.id,
+                "date": str(day.date),
+                "reason": day.reason,
+                "reason_display": day.get_reason_display(),
+                "description": day.description or "",
+                "created_at": day.created_at.isoformat()
+            })
+        
+        return Response({
+            "non_working_days": days,
+            "count": len(days)
+        }, status=status.HTTP_200_OK)
+
+
+class RemoveNonWorkingDayView(APIView):
+    """
+    Remove a non-working day marker (does NOT restore hearings).
+    
+    DELETE /api/non-working-day/<date>/
+    """
+    def delete(self, request, date):
+        try:
+            date_obj = datetime.strptime(date, "%Y-%m-%d").date()
+        except ValueError:
+            return Response(
+                {"error": "Invalid date format. Use YYYY-MM-DD"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            non_working = NonWorkingDay.objects.get(date=date_obj)
+            non_working.delete()
+            return Response({
+                "success": True,
+                "message": f"Non-working day {date} removed"
+            }, status=status.HTTP_200_OK)
+        except NonWorkingDay.DoesNotExist:
+            return Response(
+                {"error": "Non-working day not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )

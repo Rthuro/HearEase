@@ -89,6 +89,10 @@ export const useCaseStore = create((set, get) => ({
     relationshipList: [],
     loading: false,
 
+    // Jurisdiction validation state
+    jurisdictionWarning: null,
+    setJurisdictionWarning: (warning) => set({ jurisdictionWarning: warning }),
+
     predictions: null,
     predictionsLoading: false,
     case: {
@@ -600,6 +604,13 @@ export const useCaseStore = create((set, get) => ({
                 return response.data.predictions;
             } else {
                 console.error("Prediction failed:", response.data.error);
+                // Check if case is beyond jurisdiction
+                if (response.data.beyond_jurisdiction) {
+                    toast.error(response.data.error);
+                    if (response.data.recommendation) {
+                        toast(response.data.recommendation, { icon: '⚠️', duration: 5000 });
+                    }
+                }
                 set({
                     predictions: null,
                     predictionsLoading: false
@@ -608,6 +619,13 @@ export const useCaseStore = create((set, get) => ({
             }
         } catch (error) {
             console.error("Error fetching predictions:", error);
+            // Handle jurisdiction error from API response
+            if (error.response?.data?.beyond_jurisdiction) {
+                toast.error(error.response.data.error);
+                if (error.response.data.recommendation) {
+                    toast(error.response.data.recommendation, { icon: '⚠️', duration: 5000 });
+                }
+            }
             set({
                 predictions: null,
                 predictionsLoading: false

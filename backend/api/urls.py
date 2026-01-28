@@ -58,6 +58,11 @@ urlpatterns = [
     path('lupon-workload/', HearingViews.LuponWorkloadView.as_view(), name='lupon-workload'),
     path('early-warning/', HearingViews.EarlyWarningView.as_view(), name='early-warning'),
     path('lupon-match/', HearingViews.LuponCaseMatchingView.as_view(), name='lupon-match'),
+    
+    # Non-working day management
+    path('non-working-day/', HearingViews.MarkNonWorkingDayView.as_view(), name='mark-non-working-day'),
+    path('non-working-days/', HearingViews.GetNonWorkingDaysView.as_view(), name='get-non-working-days'),
+    path('non-working-day/<str:date>/', HearingViews.RemoveNonWorkingDayView.as_view(), name='remove-non-working-day'),
 
     path('document-templates/', DocumentViews.DocumentTemplateListCreateView.as_view(), name='document-template-list-create'),
     path('templates/<int:pk>/generate/', DocumentViews.GenerateDocumentView.as_view(), name='generate-document'),

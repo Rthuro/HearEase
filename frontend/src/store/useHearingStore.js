@@ -36,10 +36,10 @@ export const getHearings = async () => {
   const userData = await getUser();
 
   const response = await axios.get(`${API_URL}/hearings/`, {
-      params: { 
-        role: data.userRole,
-        email: userData.email
-      }
+    params: {
+      role: data.userRole,
+      email: userData.email
+    }
   });
 
   return response.data;
@@ -165,6 +165,74 @@ const useHearingStore = create((set, get) => ({
       return { success: false, retry: isNetworkError };
     } finally {
       set({ loading: false });
+    }
+  },
+
+  // Non-Working Day Management
+  nonWorkingDays: [],
+  nonWorkingDaysLoading: false,
+
+  fetchNonWorkingDays: async (month = null) => {
+    set({ nonWorkingDaysLoading: true });
+    try {
+      const params = month ? { month } : {};
+      const response = await axios.get(`${API_URL}/non-working-days/`, { params });
+      set({ nonWorkingDays: response.data.non_working_days || [] });
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching non-working days:", error);
+      return null;
+    } finally {
+      set({ nonWorkingDaysLoading: false });
+    }
+  },
+
+  markNonWorkingDay: async (date, reason, description) => {
+    set({ nonWorkingDaysLoading: true });
+    try {
+      const response = await axios.post(`${API_URL}/non-working-day/`, {
+        date,
+        reason,
+        description
+      });
+
+      if (response.data.success) {
+        // Refresh non-working days list
+        await get().fetchNonWorkingDays();
+        // Refresh hearings to reflect rescheduled ones
+        await get().fetchHearings();
+
+        const count = response.data.rescheduled_count;
+        if (count > 0) {
+          toast.success(`Day marked as non-working. ${count} hearing(s) rescheduled.`);
+        } else {
+          toast.success("Day marked as non-working.");
+        }
+        return response.data;
+      }
+      return null;
+    } catch (error) {
+      console.error("Error marking non-working day:", error);
+      toast.error(error.response?.data?.error || "Failed to mark day as non-working");
+      return null;
+    } finally {
+      set({ nonWorkingDaysLoading: false });
+    }
+  },
+
+  removeNonWorkingDay: async (date) => {
+    try {
+      const response = await axios.delete(`${API_URL}/non-working-day/${date}/`);
+      if (response.data.success) {
+        await get().fetchNonWorkingDays();
+        toast.success("Non-working day removed");
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error removing non-working day:", error);
+      toast.error(error.response?.data?.error || "Failed to remove non-working day");
+      return false;
     }
   },
 

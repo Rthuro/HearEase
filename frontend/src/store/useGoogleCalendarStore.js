@@ -19,11 +19,12 @@ export const useGoogleCalendarStore = create((set, get) => ({
     holidays: [],
     holidaysLoading: false,
 
-    // Check connection status
-    checkStatus: async () => {
+    // Check connection status for a specific user
+    checkStatus: async (userEmail = null) => {
         set({ loading: true });
         try {
-            const response = await axios.get(`${API_URL}/google-calendar/status/`);
+            const params = userEmail ? { email: userEmail } : {};
+            const response = await axios.get(`${API_URL}/google-calendar/status/`, { params });
             set({
                 connected: response.data.connected,
                 connectedUser: response.data.connected_user || null,
@@ -39,11 +40,15 @@ export const useGoogleCalendarStore = create((set, get) => ({
         }
     },
 
-    // Get OAuth URL and redirect
-    connectGoogleCalendar: async () => {
+    // Get OAuth URL and redirect (pass user email and role for identification)
+    connectGoogleCalendar: async (userEmail = null, userRole = 'user') => {
         set({ loading: true });
         try {
-            const response = await axios.get(`${API_URL}/google-calendar/auth-url/`);
+            const params = {};
+            if (userEmail) params.email = userEmail;
+            if (userRole) params.role = userRole;
+
+            const response = await axios.get(`${API_URL}/google-calendar/auth-url/`, { params });
             const authUrl = response.data.auth_url;
 
             // Redirect to Google OAuth
@@ -55,11 +60,12 @@ export const useGoogleCalendarStore = create((set, get) => ({
         }
     },
 
-    // Disconnect Google Calendar
-    disconnect: async () => {
+    // Disconnect Google Calendar for a specific user
+    disconnect: async (userEmail = null) => {
         set({ loading: true });
         try {
-            await axios.post(`${API_URL}/google-calendar/disconnect/`);
+            const payload = userEmail ? { email: userEmail } : {};
+            await axios.post(`${API_URL}/google-calendar/disconnect/`, payload);
             set({
                 connected: false,
                 connectedUser: null,

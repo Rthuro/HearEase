@@ -6,14 +6,27 @@ import interactionPlugin from "@fullcalendar/interaction";
 import { PageSync } from "@/components/PageSync";
 import useHearingStore from "@/store/useHearingStore";
 import { useGoogleCalendarStore } from "@/store/useGoogleCalendarStore";
-import { AlertTriangle, RefreshCw, Loader2 } from "lucide-react";
+import { AlertTriangle, RefreshCw, Loader2, CalendarOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
+
+const LOCAL_STORAGE_KEY = "authData";
 
 // Error Boundary Component
 function CalendarErrorFallback({ error, onRetry }) {
@@ -43,7 +56,7 @@ function CalendarLoading() {
 }
 
 export function Calendar() {
-  const { hearings, fetchHearings, loading } = useHearingStore();
+  const { hearings, fetchHearings, loading, nonWorkingDays, fetchNonWorkingDays, markNonWorkingDay, nonWorkingDaysLoading } = useHearingStore();
   const { holidays, fetchHolidays } = useGoogleCalendarStore();
   const [error, setError] = useState(null);
   const [selectedHearing, setSelectedHearing] = useState(null);
@@ -51,6 +64,18 @@ export function Calendar() {
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const calendarRef = useRef(null);
+
+  // Non-working day dialog state
+  const [markDayDialogOpen, setMarkDayDialogOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [markDayReason, setMarkDayReason] = useState("holiday");
+  const [markDayDescription, setMarkDayDescription] = useState("");
+  const [hearingsOnSelectedDate, setHearingsOnSelectedDate] = useState(0);
+
+  // Get user role
+  const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+  const authData = stored ? JSON.parse(stored) : {};
+  const userRole = authData.userRole;
 
   // Fetch hearings on mount
   useEffect(() => {
@@ -65,10 +90,11 @@ export function Calendar() {
     loadHearings();
   }, [fetchHearings]);
 
-  // Fetch holidays when month/year changes
+  // Fetch holidays and non-working days when month/year changes
   useEffect(() => {
     fetchHolidays(currentMonth, currentYear);
-  }, [currentMonth, currentYear, fetchHolidays]);
+    fetchNonWorkingDays(`${currentYear}-${String(currentMonth).padStart(2, '0')}`);
+  }, [currentMonth, currentYear, fetchHolidays, fetchNonWorkingDays]);
 
   // Handle calendar navigation (month change)
   const handleDatesSet = (dateInfo) => {
@@ -157,10 +183,29 @@ export function Calendar() {
     }));
   }, [holidays]);
 
-  // Merge hearing events and holiday events
+  // Transform non-working days to calendar events
+  const nonWorkingDayEvents = useMemo(() => {
+    if (!nonWorkingDays || !Array.isArray(nonWorkingDays)) return [];
+
+    return nonWorkingDays.map((day) => ({
+      id: `non-working-${day.id}`,
+      title: `⛔ ${day.reason_display}${day.description ? `: ${day.description}` : ""}`,
+      start: day.date,
+      allDay: true,
+      backgroundColor: "#7C3AED", // Purple
+      borderColor: "#6D28D9",
+      textColor: "#FFFFFF",
+      extendedProps: {
+        isNonWorkingDay: true,
+        ...day,
+      },
+    }));
+  }, [nonWorkingDays]);
+
+  // Merge hearing events, holiday events, and non-working day events
   const allEvents = useMemo(() => {
-    return [...calendarEvents, ...holidayEvents];
-  }, [calendarEvents, holidayEvents]);
+    return [...calendarEvents, ...holidayEvents, ...nonWorkingDayEvents];
+  }, [calendarEvents, holidayEvents, nonWorkingDayEvents]);
 
   // Count this month's hearings
   const thisMonthCount = useMemo(() => {
@@ -188,6 +233,39 @@ export function Calendar() {
       setDialogOpen(true);
     } catch (e) {
       console.error("Error handling event click:", e);
+    }
+  };
+
+  // Handle date click (admin only - mark as non-working)
+  const handleDateClick = (info) => {
+    if (userRole !== "admin") return;
+
+    const clickedDate = info.dateStr;
+
+    // Check if already a non-working day
+    const isAlreadyNonWorking = nonWorkingDays?.some(d => d.date === clickedDate);
+    if (isAlreadyNonWorking) {
+      return; // Don't allow marking again
+    }
+
+    // Count hearings on this date
+    const hearingsCount = hearings?.filter(h => h.hearing_date === clickedDate).length || 0;
+
+    setSelectedDate(clickedDate);
+    setHearingsOnSelectedDate(hearingsCount);
+    setMarkDayReason("holiday");
+    setMarkDayDescription("");
+    setMarkDayDialogOpen(true);
+  };
+
+  // Handle marking a day as non-working
+  const handleMarkNonWorkingDay = async () => {
+    if (!selectedDate) return;
+
+    const result = await markNonWorkingDay(selectedDate, markDayReason, markDayDescription);
+    if (result) {
+      setMarkDayDialogOpen(false);
+      setSelectedDate(null);
     }
   };
 
@@ -253,6 +331,8 @@ export function Calendar() {
         initialView="dayGridMonth"
         events={allEvents}
         eventClick={handleEventClick}
+        dateClick={userRole === "admin" ? handleDateClick : undefined}
+        selectable={userRole === "admin"}
         datesSet={handleDatesSet}
         headerToolbar={{
           left: "prev,next today",
@@ -261,6 +341,11 @@ export function Calendar() {
         }}
         height="auto"
       />
+
+      {/* Admin hint */}
+      {userRole === "admin" && (
+        <p className="text-xs text-gray-500 mt-2">💡 Tip: Click on any date to mark it as a non-working day (holiday, typhoon, etc.)</p>
+      )}
 
       {/* Hearing Details Dialog - Enhanced like Google Calendar */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -329,6 +414,84 @@ export function Calendar() {
               </div>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Mark Non-Working Day Dialog (Admin only) */}
+      <Dialog open={markDayDialogOpen} onOpenChange={setMarkDayDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarOff className="w-5 h-5 text-purple-600" />
+              Mark as Non-Working Day
+            </DialogTitle>
+            <DialogDescription>
+              {selectedDate && new Date(selectedDate).toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              })}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {hearingsOnSelectedDate > 0 && (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-md">
+                <p className="text-sm text-amber-800 font-medium">
+                  ⚠️ {hearingsOnSelectedDate} hearing(s) scheduled for this day
+                </p>
+                <p className="text-xs text-amber-700 mt-1">
+                  {hearingsOnSelectedDate <= 2
+                    ? "They will be inserted into available slots on the next working day."
+                    : "All hearings will be pushed to the next working day (cascade effect)."
+                  }
+                </p>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="reason">Reason</Label>
+              <Select value={markDayReason} onValueChange={setMarkDayReason}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select reason" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="holiday">Holiday</SelectItem>
+                  <SelectItem value="typhoon">Typhoon/Weather</SelectItem>
+                  <SelectItem value="event">Barangay Event</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Description (optional)</Label>
+              <Input
+                id="description"
+                placeholder="e.g., Typhoon Signal #3, Fiesta, etc."
+                value={markDayDescription}
+                onChange={(e) => setMarkDayDescription(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMarkDayDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleMarkNonWorkingDay}
+              disabled={nonWorkingDaysLoading}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              {nonWorkingDaysLoading ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Marking...</>
+              ) : (
+                <>Mark as Non-Working</>
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

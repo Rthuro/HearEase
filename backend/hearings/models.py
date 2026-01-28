@@ -48,3 +48,28 @@ class Hearing(models.Model):
     def __str__(self):
         return f"Hearing for Case #{self.case.id} on {self.hearing_date} ({self.get_hearing_status_display()})"
 
+
+class NonWorkingDay(models.Model):
+    """
+    Tracks days when the barangay is closed (holidays, typhoons, events).
+    Hearings on these days are automatically rescheduled.
+    """
+    REASON_CHOICES = [
+        ("holiday", "Holiday"),
+        ("typhoon", "Typhoon/Weather"),
+        ("event", "Barangay Event"),
+        ("other", "Other"),
+    ]
+    
+    date = models.DateField(unique=True)
+    reason = models.CharField(max_length=20, choices=REASON_CHOICES, default="holiday")
+    description = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-date']
+        verbose_name = "Non-Working Day"
+        verbose_name_plural = "Non-Working Days"
+
+    def __str__(self):
+        return f"{self.date} - {self.get_reason_display()}"

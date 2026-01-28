@@ -245,8 +245,8 @@ export function Settings() {
     const userRole = data.userRole;
 
     useEffect(() => {
-        // Check Google Calendar status
-        checkStatus();
+        // Check Google Calendar status for current user
+        checkStatus(data?.email);
 
         // Fetch sync settings
         fetchSyncSettings();
@@ -262,7 +262,7 @@ export function Settings() {
             toast.success('Google Calendar connected successfully!');
             switchIntegrations(true);
             switchAccount(false);
-            checkStatus();
+            checkStatus(data?.email);
         }
         if (googleError) {
             toast.error(`Google Calendar error: ${googleError}`);
@@ -295,19 +295,18 @@ export function Settings() {
                     <Bell className="size-4" />
                     Notifications
                 </button>
-                {userRole === "admin" && (
-                    <button onClick={() => {
-                        switchAccount(false)
-                        switchNotifications(false)
-                        switchIntegrations(true)
-                        switchAIModel(false)
-                    }}
-                        className={`flex items-center gap-2 p-3 rounded-md ${integrations ? "bg-red-50 text-redBase" : ""}`}
-                    >
-                        <Calendar className="size-4" />
-                        Integrations
-                    </button>
-                )}
+                {/* Integrations tab - visible for all users */}
+                <button onClick={() => {
+                    switchAccount(false)
+                    switchNotifications(false)
+                    switchIntegrations(true)
+                    switchAIModel(false)
+                }}
+                    className={`flex items-center gap-2 p-3 rounded-md ${integrations ? "bg-red-50 text-redBase" : ""}`}
+                >
+                    <Calendar className="size-4" />
+                    Integrations
+                </button>
                 {userRole === "admin" && (
                     <button onClick={() => {
                         switchAccount(false)
@@ -635,7 +634,8 @@ export function Settings() {
                 <NotificationSettings />
             )}
 
-            {integrations && userRole === "admin" && (
+            {/* Integrations tab - visible for all users */}
+            {integrations && (
                 <div className="flex-1 flex flex-col gap-6 py-6 px-6">
                     <div className="flex flex-col gap-4">
                         <h2 className="text-lg font-medium">Integrations</h2>
@@ -703,7 +703,7 @@ export function Settings() {
                                         </Button>
                                         <Button
                                             variant="outline"
-                                            onClick={disconnect}
+                                            onClick={() => disconnect(data?.email)}
                                             disabled={loading}
                                             className="text-red-600 border-red-200 hover:bg-red-50"
                                         >
@@ -712,7 +712,7 @@ export function Settings() {
                                     </>
                                 ) : (
                                     <Button
-                                        onClick={connectGoogleCalendar}
+                                        onClick={() => connectGoogleCalendar(data?.email, userRole)}
                                         disabled={loading}
                                         className="bg-blue-600 hover:bg-blue-700"
                                     >
@@ -727,8 +727,8 @@ export function Settings() {
                             </div>
                         </div>
 
-                        {/* Auto-Sync Settings (only show when connected) */}
-                        {connected && (
+                        {/* Auto-Sync Settings (only show when connected AND user is admin) */}
+                        {connected && userRole === "admin" && (
                             <div className="border rounded-lg p-4 mt-4">
                                 <div className="flex items-center justify-between mb-4">
                                     <div className="flex items-center gap-3">
