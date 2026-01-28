@@ -177,12 +177,9 @@ class SetCaseHearingsView(APIView):
 
                 h_number = h_data.get("hearing_number")
                 
-                if h_number == 1:
-                    current_status = "scheduled"
-                    current_remarks = h_data.get("remarks") or "Initial hearing scheduled."
-                else:
-                    current_status = "pending_schedule"
-                    current_remarks = h_data.get("remarks") or "Subsequent hearing pending."
+                current_status = "pending_schedule"
+                current_remarks = h_data.get("remarks") or "Subsequent hearing pending."
+                    
 
                 lupon_id = h_data.get("lupon_member_id")
                 

@@ -26,43 +26,21 @@ def send_otp_email(email, code):
 
 class EmailNotification:
     @staticmethod
-    def send_hearing_reminder(user_email, user_name, hearing_date, case_number, user_obj):
-        
-        # 1. CHECK PREFERENCE
-        # If the user has turned off email notifications, STOP.
-        if hasattr(user_obj, 'notification_preferences'):
-            if not user_obj.notification_preferences.allow_email:
-                print(f"Skipped email for {user_email}: User disabled email notifications.")
-                return 
-
-        subject = f"Reminder: Hearing for Case #{case_number}"
-        
-        html_content = f""" ... html content ... """
-
-        email_data = {
-            "from": "HearEase <updates@hearease.me>",
-            "to": user_email,
-            "subject": subject,
-            "html": html_content
-        }
-        
-        EmailThread(email_data).start()
-        
-    def created_case_notification(user_email, user_name, case_number, case_status):
-        subject = f"Case #{case_number} Created Successfully"
+    def created_case_notification(user_email, name, case_number, case_status):
+        subject = f"{case_number} Created Successfully"
         
         html_content = f"""
         <div style="font-family: Arial, sans-serif; color: #333;">
             <h2 style="color: #DC2626;">Case Created</h2>
-            <p>Hi {user_name},</p>
-            <p>Your case has been created successfully.</p>
+            <p>Hi {name},</p>
+            <p>You are receiving this notification because a new case has been created under your name. Please wait for further updates. The HearEase admin will process the case shortly.</p>
             
             <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
                 <p><strong>Case Number:</strong> {case_number}</p>
                 <p><strong>Status:</strong> {case_status}</p>
             </div>
 
-            <a href="https://www.hearease.me/#/u/@{user_name}/Case/{case_number}" style="background-color: #DC2626; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+            <a href="https://www.hearease.me/#/u/@{user_email.split('@')[0]}/Case/{case_number}" style="background-color: #DC2626; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
                 View Case
             </a>
             <p style="font-size: 12px; color: #666; margin-top: 30px;">
@@ -80,7 +58,61 @@ class EmailNotification:
         }
 
         EmailThread(email_data).start()
+    def case_status_update_notification(user_email, name, case_number, case_status, remarks ='No remarks provided'):
+        subject = ''
+        body = ''
 
+        if case_status == 'approved':
+            subject = f"Your {case_number} has been Approved"
+            body = f"Congratulations! Your case: {case_number} has been approved. The hearing will be scheduled once the summon is served. Please wait for further updates."
+        elif case_status == 'rejected':
+            subject = f"Your {case_number} has been Rejected"
+            body = f"Unfortunately, your case: {case_number} has been rejected."
+        elif case_status == 'in_progress':
+            subject = f"Your {case_number} is now In Progress"
+            body = f"Your case: {case_number} is now in progress. The hearing is already been scheduled. Please coordinate with the HearEase admin for questions or concerns."
+        elif case_status == 'resolved':
+            subject = f"Your {case_number} has been Resolved"
+            body = f"Good news! Your case: {case_number} has been resolved. Thank you for using HearEase."
+        elif case_status == 'escalated':
+            subject = f"Your {case_number} has been Escalated"
+            body = f"Your case: {case_number} has been escalated to a higher authority for further review. Please coordinate with the HearEase admin for questions or concerns."
+        elif case_status == 'archived':
+            subject = f"Your {case_number} has been Archived"
+            body = f"Your case: {case_number} has been archived. You can still view the details of your case in your account."
+        else:
+            subject = f"Update on your {case_number}"
+
+        html_content = f"""
+        <div style="font-family: Arial, sans-serif; color: #333;">
+            <h2 style="color: #DC2626;">Case Status Update</h2>
+            <p>Hi {name},</p>
+            <p>{body}</p>
+            
+            <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                <p><strong>Case Number:</strong> {case_number}</p>
+                <p><strong>Status:</strong> {case_status}</p>
+                <p><strong>Remarks:</strong> {remarks}</p>
+            </div>
+
+            <a href="https://www.hearease.me/#/u/@{user_email.split('@')[0]}/Case/{case_number}" style="background-color: #DC2626; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+                View Case
+            </a>
+            <p style="font-size: 12px; color: #666; margin-top: 30px;">
+                © 2025 HearEase. Sent from hearease.me
+            </p>
+        </div>
+        """
+
+        # Send in a background thread so your website doesn't load slowly
+        email_data = {
+            "from": "HearEase Notifications <updates@hearease.me>",
+            "to": user_email,
+            "subject": subject,
+            "html": html_content
+        }
+
+        EmailThread(email_data).start()
     def send_hearing_reminder(user_email, user_name, hearing_date, case_number):
         subject = f"Reminder: Hearing for Case #{case_number}"
         
@@ -115,6 +147,59 @@ class EmailNotification:
         
         # This wrapper makes it async (fire and forget)
         EmailThread(email_data).start()
+
+class PhoneNotification:
+    @staticmethod
+    def created_case_notification(user_email, contact_number, name, case_number, case_status):
+        message_text = (
+            f"Hello {name}, You are receiving this notification because a new case has been created under your name. Please wait for further updates. The HearEase admin will process the case shortly. "
+            f"Case Number: {case_number}, Status: {case_status}."
+            f" View your case at: https://www.hearease.me/#/u/@{user_email}/Case/{case_number}"
+        )
+
+        message = domain.Message(
+            phone_numbers=[contact_number],
+            text_message=domain.TextMessage(text=message_text)
+        )
+
+        try:
+            with client.APIClient(login, password) as c:
+                c.send(message)
+        except Exception as e:
+            print(f"SMS Error: {e}")
+    def case_status_update_notification(user_email, contact_number, name, case_number, case_status, remarks ='No remarks provided'):
+        body = ''
+        if case_status == 'approved':
+            body = f"Congratulations! Your case: {case_number} has been approved. The hearing will be scheduled once the summon is served. Please wait for further updates."
+        elif case_status == 'rejected':
+            body = f"Unfortunately, your case: {case_number} has been rejected."
+        elif case_status == 'in_progress':
+            body = f"Your case: {case_number} is now in progress. The hearing is already been scheduled. Please coordinate with the HearEase admin for questions or concerns."
+        elif case_status == 'resolved':
+            body = f"Good news! Your case: {case_number} has been resolved. Thank you for using HearEase."
+        elif case_status == 'escalated':
+            body = f"Your case: {case_number} has been escalated to a higher authority for further review. Please coordinate with the HearEase admin for questions or concerns."
+        elif case_status == 'archived':
+            body = f"Your case: {case_number} has been archived. You can still view the details of your case in your account."
+        else:
+            body = f"Update on your case: {case_number}."
+
+        message_text = (
+            f"Hello {name}, {body} "
+            f"Case Number: {case_number}, Status: {case_status}, Remarks: {remarks}."
+            f" View your case at: https://www.hearease.me/#/u/@{user_email}/Case/{case_number}"
+        )
+
+        message = domain.Message(
+            phone_numbers=[contact_number],
+            text_message=domain.TextMessage(text=message_text)
+        )
+
+        try:
+            with client.APIClient(login, password) as c:
+                c.send(message)
+        except Exception as e:
+            print(f"SMS Error: {e}")
 
 class EmailThread(threading.Thread):
     def __init__(self, email_data):

@@ -7,6 +7,7 @@ from rest_framework import status
 from django.db import transaction
 from case_persons.serializers import CasePersonSerializer
 from case_persons.models import CasePerson
+from case_organizations.models import CaseOrganization
 from .models import Case, SettlementType, CaseType, Relationship
 from .serializers import CaseSerializer, CaseTypeSerializer, SettlementTypeSerializer, RelationshipSerializer
 from hearings.models import Hearing
@@ -15,9 +16,21 @@ from django.db.models.functions import TruncMonth
 from django.db.models import Count
 from datetime import datetime
 from django.db.models.functions import Trim 
+from users.utils import EmailNotification, PhoneNotification
+from users.models import NotificationPreference
+from rest_framework.permissions import IsAuthenticated
 
 User = get_user_model()
 
+class TestEmailView(APIView):
+    def get(self, request):
+        EmailNotification.created_case_notification(
+                    user_email="oribelloruthiemy@gmail.com",
+                    name=f"Ruth K. Oribello",
+                    case_number="Case12345",
+                    case_status="pending_approval"
+                )
+        return Response({"message": "Test email sent."}, status=status.HTTP_200_OK)
 
 class CaseTypeListView(APIView):
     def get(self, request):
@@ -37,51 +50,91 @@ class RelationshipListView(APIView):
         serializer = RelationshipSerializer(relationships, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
-
 class CaseView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request):
         data = request.data.copy()
         
         complainants = data.get("complainants", [])
-        complainants_ids = []
+        complainants_individuals_ids = []
+        complainants_organizations_ids = []
 
         for complainant in complainants:
-            if "birth_date" in complainant and complainant["birth_date"]:
-                raw_bd = str(complainant["birth_date"])
-                if "T" in raw_bd:
-                    complainant["birth_date"] = raw_bd.split("T")[0]
+            if complainant.get("type") == "individual":
+                if "birth_date" in complainant and complainant["birth_date"]:
+                    raw_bd = str(complainant["birth_date"])
+                    if "T" in raw_bd:
+                        complainant["birth_date"] = raw_bd.split("T")[0]
 
-            check_complainant = CasePerson.objects.filter(
-                first_name__iexact=complainant.get("first_name"),
-                last_name__iexact=complainant.get("last_name"),
-            ).first()
+                check_complainant = CasePerson.objects.filter(
+                    first_name__iexact=complainant.get("first_name"),
+                    last_name__iexact=complainant.get("last_name"),
+                ).first()
 
-            if check_complainant:
-                complainants_ids.append(check_complainant.id)
+                if check_complainant:
+                    is_updated = False
+                
+                    new_value = complainant.get('email')
+                    current_value = getattr(check_complainant, 'email')
+
+                    if new_value and not current_value:
+                        setattr(check_complainant, 'email', new_value)
+                        is_updated = True
+                        
+                    if is_updated:
+                        check_complainant.save()
+                        print(f"Updated info for {check_complainant.first_name}")
+
+                    complainants_individuals_ids.append(check_complainant.id)
+                else:
+                    complainant_obj = CasePerson.objects.create(**complainant)
+                    complainants_individuals_ids.append(complainant_obj.id)
             else:
-                complainant_obj = CasePerson.objects.create(**complainant)
-                complainants_ids.append(complainant_obj.id)
+                check_complainant = CaseOrganization.objects.filter(
+                    name__iexact=complainant.get("name"),
+                ).first()
+
+                if check_complainant:
+                    complainants_organizations_ids.append(check_complainant.id)
+                else:
+                    complainant.pop('type', None) 
+                    complainant_obj = CaseOrganization.objects.create(**complainant)
+                    complainants_organizations_ids.append(complainant_obj.id)
         
 
         respondents = data.get("respondents", [])
-        respondents_ids = []
+        respondents_individuals_ids = []
+        respondents_organizations_ids = []
 
         for respondent in respondents:
-            if "birth_date" in respondent and respondent["birth_date"]:
-                raw_bd = str(respondent["birth_date"])
-                if "T" in raw_bd:
-                    respondent["birth_date"] = raw_bd.split("T")[0]
+            if respondent.get("type") == "individual":
+                if "birth_date" in respondent and respondent["birth_date"]:
+                    raw_bd = str(respondent["birth_date"])
+                    if "T" in raw_bd:
+                        respondent["birth_date"] = raw_bd.split("T")[0]
 
-            check_respondent = CasePerson.objects.filter(
-                first_name__iexact=respondent.get("first_name"),
-                last_name__iexact=respondent.get("last_name"),
-            ).first()
+                check_respondent = CasePerson.objects.filter(
+                    first_name__iexact=respondent.get("first_name"),
+                    last_name__iexact=respondent.get("last_name"),
+                ).first()
 
-            if check_respondent:
-                respondents_ids.append(check_respondent.id)
+                if check_respondent:
+                    respondents_individuals_ids.append(check_respondent.id)
+                else:
+                    respondent_obj = CasePerson.objects.create(**respondent)
+                    respondents_individuals_ids.append(respondent_obj.id)    
             else:
-                respondent_obj = CasePerson.objects.create(**respondent)
-                respondents_ids.append(respondent_obj.id)        
+                check_respondent = CaseOrganization.objects.filter(
+                    name__iexact=respondent.get("name"),
+                ).first()
+
+                if check_respondent:
+                    respondents_organizations_ids.append(check_respondent.id)
+                else:
+                    respondent.pop('type', None) 
+                    respondent_obj = CaseOrganization.objects.create(**respondent)
+                    respondents_organizations_ids.append(respondent_obj.id)    
 
         case_data = {
             "id": data.get("id"),
@@ -95,8 +148,15 @@ class CaseView(APIView):
 
         new_case = Case.objects.create(**case_data)
 
-        new_case.complainants.add(*complainants_ids)
-        new_case.respondents.add(*respondents_ids)
+        if complainants_individuals_ids is not None:
+            new_case.complainants.add(*complainants_individuals_ids)
+        if complainants_organizations_ids is not None:
+            new_case.complainant_organizations.add(*complainants_organizations_ids)
+
+        if respondents_individuals_ids is not None:
+            new_case.respondents.add(*respondents_individuals_ids)
+        if respondents_organizations_ids is not None:
+            new_case.respondent_organizations.add(*respondents_organizations_ids)
 
         # If hearing info is provided, create initial hearing
         hearing_info = data.get("hearing_info")
@@ -113,13 +173,9 @@ class CaseView(APIView):
 
                 h_number = h_data.get("hearing_number")
                 
-                if h_number == 1:
-                    current_status = "scheduled"
-                    current_remarks = h_data.get("remarks") or "Initial hearing scheduled."
-                else:
-                    current_status = "pending_schedule"
-                    current_remarks = h_data.get("remarks") or "Subsequent hearing pending."
-
+                current_status = "pending_schedule"
+                current_remarks = h_data.get("remarks") or "Subsequent hearing pending. Summon to be served."
+                    
                 lupon_id = h_data.get("lupon_member_id")
                 
                 Hearing.objects.create(
@@ -131,6 +187,56 @@ class CaseView(APIView):
                     remarks=current_remarks,
                     hearing_status=current_status,
                 )
+
+        # Send email notification to complainant if email verified and if notifications allowed
+        all_involved_complainants = complainants_individuals_ids
+        involved_complainants = CasePerson.objects.filter(
+            id__in=all_involved_complainants,
+            email__isnull=False
+        ).exclude(email__exact="")
+
+        involved_complainant_emails = [p.email for p in involved_complainants]
+        users_to_notify = User.objects.filter(
+            email__in=involved_complainant_emails
+        ).select_related('notification_preferences')
+
+        for user in users_to_notify:
+            try:
+                prefs = user.notification_preferences
+            except NotificationPreference.DoesNotExist:
+                print(f"Skipping {user.email}: No notification preferences found.")
+                continue
+
+            # --- EMAIL NOTIFICATION ---
+            # Check if Account is Verified AND User allows Emails
+            if user.is_email_verified and prefs.allow_email:
+                EmailNotification.created_case_notification(
+                    user_email=user.email,
+                    name=f"{user.first_name} {user.middle_name or ''} {user.last_name}",
+                    case_number=new_case.id,
+                    case_status=new_case.case_status
+                )
+
+            # --- PHONE/SMS NOTIFICATION ---
+            # Check if Phone is Verified AND User allows SMS
+            if user.is_phone_verified and prefs.allow_sms: 
+                if user.contact_number:
+
+                    if  user.contact_number.startswith("0"):
+                        formatted_phone = f"+63{user.contact_number[1:]}"
+                    elif not user.contact_number.startswith("+"):
+                        formatted_phone = f"+{user.contact_number}"
+                    else:
+                        formatted_phone = user.contact_number
+                        
+                    PhoneNotification.created_case_notification(
+                        user_email=user.email,
+                        contact_number=formatted_phone,
+                        name=f"{user.first_name} {user.middle_name or ''} {user.last_name}",
+                        case_number=new_case.id,
+                        case_status=new_case.case_status
+                    )
+            
 
         # Serialize and return
         serializer = CaseSerializer(new_case)
@@ -323,6 +429,7 @@ class CaseDeleteView(APIView):
 
 class UpdateCaseInfoView(APIView):
     def put(self, request, pk):
+        check_summon_status = request.data.get("summon_status")
         try:
             case = Case.objects.get(pk=pk)
         except Case.DoesNotExist:
@@ -331,6 +438,16 @@ class UpdateCaseInfoView(APIView):
         # Check if status is changing to resolved
         old_status = case.case_status
         new_status = request.data.get("case_status", old_status)
+
+        # Update first hearing if summon_status is being updated to 'served'
+        if check_summon_status == "served":
+            first_hearing = Hearing.objects.filter(case=case, hearing_number=1).first()
+            if first_hearing:
+                first_hearing.hearing_status = "scheduled"
+                first_hearing.remarks = "Initial hearing scheduled."
+                first_hearing.save()
+
+        send_notification(ids=[p.id for p in case.complainants.all()], case_id=case.id, case_status=new_status, remarks=request.data.get("remarks", ""), type=2)
 
         serializer = CaseSerializer(case, data=request.data, partial=True)
 
@@ -408,7 +525,6 @@ class ReportView(APIView):
             })
 
         return Response(result)
-
 
 class CasePriorityView(APIView):
     """
@@ -518,4 +634,70 @@ class CasePriorityView(APIView):
         
         return Response(prioritized_cases[:limit], status=status.HTTP_200_OK)
 
+def send_notification(ids, case_id, case_status, remarks="", type=1): 
+    all_involved_complainants = ids
+    involved_complainants = CasePerson.objects.filter(
+        id__in=all_involved_complainants,
+        email__isnull=False
+    ).exclude(email__exact="")
 
+    involved_complainant_emails = [p.email for p in involved_complainants]
+    users_to_notify = User.objects.filter(
+        email__in=involved_complainant_emails
+    ).select_related('notification_preferences')
+
+    for user in users_to_notify:
+        try:
+            prefs = user.notification_preferences
+        except NotificationPreference.DoesNotExist:
+            print(f"Skipping {user.email}: No notification preferences found.")
+            continue
+
+        # --- EMAIL NOTIFICATION ---
+        # Check if Account is Verified AND User allows Emails
+        if user.is_email_verified and prefs.allow_email:
+            if type == 1:  # Case Created
+                EmailNotification.created_case_notification(
+                    user_email=user.email,
+                    name=f"{user.first_name} {user.middle_name or ''} {user.last_name}",
+                    case_number=case_id,
+                    case_status=case_status
+                )
+            elif type == 2:  # Case Updated
+                EmailNotification.case_status_update_notification(
+                    user_email=user.email,
+                    name=f"{user.first_name} {user.middle_name or ''} {user.last_name}",
+                    case_number=case_id,
+                    case_status=case_status,
+                    remarks=remarks
+                )
+
+        # --- PHONE/SMS NOTIFICATION ---
+        # Check if Phone is Verified AND User allows SMS
+        if user.is_phone_verified and prefs.allow_sms: 
+            if user.contact_number:
+
+                if  user.contact_number.startswith("0"):
+                    formatted_phone = f"+63{user.contact_number[1:]}"
+                elif not user.contact_number.startswith("+"):
+                    formatted_phone = f"+{user.contact_number}"
+                else:
+                    formatted_phone = user.contact_number
+
+                if type == 1:  # Case Created
+                    PhoneNotification.created_case_notification(
+                        user_email=user.email,
+                        contact_number=formatted_phone,
+                        name=f"{user.first_name} {user.middle_name or ''} {user.last_name}",
+                        case_number=case_id,
+                        case_status=case_status
+                    )
+                elif type == 2:  # Case Updated
+                    PhoneNotification.case_status_update_notification(
+                        user_email=user.email,
+                        contact_number=formatted_phone,
+                        name=f"{user.first_name} {user.middle_name or ''} {user.last_name}",
+                        case_number=case_id,
+                        case_status=case_status,
+                        remarks=remarks
+                    )

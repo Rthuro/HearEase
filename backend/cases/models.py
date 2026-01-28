@@ -2,6 +2,7 @@ from django.db import models
 from users.models import User
 from lupon_members.models import LuponMember
 from case_persons.models import CasePerson
+from case_organizations.models import CaseOrganization
 
 
 class CaseType(models.Model):
@@ -29,13 +30,14 @@ class Relationship(models.Model):
 class Case(models.Model):
 
     CASE_STATUS_CHOICES = [
+        ("draft", "Draft"),
         ("pending_approval", "Pending Approval"),
         ("approved", "Approved"),
         ("in_progress", "In Progress"),
         ("resolved", "Resolved"),
         ("escalated", "Escalated"),
         ("rejected", "Rejected"),
-        ("cancelled", "Cancelled"),
+        ("archived", "Archived"),
     ]
 
     REJECTION_SECTION = [
@@ -43,6 +45,12 @@ class Case(models.Model):
         ("case_details", "Case Details"),
         ("complainant_info", "Complainant Information"),
         ("respondent_info", "Respondent Information")
+    ]
+
+    SUMMON_STATUS = [
+        ("served", "Served"),
+        ("not_served", "Not Served"),
+        ("pending", "Pending"),
     ]
 
     case_type = models.ForeignKey(
@@ -56,8 +64,25 @@ class Case(models.Model):
         Relationship, on_delete=models.SET_NULL, null=True, related_name="cases"
     )
 
-    complainants = models.ManyToManyField(CasePerson, related_name="cases_as_complainant")
-    respondents = models.ManyToManyField(CasePerson, related_name="cases_as_respondent")
+    complainants = models.ManyToManyField(
+        CasePerson, 
+        related_name="cases_as_complainant",
+        blank=True)
+    respondents = models.ManyToManyField(
+        CasePerson, 
+        related_name="cases_as_respondent",
+        blank=True)
+
+    complainant_organizations = models.ManyToManyField(
+        CaseOrganization,
+        related_name="cases_as_complainant_org",
+        blank=True
+    )
+    respondent_organizations = models.ManyToManyField(
+        CaseOrganization,
+        related_name="cases_as_respondent_org",
+        blank=True
+    )
 
     case_status = models.CharField(
         max_length=20,
@@ -77,6 +102,14 @@ class Case(models.Model):
         blank=True,
         null=True,
         default="none",
+    )
+
+    summon_date_received = models.DateTimeField(blank=True, null=True)
+    summon_received_by = models.CharField(max_length=100, blank=True, null=True)
+    summon_status = models.CharField(
+        max_length=20,
+        choices=SUMMON_STATUS,
+        default="pending",
     )
 
 

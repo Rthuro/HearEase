@@ -7,8 +7,11 @@ from hearings import views as HearingViews
 from documents import views as DocumentViews
 from AIModel import views as AIModelViews
 from case_persons import views as CasePersonViews
+from case_organizations import views as CaseOrganizationViews
 
 urlpatterns = [
+    path("test-email/", CaseViews.TestEmailView.as_view(), name="test-email"),
+    
     path("register/", UserViews.RegisterView.as_view(), name="register"),
     path('auth/google/', UserViews.GoogleLoginView.as_view(), name='google-login'),
 
@@ -24,6 +27,10 @@ urlpatterns = [
     path('admins/', UserViews.AdminView.as_view(), name='admins'),
 
     path('case-persons/', CasePersonViews.CasePersonView.as_view(), name='case-persons'),
+    path('case-person/<str:email>/', CasePersonViews.SingleCasePersonView.as_view(), name='case-person-detail'),
+
+    path('case-organizations/', CaseOrganizationViews.CaseOrganizationView.as_view(), name='case-organizations'),
+    path('case-organization/<str:email>/', CaseOrganizationViews.SingleCaseOrganizationView.as_view(), name='case-organization-detail'),
 
     path('login/', UserViews.LoginView.as_view(), name='login'),
     path('barangays/', AddressViews.BarangayListView.as_view(), name='barangay-list'),
