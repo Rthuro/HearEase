@@ -22,7 +22,7 @@ import IdentitySync from "@/components/ui/IdentitySync"
 
 export function UserDashboard() {
   const { userInfo, userLinkName } = useAuthenticationStore();
-  const { cases, fetchUserRelatedCase, relatedCases } = useCaseStore();
+  const { cases, fetchUserRelatedCase, relatedCases,testEmail } = useCaseStore();
   const { hearings } = useHearingStore();
   const { userInformation } = useRetrieveUsersStore();
 
@@ -84,7 +84,9 @@ export function UserDashboard() {
   return (
     <div className=" flex flex-col gap-6 p-6">
       <PageSync page="Home" />
-      
+      {/* testing */}
+      {/* <Button onClick={testEmail} className="bg-redBase w-fit">Test Email</Button> */}
+
       <div className="grid grid-cols-2 gap-4 mt-6" >
         <Greetings />
 

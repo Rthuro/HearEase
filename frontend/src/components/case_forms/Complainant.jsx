@@ -4,9 +4,10 @@ import { useCaseStore } from "@/store/useCaseStore"
 import { Separator } from "../ui/separator"
 import { cn } from "@/lib/utils"
 import { RetrievePopover } from "./retrieve-popover"
-import { AddEditParticipant } from "./add-edit-participant"
 import { ParticipantCard } from "./participant-card"
 import useAuthenticationStore from "@/store/useAuthenticationStore"
+import { DropdownParticipants } from "./dropdown-participants"
+
 export function Complainant() {
     const { complainantList, set_complainants } = useCaseStore();
     const { userRole } = useAuthenticationStore();
@@ -25,15 +26,11 @@ export function Complainant() {
 
             <div className="flex gap-3 col-span-2">
                 <div className="flex gap-2">
-                    <AddEditParticipant type="complainant" action="Add" />
-
-                    {userRole === 'admin' && (
-                        <RetrievePopover participantType="complainant" />
-                    )}
+                    <DropdownParticipants type="complainant" action="Add" />
+                    <RetrievePopover participantType="complainant" />
                 </div>
                 <Button className={cn('bg-redBase w-fit')} onClick={handleReset}>Reset</Button>
             </div>
-
 
             <Separator className="col-span-2" />
 

@@ -72,6 +72,7 @@ INSTALLED_APPS = [
     'lupon_members',
     'addresses',
     'case_persons',
+    'case_organizations',
     'cases',
     'hearings',
     'documents',

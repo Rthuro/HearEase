@@ -3,7 +3,7 @@ import { useCaseStore } from "@/store/useCaseStore"
 import { cn } from "@/lib/utils"
 import { Separator } from "../ui/separator"
 import { RetrievePopover } from "./retrieve-popover"
-import { AddEditParticipant } from "./add-edit-participant"
+import { DropdownParticipants } from "./dropdown-participants"
 import { ParticipantCard } from "./participant-card"
 export function Respondent() {
     const { set_respondents,respondentList } = useCaseStore();
@@ -18,7 +18,7 @@ export function Respondent() {
             <p className="col-span-2 text-center text-2xl mb-3">Respondent Information</p>
             <div className="flex gap-3 col-span-2">
                 <div className="flex gap-2">
-                    <AddEditParticipant type="respondent" action="Add" />
+                    <DropdownParticipants type="respondent" action="Add" />
                     <RetrievePopover participantType="respondent" />
                 </div>
                 <Button className={cn('bg-redBase w-fit')} onClick={handleReset}>Reset</Button>

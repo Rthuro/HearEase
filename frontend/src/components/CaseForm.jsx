@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Button } from "./ui/button"
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, Loader2 } from "lucide-react";
 import useAuthenticationStore from "@/store/useAuthenticationStore";
 import { Complainant } from "./case_forms/Complainant";
 import { Respondent } from "./case_forms/Respondent";
@@ -14,53 +14,13 @@ import { toast } from "react-hot-toast";
 import { invalidContactNumber } from "@/lib/helpers";
 import { useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { useRetrieveUsersStore } from "@/store/useRetrieveUsersStore";
 
 export function CaseForm(){
-    const { formData, addCaseData, fetchCaseTypes, fetchSettlementTypes, complainantList, respondentList, setComplainantInfo, set_complainants } = useCaseStore();
-    const { fetchComplainants, fetchRespondents} = useRetrieveUsersStore();
+    const { formData, addCaseData, complainantList, respondentList} = useCaseStore();
+    const [loading, setLoading] = useState(false);
+
     
     const { userRole, userLinkName } = useAuthenticationStore();
-
-    const userInfo = {
-        first_name: formData?.complainant?.first_name?.value,
-        last_name: formData?.complainant?.last_name?.value,
-        middle_name: formData?.complainant?.middle_name?.value,
-        birth_date: formData?.complainant?.birth_date?.value,
-        sex: formData?.complainant?.sex?.value,
-        contact_number: formData?.complainant?.contact_number?.value,
-        barangay: formData?.complainant?.barangay?.value,
-        street: formData?.complainant?.street?.value,
-        additional_info: formData?.complainant?.additional_info?.value,
-    }  
-
-    useEffect(() => {
-        fetchCaseTypes();
-        fetchSettlementTypes();
-    }, [fetchCaseTypes, fetchSettlementTypes]);
-
-    useEffect(() => {
-        if(userRole === 'admin') {
-            fetchComplainants();
-        }
-        fetchRespondents();
-    }, []);
-
-    const isSelected = (user) => {
-        return complainantList.some(
-            (u) =>
-            u.first_name?.toLowerCase() === user.first_name?.toLowerCase() &&
-            u.last_name?.toLowerCase() === user.last_name?.toLowerCase()
-        );
-    };
-
-     useEffect(() => {
-        setComplainantInfo()
-        if(userRole === 'user' && !isSelected(userInfo)) {
-            set_complainants([userInfo])
-        }
-    }, [])
-
 
     const navigate = useNavigate();
     const [stepNumber, setStepNumber] = useState(1);
@@ -111,9 +71,12 @@ export function CaseForm(){
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoading(true);
+
         const res = await addCaseData(); 
 
         if (res) {
+            setLoading(false);
             setStepNumber(5);
         }
     };
@@ -175,7 +138,7 @@ export function CaseForm(){
 
 
     return(
-        <main className="flex flex-col w-full h-full items-center justify-center gap-3 bg-white">
+        <main className="relative flex flex-col w-full h-full items-center pt-12 gap-3 bg-white">
             <PageSync page="" />
             
             <div className="w-full max-h-max flex items-center justify-center pb-20 border-b border-zinc-200"> 
@@ -258,6 +221,13 @@ export function CaseForm(){
                         }}>Submit Case</Button>
                         <Button variant="outline" className="w-full">Save as Draft</Button>
                     </div>
+                </div>
+            )}
+
+            {loading && (
+                <div className="flex justify-center items-center absolute bottom-0 top-0 left-0 right-0 bg-white/80 z-50 gap-2">
+                    <Loader2 className="animate-spin" />
+                    Submitting Case Form...
                 </div>
             )}
 

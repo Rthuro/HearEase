@@ -505,7 +505,7 @@ export function Settings() {
                     </p>
                 </div>
 
-                <PhoneVerification user={user} setUser={setUser} handleUpdate={handleUpdate} handleReset={handleReset} formatTime={formatTime} />
+                <PhoneVerification user={user} setUser={setUser} handleUpdate={handleUpdate} handleReset={handleReset} formatTime={formatTime} contactNumber={contactNumber} setContactNumber={setContactNumber} />
                 
                 <Card className="py-3 rounded-sm gap-2 mb-3">
                     <CardContent className="px-0">

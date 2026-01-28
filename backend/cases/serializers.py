@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Case, CaseType, SettlementType, Relationship
 from case_persons.serializers import CasePersonSerializer
+from case_organizations.serializers import CaseOrganizationSerializer
 
 class CaseTypeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -23,6 +24,8 @@ class CaseSerializer(serializers.ModelSerializer):
     relationship = RelationshipSerializer(read_only=True)
     complainants = CasePersonSerializer(many=True, read_only=True)
     respondents = CasePersonSerializer(many=True, read_only=True)
+    complainant_organizations = CaseOrganizationSerializer(many=True, read_only=True)
+    respondent_organizations = CaseOrganizationSerializer(many=True, read_only=True)
 
     class Meta:
         model = Case

@@ -59,3 +59,12 @@ class CasePersonView(APIView):
             return Response(case_person_data, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class SingleCasePersonView(APIView):
+    def get(self, request, email):
+        try:
+            case_person = CasePerson.objects.get(email=email)
+            serializer = CasePersonSerializer(case_person)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except CasePerson.DoesNotExist:
+            return Response({"error": "CasePerson not found."}, status=status.HTTP_404_NOT_FOUND)

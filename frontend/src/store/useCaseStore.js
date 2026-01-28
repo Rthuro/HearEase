@@ -17,6 +17,11 @@ export const getUser = async () => {
     return response.data;
 };
 
+export const getCasePersonByUserEmail = async (email) => {
+    const response = await axios.get(`${API_URL}/case-person/${email}/`);
+    return response.data;
+}; 
+
 export const getCaseTypes = async () => {
     const response = await axios.get(`${API_URL}/case-types/`);
     return response.data;
@@ -33,8 +38,12 @@ export const getRelationshipList = async () => {
 };
 
 export const addCase = async (caseData) => {
+    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+    const data = JSON.parse(stored);
     try {
-        const response = await axios.post(`${API_URL}/cases/`, caseData);
+        const response = await axios.post(`${API_URL}/cases/`, caseData,
+            { headers: { Authorization: `Token ${data?.userInfo.token}` } }
+        );
         if (response.status === 201) {
             return response.data;
         }
@@ -79,6 +88,13 @@ export const fetchCase = async (case_id) => {
 }
 
 export const useCaseStore = create((set, get) => ({
+    testEmail: async () => {
+        try {
+            await axios.get(`${API_URL}/test-email/`);
+        } catch (error) {
+            console.error("Test email error:", error);
+        }
+    },
     cases: [],
     caseTypes: [],
     settlementTypes: [],
@@ -96,15 +112,6 @@ export const useCaseStore = create((set, get) => ({
     },
     setCaseInfo: (info) => {
         set({ case: { ...get().case, ...info } });
-    },
-
-    co_complainants: [],
-    set_coComplainants: (updatedComplainants) => {
-        set({ co_complainants: updatedComplainants })
-    },
-    co_respondents: [],
-    set_coRespondents: (updatedRespondents) => {
-        set({ co_respondents: updatedRespondents })
     },
 
     complainantList: [],
@@ -244,6 +251,24 @@ export const useCaseStore = create((set, get) => ({
             hearing_info: formData.hearingInfo,
         };
 
+        if (data.userRole !== 'admin') {
+            const loggedInFirst = data.userInfo.first_name.trim().toLowerCase();
+            const loggedInLast = data.userInfo.last_name.trim().toLowerCase();
+
+            caseData.complainants = complainantList.map(person => {
+                if (
+                    person.first_name.trim().toLowerCase() === loggedInFirst &&
+                    person.last_name.trim().toLowerCase() === loggedInLast
+                ) {
+                    return {
+                        ...person,
+                        email: data.userInfo.email
+                    };
+                }
+                return person;
+            });
+        }
+
         const case_documents = formData.caseDetails.documents.value;
 
         try {
@@ -293,6 +318,7 @@ export const useCaseStore = create((set, get) => ({
     },
 
     complainant_info: null,
+    initialUserComplainantInfo: {},
 
     setComplainantInfo: async () => {
         try {
@@ -303,28 +329,44 @@ export const useCaseStore = create((set, get) => ({
                 return;
             }
 
-            const data = await getUser();
-            const user = data.user;
+            const data = await getCasePersonByUserEmail(user_data.userInfo.email);
 
-            set((state) => {
-                const updatedComplainant = { ...state.formData.complainant };
-
-                Object.keys(updatedComplainant).forEach((key) => {
-                    if (user[key] !== undefined && user[key] !== null) {
-                        updatedComplainant[key] = {
-                            ...updatedComplainant[key],
-                            value: user[key],
-                        };
-                    }
-                });
-
-                return {
-                    formData: {
-                        ...state.formData,
-                        complainant: updatedComplainant,
-                    },
-                };
+            const user = data;
+            set({ initialUserComplainantInfo: {
+                id: user?.id,
+                first_name: user?.first_name,
+                last_name:user?.last_name,
+                middle_name: user?.middle_name,
+                birth_date: user?.birth_date,
+                sex: user?.sex,
+                contact_number: user?.contact_number,
+                barangay: user?.barangay,
+                street: user?.street,
+                additional_info: user?.additional_info,
+                type: "individual"
+                }
             });
+
+            // set((state) => {
+            //     const updatedComplainant = { 
+            //         ...state.formData.complainant };
+
+            //     Object.keys(updatedComplainant).forEach((key) => {
+            //         if (user[key] !== undefined && user[key] !== null) {
+            //             updatedComplainant[key] = {
+            //                 ...updatedComplainant[key],
+            //                 value: user[key],
+            //             };
+            //         }
+            //     });
+
+            //     return {
+            //         formData: {
+            //             ...state.formData,
+            //             complainant: updatedComplainant,
+            //         },
+            //     };
+            // });
         } catch (error) {
             console.error("Failed to fetch complainant info:", error);
         }
@@ -369,7 +411,7 @@ export const useCaseStore = create((set, get) => ({
         }
     },
 
-    deleteCase: async (case_id) => {
+    deleteCase: async (case_id, type) => {
         try {
             const res = await axios.delete(`${API_URL}/delete-case/`, {
                 data: { case_id: case_id }
@@ -377,11 +419,11 @@ export const useCaseStore = create((set, get) => ({
 
             if (res.status === 204) {
                 get().fetchCases();
-                toast.success("Case " + case_id + " deleted successfully.");
+               toast.success("Case " + case_id + `${ type == 'delete' ? 'deleted' : 'withdrawn'} successfully.` );
             }
 
         } catch (error) {
-            toast.error("Delete case unsuccessful:", error);
+             toast.error(`${type == 'delete' ? 'Delete' : 'Withdraw'} case unsuccessful:`, error);
         }
     },
 
@@ -464,7 +506,21 @@ export const useCaseStore = create((set, get) => ({
                     toast.error("Update case unsuccessful: " + (error?.response?.data || error.message));
                 }
                 break;
+            
+            case "update_case":
+                try {
+                    const res = await axios.put(`${API_URL}/update-case/${id}/`, data);
 
+                    if (res.status === 200) {
+                        fetchCases();
+                        toast.success("Case updated successfully.");
+                    }
+                    
+                } catch (error) {
+                    toast.error("Update case unsuccessful: " + (error?.response?.data || error.message));
+                }
+
+                break;
             default:
                 break;
         }

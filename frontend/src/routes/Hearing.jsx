@@ -51,9 +51,9 @@ export default function Hearing() {
 
     const hearing = hearings.find( hearing => hearing.id == hearing_id);
     const caseInfo = cases.find( c => c.id == hearing.case);
-
+    console.log("caseInfo", caseInfo);
     const caseHearings = hearings.filter( h => h.case == hearing.case);
-    console.log("caseHearings", caseHearings);
+    // console.log("caseHearings", caseHearings);
 
     const lupon = members.find( l => l.id == hearing.lupon_member)
 
@@ -93,10 +93,10 @@ export default function Hearing() {
       setUpdatedHearings(initializedHearings);
     }, []);
 
-    useEffect( () => {
-        fetchCaseComplainants(caseInfo?.complainants);
-        fetchCaseRespondents(caseInfo?.respondents);
-    }, [caseInfo])
+    // useEffect( () => {
+    //     fetchCaseComplainants(caseInfo?.complainants);
+    //     fetchCaseRespondents(caseInfo?.respondents);
+    // }, [caseInfo])
     
     if(userRole == 'admin'){
         return (
@@ -180,11 +180,13 @@ export default function Hearing() {
                     </div>
                     
                 </div>
+                { hearing?.hearing_number == 1 && caseInfo?.summon_status != 'served' && (
+                    <SummonConfirmationDisplay hearing={hearing} caseInfo={caseInfo} />
+                )}   
 
-                <SummonConfirmationDisplay hearing={hearing} caseInfo={caseInfo} />
-
-                <HearingProgressDisplay hearing={hearing} case_complainants={case_complainants} case_respondents={case_respondents} />
-
+                { caseInfo?.summon_status == 'served' && (
+                    <HearingProgressDisplay hearing={hearing} case_complainants={caseInfo?.complainants} case_respondents={caseInfo?.respondents} case_organization_complainants={caseInfo?.organization_complainants} case_organization_respondents={caseInfo?.organization_respondents} />
+                )}          
             </div>
         )
     } else {
