@@ -10,7 +10,7 @@ import cancellation_notice from "@/assets/imgs/cancellation_notice.png"
 import { cn } from "@/lib/utils";
 import { PageSync } from "@/components/PageSync";
 import { CaseStatusDisplay } from "@/components/CaseStatusDisplay";
-import { ChevronLeft, X,Check, Edit, ArrowRight, ArrowUpRight } from "lucide-react";
+import { ChevronLeft, X,Check, Edit, ArrowRight, ArrowUpRight, Loader2, FileText } from "lucide-react";
 import { useEffect, useState } from "react";
 import useHearingStore from "@/store/useHearingStore";
 import { useRetrieveUsersStore } from "@/store/useRetrieveUsersStore";
@@ -24,7 +24,6 @@ import {
 } from "@/components/ui/table"
 import { Link } from "react-router-dom";
 import useCaseDocumentsStore from "@/store/useCaseDocumentStore";
-import { FileText } from "lucide-react";
 import { useGenerateDocumentStore } from "@/store/useGenerateDocumentStore";
 import { EditCaseInfo } from "@/components/EditCaseInfo";
 import { CaseCancellationModal } from "@/components/CaseCancellationModal";
@@ -38,7 +37,6 @@ export function Case() {
     const { case_number } = useParams();
     const { cases, updateCaseStatus, deleteCase, setFormData, set_complainants, set_respondents } = useCaseStore();
     const { hearings } = useHearingStore();
-    const { case_complainants, case_respondents, fetchCaseComplainants, fetchCaseRespondents} = useRetrieveUsersStore();
     const [template, setTemplate] = useState({});
     const { case_documents, fetchCaseDocuments } = useCaseDocumentsStore();
     const [ viewImg, setViewImg ] = useState(null);
@@ -46,6 +44,7 @@ export function Case() {
     const { members } = useLuponStore();
     const [ noShowModal, setNoShowModal ] = useState(false);
     const [ noShowUserData, setNoShowUserData ] = useState({});
+    const [deleteLoader, setDeleteLoader] = useState(false);
 
     const stored = localStorage.getItem("authData");
     const data = JSON.parse(stored);
@@ -58,6 +57,7 @@ export function Case() {
 
     const caseInfo = cases.find( c => c.id == case_number);
 
+    // No complainant and respondent for organization for prediction yet9
     useEffect(() => {
         if (caseInfo) {
             setFormData('caseDetails', 'nature_of_complaint_code', caseInfo.case_type.id);
@@ -72,11 +72,21 @@ export function Case() {
 
     const lupon = members.find(member => member.id === findHearingCase[0]?.lupon_member);
 
-
-    useEffect( () => {
-        fetchCaseComplainants(caseInfo?.complainants);
-        fetchCaseRespondents(caseInfo?.respondents);
-    }, [caseInfo])
+    // console.log(caseInfo);
+    // useEffect( () => {
+    //     if(caseInfo?.complainants.length > 0 ){
+    //         fetchCaseComplainants(caseInfo?.complainants);
+    //     }
+    //     if(caseInfo?.respondents.length > 0 ){
+    //         fetchCaseRespondents(caseInfo?.respondents);
+    //     }
+    //     if(caseInfo?.complainant_organizations.length > 0 ){
+    //         fetchOrganizationCaseComplainants(caseInfo?.complainant_organizations);
+    //     }
+    //     if(caseInfo?.respondent_organizations.length > 0 ){
+    //         fetchOrganizationCaseRespondents(caseInfo?.respondent_organizations);
+    //     }
+    // }, [caseInfo])
 
     const navigate = useNavigate();
     
@@ -232,10 +242,11 @@ export function Case() {
         }
     };
 
+   
     return (
         <div className="relative flex flex-col gap-4 p-6 ">
             <PageSync page="" />
-
+            
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
@@ -260,17 +271,7 @@ export function Case() {
                             </Button>
                         </div>
                     )}
-                    { userRole == 'user' && caseInfo.case_status == 'pending_approval' && (
-                        <div className="flex gap-2">
-                            <Button variant="default" className={cn("bg-redBase")}
-                            onClick={() => {
-                                deleteCase(caseInfo.id);
-                            }}>
-                                Withdraw Application
-                            </Button>
-                        </div>
-                    )}
-                    <CaseSettingsModal caseData={caseInfo} />
+                    <CaseSettingsModal role={userRole} caseData={caseInfo} />
                 </div>
                 
             </div>
@@ -387,7 +388,7 @@ export function Case() {
                 </div> 
 
                 { viewImg && (
-                    <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50"
+                    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
                     onClick={() => setViewImg(null)}
                     >
                         <X className="text-white absolute top-4 right-4 cursor-pointer" onClick={ () => setViewImg(null)} />
@@ -401,9 +402,8 @@ export function Case() {
                 
 
             </div>
-                
-            { case_complainants?.length > 0 &&                     
-            ( <div className="flex flex-col gap-4 bg-white p-4 rounded-md border shadow-2xs">
+            
+            <div className="flex flex-col gap-4 bg-white p-4 rounded-md border shadow-2xs">
 
                 <div className="flex flex-col">
                     <h2 className="font-medium mb-2 text-zinc-900">Complainants</h2>
@@ -412,16 +412,24 @@ export function Case() {
                             <TableHeader>
                                 <TableRow>
                                 <TableHead className="text-left px-4 py-2">Full Name</TableHead>
+                                {caseInfo?.complainant_organizations.length > 0 && (
+                                    <TableHead className="text-left px-4 py-2">Organization
+                                    </TableHead>
+                                )}
                                 <TableHead className="text-left px-4 py-2">Contact</TableHead>
                                 <TableHead className="px-4 py-2"></TableHead>
                                 </TableRow>
                             </TableHeader>
 
                             <TableBody>
-                            {case_complainants.map( c => (
+                            {caseInfo?.complainants?.map( c => (
                                 
                                 <TableRow key={c.id} className="border-t">
-                                    <TableCell className="px-4 py-2">{c.first_name} {c.middle_name ? c.middle_name + ' ' : ''}{c.last_name}</TableCell>
+                                    <TableCell className="px-4 py-2">{c.first_name} {c.middle_name ? c.middle_name + ' ' : ''}{c.last_name}
+                                    </TableCell>
+                                    {caseInfo?.complainant_organizations.length > 0 && (
+                                        <TableCell className="px-4 py-2"></TableCell>
+                                    )}
                                     <TableCell className="px-4 py-2">{c.contact_number || "-"}</TableCell>
                                     <TableCell>
                                         <EditCoAttendee co_attendees={caseInfo.complainants} type="complainant"
@@ -430,17 +438,30 @@ export function Case() {
                                 </TableRow>
                                           
                             ))}
+                            {caseInfo?.complainant_organizations?.map( c => (
+                                
+                                <TableRow key={c.id} className="border-t">
+                                    <TableCell className="px-4 py-2">{c.representative_name} </TableCell>
+
+                                    <TableCell className="px-4 py-2">{c.contact_number || "-"}</TableCell>
+                                    <TableCell>
+                                        <EditCoAttendee co_attendees={caseInfo.complainants} type="complainant"
+                                        attendeeInfo={c} />
+                                    </TableCell>
+                                </TableRow>
+                                          
+                            ))}
+                            {caseInfo?.complainants.length == 0 && caseInfo?.complainant_organizations.length == 0 && (
+                                <TableRow>
+                                    <TableCell className="px-4 py-2 text-center" colSpan={3}>No complainants added.</TableCell>
+                                </TableRow>
+                            )}
                             </TableBody>
                         </Table>
                     </div>
                 </div>
             </div>
 
-            )
-            }
-
-            { case_respondents?.length > 0 &&                     
-            (
             <div className="flex flex-col gap-4 bg-white p-4 rounded-md border shadow-2xs">
                 <div className="flex flex-col">
                     <h2 className="font-medium mb-2 text-zinc-900">Respondents</h2>
@@ -449,28 +470,56 @@ export function Case() {
                             <TableHeader>
                                 <TableRow>
                                 <TableHead className="text-left px-4 py-2">Full Name</TableHead>
+                                {caseInfo?.respondent_organizations.length > 0 && (
+                                    <TableHead className="text-left px-4 py-2">Organization
+                                    </TableHead>
+                                )}
                                 <TableHead className="text-left px-4 py-2">Contact</TableHead>
                                 <TableHead className="px-4 py-2"></TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                            {case_respondents.map( c => (
+                            {caseInfo?.respondents?.map( c => (
+                                
                                 <TableRow key={c.id} className="border-t">
                                     <TableCell className="px-4 py-2">{c.first_name} {c.middle_name ? c.middle_name + ' ' : ''}{c.last_name}</TableCell>
+                                    {caseInfo?.respondent_organizations.length > 0 && (
+                                        <TableCell className="px-4 py-2"></TableCell>
+                                    )}
                                     <TableCell className="px-4 py-2">{c.contact_number || "-"}</TableCell>
                                     <TableCell>
                                         <EditCoAttendee co_attendees={caseInfo.respondents} type="respondent"
                                         attendeeInfo={c} />
                                     </TableCell>
                                 </TableRow>
+                                          
                             ))}
+                            {caseInfo?.respondent_organizations?.map( c => (
+                                
+                                <TableRow key={c.id} className="border-t">
+                                    <TableCell className="px-4 py-2">{c.representative_name} </TableCell>
+                                    {caseInfo?.respondent_organizations.length > 0 && (
+                                        <TableCell className="px-4 py-2">{c.name} </TableCell>
+
+                                    )}
+                                    <TableCell className="px-4 py-2">{c.contact_number || "-"}</TableCell>
+                                    <TableCell>
+                                        <EditCoAttendee co_attendees={caseInfo.respondents} type="respondent"
+                                        attendeeInfo={c} />
+                                    </TableCell>
+                                </TableRow>
+                                          
+                            ))}
+                            {caseInfo?.respondents.length == 0 && caseInfo?.respondent_organizations.length == 0 && (
+                                <TableRow>
+                                    <TableCell className="px-4 py-2 text-center" colSpan={3}>No respondents added.</TableCell>
+                                </TableRow>
+                            )}
                         </TableBody>
                     </Table>
                     </div>
                 </div>
             </div>
-            )
-            }
 
             <div className="flex flex-col gap-4 bg-white p-4 rounded-md shadow-2xs border">
                 <h2 className="text-xl font-semibold">Hearing Attendance</h2>

@@ -8,9 +8,18 @@ export function ParticipantCard({participant, type}){
 
     const handleRemove = () => {
         if (type === "complainant") {
-            set_complainants(complainantList.filter((p) => p.first_name !== participant.first_name && p.last_name !== participant.last_name));
+            if (participant.type === 'individual') {
+                set_complainants(complainantList.filter((p) => p.first_name !== participant.first_name && p.last_name !== participant.last_name));
+            } else {
+                set_complainants(complainantList.filter((p) => p.name !== participant.name));
+            }
+            
         } else if (type === "respondent") {
-            set_respondents(respondentList.filter((p) => p.first_name !== participant.first_name && p.last_name !== participant.last_name));
+            if (participant.type === 'individual') {
+                set_respondents(respondentList.filter((p) => p.first_name !== participant.first_name && p.last_name !== participant.last_name));
+            } else {
+                set_respondents(respondentList.filter((p) => p.name !== participant.name));
+            }
         }
     };
     
@@ -19,7 +28,14 @@ export function ParticipantCard({participant, type}){
             <DialogTrigger asChild>     
                 {participant && (
                     <div className="flex items-center justify-between p-3 rounded-md border cursor-pointer col-span-2 ">
-                        <p>{participant.first_name} {participant.last_name}</p>
+                        {participant.type === 'individual' ? (
+                            <p>{participant.first_name} {participant.last_name}</p>
+                        ) : (
+                            <p>{participant.name}</p>
+                        )}
+                        <p className="py-1 px-2  bg-zinc-100 font-medium rounded-full text-xs text-zinc-500 border">
+                            {participant.type}
+                        </p>
                     </div>
                 )}
             </DialogTrigger>

@@ -11,7 +11,7 @@ import { Calendar } from "./ui/calendar";
 import { dateFormatter } from "@/lib/helpers";
 import { Textarea } from "./ui/textarea";
 
-export function HearingProgressDisplay({ hearing, case_complainants, case_respondents }) {
+export function HearingProgressDisplay({ hearing, case_complainants, case_respondents, case_organization_complainants, case_organization_respondents }) {
     const { members } = useLuponStore();
     const [ outcome, setSelectedOutcome ] = useState(null);
     const [ reason, setReason ] = useState("respondent_noShow");

@@ -1,4 +1,4 @@
-import { Download, FileText, CalendarIcon, CircleCheck } from "lucide-react";
+import { Download, FileText, CalendarIcon, CircleCheck, Loader2 } from "lucide-react";
 import { useGenerateDocumentStore } from "@/store/useGenerateDocumentStore";
 import { Label } from "./ui/label";
 import { formatedBday, dateFormatter } from "@/lib/helpers";
@@ -8,13 +8,21 @@ import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
 import { Calendar } from "./ui/calendar";
 import { Input } from "./ui/input";
+import { useCaseStore } from "@/store/useCaseStore";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "./ui/select";
+import { Textarea } from "@/components/ui/textarea"
+import toast from "react-hot-toast";
 
 export function SummonConfirmationDisplay({ hearing, caseInfo }) {
     const { generateDocument, templates } = useGenerateDocumentStore();
+    const [loader, setLoader] = useState(false);
+    const { updateCaseInfo} = useCaseStore();
     const [openCalendar, setOpenCalendar] = useState(false);
     const [summonDeliveryInfo, setSummonDeliveryInfo] = useState({
         date_received: null,
         received_by: null,
+        summon_status: caseInfo.summon_status,
+        remarks: null,
     });
     
 
@@ -26,6 +34,25 @@ export function SummonConfirmationDisplay({ hearing, caseInfo }) {
             console.log(error);
         }
     }
+
+     const submitSummonDeliveryInfo = async () => {
+        if(summonDeliveryInfo.date_received == null &&
+        summonDeliveryInfo.received_by == null) {
+            toast.error("Please fill in the required fields.");
+            return;
+        }
+
+        setLoader(true);
+        try {
+            await updateCaseInfo(summonDeliveryInfo,"update_case", caseInfo.id, false);
+            setLoader(false);
+        } catch (error) {
+                setLoader(false);
+                console.log(error);
+            }
+        }
+        
+
 
     return (
         <div className="flex flex-col gap-2 p-4 border-amber-300 border-t-8 bg-white shadow-md rounded-md">
@@ -59,16 +86,39 @@ export function SummonConfirmationDisplay({ hearing, caseInfo }) {
 
                 <div className="flex flex-col border-l w-full px-4 gap-4">
                     <Label className="font-semibold text-gray-500 ">ACTION REQUIRED</Label>
+                     <div className="flex flex-col gap-1">
+                        <Label className="font-semibold text-gray-600 ">Summon Status</Label>
+                        <Select 
+                        value={summonDeliveryInfo?.summon_status}
+                        onValueChange={(value) => setSummonDeliveryInfo((prev) => ({
+                            ...prev,
+                            summon_status: value,
+                        }))}>
+                            <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Select summon status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectGroup>
+                                <SelectLabel>Summon Status</SelectLabel>
+                                <SelectItem value="served">Served</SelectItem>
+                                <SelectItem value="not_served">Not Served</SelectItem>
+                                <SelectItem value="pending">Pending</SelectItem>
+                                </SelectGroup>
+                            </SelectContent>
+                        </Select>
+                    </div>
                     <div className="flex flex-col gap-1">
                         <Label className="font-semibold text-gray-600 ">Date Received</Label>
                         <Popover
                         open={openCalendar}
                         onOpenChange={() => setOpenCalendar(!openCalendar)}
+                        
                         >
                         <PopoverTrigger asChild>
                             <Button
                             variant="outline"
                             className={cn("justify-between font-normal", !summonDeliveryInfo?.date_received && "text-muted-foreground")}
+                            disabled={ summonDeliveryInfo?.summon_status == 'not_served' }
                             >
                             {summonDeliveryInfo?.date_received
                                 ? dateFormatter(summonDeliveryInfo?.date_received)
@@ -92,11 +142,42 @@ export function SummonConfirmationDisplay({ hearing, caseInfo }) {
                     </div>
                     <div className="flex flex-col gap-1">
                         <Label className="font-semibold text-gray-600 ">Received By (Name)</Label>
-                        <Input type="text" placeholder="e.g. Respondent / Wife" className="bg-white" />
+                        <Input type="text" placeholder="e.g. Respondent / Wife" className="bg-white" 
+                        onChange={(e) => setSummonDeliveryInfo((prev) => ({
+                            ...prev,
+                            received_by: e.target.value,
+                        }))}
+                        />
                     </div>
-                    <Button className="w-full py-5 bg-amber-400 text-white font-semibold ">
-                        <CircleCheck className="size-5" />
-                        Mark Summon/s as Served
+                   
+                    { summonDeliveryInfo?.summon_status === 'not_served' ? (
+                        <div className="flex flex-col gap-1">
+                            <Label className="font-semibold text-gray-600 ">Remarks</Label>
+                            <Textarea 
+                            placeholder="Provide additional details regarding the summon status..." 
+                            className="bg-white"
+                            onChange={(e) => setSummonDeliveryInfo((prev) => ({
+                                ...prev,
+                                remarks: e.target.value,
+                            }))}
+                            />
+                        </div>
+                    ) : (null) }
+                    <Button className="w-full py-5 bg-amber-400 hover:bg-amber-200 text-white font-semibold "
+                    onClick={submitSummonDeliveryInfo}
+                    disabled={ loader }
+                    >
+                        { loader ? (
+                            <>
+                            <Loader2 className="animate-spin size-5 " />
+                            Processing...
+                            </>
+                        ) : (
+                            <>
+                                <CircleCheck className="size-5" />
+                                Mark Summon/s as Served
+                            </>
+                        )}
                     </Button>
                 </div>
 

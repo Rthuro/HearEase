@@ -21,7 +21,10 @@ export const useUserStore = create((set, get) => ({
             });
 
             set({ loading: false });
-            toast.success("User updated successfully.");
+
+            if (response.status === 200) {
+                toast.success("User updated successfully.");
+            }
 
             return response.data;
         } catch (error) {

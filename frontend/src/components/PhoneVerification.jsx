@@ -7,13 +7,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useUserStore } from "@/store/useUserStore";
 
-export default function PhoneVerification({user, setUser, handleUpdate, handleReset, formatTime}) {
+export default function PhoneVerification({user, setUser, handleUpdate, handleReset, formatTime, contactNumber, setContactNumber}) {
     const [phoneVerification, setPhoneVerification] = useState(false);
     const [phoneCode, setPhoneCode] = useState("");
     const [loading, setLoading] = useState(false);
     const [verifyLoading, setVerifyLoading] = useState(false);
     const { fetchUser, sendOTP, verifyOTP } = useUserStore();
-    const [contactNumber, setContactNumber] = useState(user?.contact_number || "");
 
     const contactHasChanges = 
         contactNumber !== (user?.contact_number || "");
@@ -102,37 +101,27 @@ export default function PhoneVerification({user, setUser, handleUpdate, handleRe
                                 </Button>
                             )}
 
-                            {!user?.contact_number  ? (
-                            contactHasChanges ? (
+                            {contactHasChanges ? (
                                 <>
-                                    <Button variant="outline" size="sm" onClick={() => handleReset("contact")}>
-                                        Cancel
-                                    </Button> 
-                                        <Button onClick={() => handleUpdate("contact")} size="sm">
-                                        { loading ? (
+                                    <Button onClick={() => handleUpdate("contact")} size="sm" disabled={loading}>
+                                        {loading ? (
                                             <>
-                                            <Loader2 className="animate-spin size-5 " />
-                                            Saving...
+                                                <Loader2 className="animate-spin size-5" />
+                                                Saving...
                                             </>
-                                        ) : ("Change")}
-                                    </Button> 
+                                        ) : (
+                                            "Save Changes"
+                                        )}
+                                    </Button>
+                                     <Button variant="outline" size="sm" onClick={() => handleReset("contact")}>
+                                        Cancel
+                                    </Button>
                                 </>
-                            ) : <Button variant="secondary" size="sm" disabled>
-                                        Change
-                            </Button> 
-                                
-                            ) :  contactHasChanges ? (
-                            <Button  onClick={() => handleUpdate("contact")} variant="outline" size="sm">
-                                { loading ? (
-                                    <>
-                                    <Loader2 className="animate-spin size-5 " />
-                                    Saving...
-                                    </>
-                                ) : ("Change")}
-                            </Button>
-                            ) : <Button variant="outline" size="sm" disabled>
-                                Change
-                            </Button>}
+                            ) : (
+                                <Button variant="outline" size="sm" disabled>
+                                    {user?.contact_number ? "Change" : "Add Number"}
+                                </Button>
+                            )}
                         </div>
                     
                 </div>

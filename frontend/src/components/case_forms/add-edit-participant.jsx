@@ -29,7 +29,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import toast from "react-hot-toast";
-export function AddEditParticipant({action, type}) {
+export function AddEditParticipant({action, type, form_type, open, onOpenChange}) {
     const typeLabel = type.charAt(0).toUpperCase() + type.slice(1);
     const [openCalendar, setOpenCalendar] = useState(false);
     const { set_complainants, set_respondents, complainantList, respondentList } = useCaseStore(); 
@@ -61,255 +61,432 @@ export function AddEditParticipant({action, type}) {
         barangay: 2,
         street: "",
         additional_info: "",
+        type: "individual"
     });
 
-    const handleSubmit = () => {
-        if (!userData.first_name || !userData.last_name || !userData.birth_date || !userData || !userData.sex || !userData.contact_number || !userData.barangay || !userData.street) {
-            toast.error("Please fill out all required fields.");
-            return;
+    const [organizationData, setOrganizationData] = useState({
+        name: "",
+        representative_name: "",
+        email: "",
+        contact_number: "",
+        barangay: 2,
+        street: "",
+        additional_info: "",
+        type: "organization"
+
+    });
+
+    const handleSubmit = (form_type) => {
+        if (form_type == 'individual') {
+            if (!userData.first_name || !userData.last_name || !userData.birth_date || !userData || !userData.sex || !userData.contact_number || !userData.barangay || !userData.street) {
+                toast.error("Please fill out all required fields.");
+                return;
+            }
+
+            if(action == "Add" && type == "complainant") {
+                set_complainants([...complainantList, userData])
+            }
+            if(action == "Add" && type == "respondent") {
+                set_respondents([...respondentList, userData])
+            }
+
+            setUserData({
+                first_name: "",
+                last_name: "",
+                middle_name: "",
+                birth_date: null,
+                sex: "",
+                contact_number: "",
+                barangay: 2,
+                street: "",
+                additional_info: "",
+                type: "individual"
+            });
         }
 
-        if(action == "Add" && type == "complainant") {
-            set_complainants([...complainantList, userData])
+        if (form_type == 'organization') {
+            if (!organizationData.name || !organizationData.representative_name ||  !organizationData.email || !organizationData.contact_number || !organizationData.barangay || !organizationData.street) {
+                toast.error("Please fill out all required fields.");
+                return;
+            }
+            if(action == "Add" && type == "complainant") {
+                set_complainants([...complainantList, organizationData])
+            }
+            if(action == "Add" && type == "respondent") {
+                set_respondents([...respondentList, organizationData])
+            }
+            setOrganizationData({
+                name: "",
+                representative_name: "",
+                email: "",
+                contact_number: "",
+                barangay: 2,
+                street: "",
+                additional_info: "",
+                type: "organization"
+            });
         }
-        if(action == "Add" && type == "respondent") {
-            set_respondents([...respondentList, userData])
-        }
-
-        setUserData({
-            first_name: "",
-            last_name: "",
-            middle_name: "",
-            birth_date: null,
-            sex: "",
-            contact_number: "",
-            barangay: 2,
-            street: "",
-            additional_info: "",
-        });
+        
     }
     
      return (
-        <Dialog>
-            <DialogTrigger asChild>     
-                { action === 'Add' ? (
-                        <Button variant="outline">
-                            <Plus /> 
-                            Add {typeLabel}
-                        </Button>
-                    ) : (
-                        <Button variant="outline">
-                            <Edit /> 
-                            Edit {typeLabel}
-                        </Button>
-                    )
-                }
-            </DialogTrigger>
+        <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className={cn('sm:max-w-fit')}>
                 <DialogHeader>
                     <DialogTitle>{action} {typeLabel}</DialogTitle>
                     <DialogDescription>{action} {typeLabel} Information.</DialogDescription>
                 </DialogHeader>
-                <div className="grid grid-cols-2 gap-4 overflow-y-scroll max-h-[350px] px-3 py-2 mb-4 ">                                
-                    <div className="grid grid-cols-1 gap-2">
-                        <Label htmlFor="first_name">First Name
-                            <span className="text-redBase">*</span>
-                        </Label>
-                        <Input id="first_name" type="text" className="w-72" 
-                        value={userData.first_name}
-                        onChange ={ (e) => {
-                            setUserData({...userData, first_name: e.target.value});
-                        }}
-                        required
-                        />
-                    </div>
-                    <div className="grid grid-cols-1 gap-2">
-                        <Label htmlFor="middle_name">Middle Name
-                        </Label>
-                        <Input id="middle_name" type="text" className="w-72"
-                        value={userData.middle_name} 
-                        onChange ={ (e) => {
-                            setUserData({...userData, middle_name: e.target.value});
-                        }}
-                        />
-                    </div>
-                    <div className="grid grid-cols-1 gap-2">
-                        <Label htmlFor="last_name">Last Name
-                            <span className="text-redBase">*</span>
-                        </Label>
-                        <Input id="last_name" type="text" className="w-72"
-                        value={userData.last_name}
-                        onChange ={ (e) => {
-                            setUserData({...userData, last_name: e.target.value});
-                        }}
-                        required/>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-2">
-                        <Label htmlFor="birth_date">
-                            Birthday
-                            <span className="text-redBase">*</span>
-                        </Label>
-                        <Popover open={openCalendar} onOpenChange={setOpenCalendar} id="birth_date">
-                            <PopoverTrigger asChild>
-                            <Button
-                                variant="outline"
-                                id="birth_date"
-                                className="w-72 justify-between font-normal"
-                            >
-                                {userData.birth_date
-                                ? dateFormatter(userData.birth_date)
-                                : "Select date"}
-                                <CalendarIcon />
-                            </Button>
-                            </PopoverTrigger>
-
-                            <PopoverContent className="overflow-hidden p-0 w-72" align="start">
-                            <Calendar
-                                mode="single"
-                                selected={userData.birth_date ?? undefined}
-                                captionLayout="dropdown"
-                                disabled={(date) => date > maxDate || date < minDate}
-                                onSelect={(date) => {
-                                setOpenCalendar(false);
-                                setUserData({...userData, birth_date: date});
+                {form_type == 'individual' && (
+                    <div className="flex flex-col gap-3">
+                        <div className="grid grid-cols-2 gap-4 overflow-y-scroll max-h-[350px] px-3 py-2 mb-4 ">                                
+                            <div className="grid grid-cols-1 gap-2">
+                                <Label htmlFor="first_name">First Name
+                                    <span className="text-redBase">*</span>
+                                </Label>
+                                <Input id="first_name" type="text" className="w-72" 
+                                value={userData.first_name}
+                                onChange ={ (e) => {
+                                    setUserData({...userData, first_name: e.target.value});
                                 }}
-                            />
-                            </PopoverContent>
-                        </Popover>
-                    </div>
+                                required
+                                />
+                            </div>
+                            <div className="grid grid-cols-1 gap-2">
+                                <Label htmlFor="middle_name">Middle Name
+                                </Label>
+                                <Input id="middle_name" type="text" className="w-72"
+                                value={userData.middle_name} 
+                                onChange ={ (e) => {
+                                    setUserData({...userData, middle_name: e.target.value});
+                                }}
+                                />
+                            </div>
+                            <div className="grid grid-cols-1 gap-2">
+                                <Label htmlFor="last_name">Last Name
+                                    <span className="text-redBase">*</span>
+                                </Label>
+                                <Input id="last_name" type="text" className="w-72"
+                                value={userData.last_name}
+                                onChange ={ (e) => {
+                                    setUserData({...userData, last_name: e.target.value});
+                                }}
+                                required/>
+                            </div>
 
-                    <div className="grid grid-cols-1 gap-2">
-                        <Label htmlFor="sexComplainant">Sex
-                            <span className="text-redBase">*</span>
-                        </Label>
-                        <DropdownMenu id="sexComplainant">
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="outline">
-                                {userData.sex || "Select"} 
+                            <div className="grid grid-cols-1 gap-2">
+                                <Label htmlFor="birth_date">
+                                    Birthday
+                                    <span className="text-redBase">*</span>
+                                </Label>
+                                <Popover open={openCalendar} onOpenChange={setOpenCalendar} id="birth_date">
+                                    <PopoverTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        id="birth_date"
+                                        className="w-72 justify-between font-normal"
+                                    >
+                                        {userData.birth_date
+                                        ? dateFormatter(userData.birth_date)
+                                        : "Select date"}
+                                        <CalendarIcon />
+                                    </Button>
+                                    </PopoverTrigger>
+
+                                    <PopoverContent className="overflow-hidden p-0 w-72" align="start">
+                                    <Calendar
+                                        mode="single"
+                                        selected={userData.birth_date ?? undefined}
+                                        captionLayout="dropdown"
+                                        disabled={(date) => date > maxDate || date < minDate}
+                                        onSelect={(date) => {
+                                        setOpenCalendar(false);
+                                        setUserData({...userData, birth_date: date});
+                                        }}
+                                    />
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-2">
+                                <Label htmlFor="sexComplainant">Sex
+                                    <span className="text-redBase">*</span>
+                                </Label>
+                                <DropdownMenu id="sexComplainant">
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline">
+                                        {userData.sex || "Select"} 
+                                        </Button>
+                                    </DropdownMenuTrigger>
+
+                                    <DropdownMenuContent className="w-56">
+                                        <DropdownMenuRadioGroup
+                                        value={userData.sex}
+                                        onValueChange={(value) => 
+                                            setUserData({...userData, sex: value})}
+                                        >
+                                        <DropdownMenuRadioItem value="Male">Male</DropdownMenuRadioItem>
+                                        <DropdownMenuRadioItem value="Female">Female</DropdownMenuRadioItem>
+                                        </DropdownMenuRadioGroup>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+                            <div className="grid grid-cols-1 gap-2">
+                                <Label htmlFor="contact">
+                                    Contact Number
+                                    <span className="text-redBase">*</span>
+                                </Label>
+                                <Input id="contact" type="tel"
+                                placeholder="09876543210"
+                                inputMode="numeric"         
+                                pattern="[0-9]*"              
+                                maxLength={11} 
+                                className="w-72"
+                                value={userData.contact_number}
+                                onChange={(e) => {
+                                    const onlyDigits = e.target.value.replace(/\D/g, "");
+                                    setUserData({...userData, contact_number: onlyDigits});
+                                }} />
+                            </div>
+                            
+                            <div className="grid grid-cols-1 col-span-2 gap-2">
+                                <Label htmlFor="address">Address
+                                </Label>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="grid grid-cols-1 gap-2">
+                                        <Label htmlFor="barangay">
+                                            Barangay
+                                            <span className="text-redBase">*</span>
+                                        </Label>
+                                        <DropdownMenu id="barangay">
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="outline">
+                                                    {getBarangayName(userData.barangay) || 'Select'}
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent className="w-72">
+                                                <DropdownMenuRadioGroup 
+                                                value={userData.barangay} 
+                                                onValueChange={(value) => {
+                                                    const streetsForBarangay = getStreets(value);
+                                                    setUserData({
+                                                        ...userData,
+                                                        barangay: value,
+                                                        street: streetsForBarangay[0] || "", 
+                                                    });
+                                                }}>
+
+                                                {barangays.map(b => (
+                                                    <DropdownMenuRadioItem key={b.name} value={b.id}>{b.name}
+                                                    </DropdownMenuRadioItem>
+                                                ))}
+
+                                                </DropdownMenuRadioGroup>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-2">
+                                        <Label htmlFor="street">
+                                            Street
+                                            <span className="text-redBase">*</span>
+                                        </Label>
+                                        <DropdownMenu id="street">
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="outline">
+                                                    {userData.street || 'Select'}
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent className="w-72">
+                                                <DropdownMenuRadioGroup 
+                                                value={userData.street} onValueChange={(value) => 
+                                                setUserData({...userData, street: value})}>
+
+                                                { getStreets(userData.barangay).map(street => (
+                                                        <DropdownMenuRadioItem key={street} 
+                                                        value={street}>{street}
+                                                        </DropdownMenuRadioItem>
+                                                    ))
+                                                }
+                                                </DropdownMenuRadioGroup>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 gap-2 mt-2">
+                                    <Label htmlFor="additional_info">Additional Information</Label>
+                                    <Input id="additional_info" type="text" className="w-full"
+                                    value={userData.additional_info}
+                                    onChange={(e) => 
+                                        setUserData({...userData, additional_info: e.target.value})} 
+                                    />
+                                </div>
+                            </div>    
+                        </div>
+                        <DialogFooter>
+                            <DialogClose asChild>
+                            <Button variant="outline">Cancel</Button>
+                            </DialogClose>
+                            { action === 'Add' ? (
+                                <Button 
+                                onClick={() => handleSubmit("individual")}>
+                                    Add {typeLabel}
                                 </Button>
-                            </DropdownMenuTrigger>
+                            ) : (
+                                <Button 
+                                onClick={() => handleSubmit("individual")}>
+                                    Save Changes
+                                </Button>
+                            )}
+                        </DialogFooter> 
+                    </div>
+                )}
 
-                            <DropdownMenuContent className="w-56">
-                                <DropdownMenuRadioGroup
-                                value={userData.sex}
-                                onValueChange={(value) => 
-                                    setUserData({...userData, sex: value})}
-                                >
-                                <DropdownMenuRadioItem value="Male">Male</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="Female">Female</DropdownMenuRadioItem>
-                                </DropdownMenuRadioGroup>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-                    <div className="grid grid-cols-1 gap-2">
-                        <Label htmlFor="contact">
-                            Contact Number
-                            <span className="text-redBase">*</span>
-                        </Label>
-                        <Input id="contact" type="tel"
-                        placeholder="09876543210"
-                        inputMode="numeric"         
-                        pattern="[0-9]*"              
-                        maxLength={11} 
-                        className="w-72"
-                        value={userData.contact_number}
-                        onChange={(e) => {
-                            const onlyDigits = e.target.value.replace(/\D/g, "");
-                            setUserData({...userData, contact_number: onlyDigits});
-                        }} />
-                    </div>
-                    
-                    <div className="grid grid-cols-1 col-span-2 gap-2">
-                        <Label htmlFor="address">Address
-                        </Label>
-                        <div className="grid grid-cols-2 gap-3">
+                {form_type == 'organization' && (
+                    <div className="flex flex-col gap-3">
+                        <div className="grid grid-cols-2 gap-4 overflow-y-scroll max-h-[350px] px-3 py-2 mb-4 ">                                
                             <div className="grid grid-cols-1 gap-2">
-                                <Label htmlFor="barangay">
-                                    Barangay
+                                <Label htmlFor="first_name">Name
                                     <span className="text-redBase">*</span>
                                 </Label>
-                                <DropdownMenu id="barangay">
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="outline">
-                                            {getBarangayName(userData.barangay) || 'Select'}
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent className="w-72">
-                                        <DropdownMenuRadioGroup 
-                                        value={userData.barangay} 
-                                        onValueChange={(value) => {
-                                            const streetsForBarangay = getStreets(value);
-                                            setUserData({
-                                                ...userData,
-                                                barangay: value,
-                                                street: streetsForBarangay[0] || "", 
-                                            });
-                                        }}>
-
-                                        {barangays.map(b => (
-                                            <DropdownMenuRadioItem key={b.name} value={b.id}>{b.name}
-                                            </DropdownMenuRadioItem>
-                                        ))}
-
-                                        </DropdownMenuRadioGroup>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
+                                <Input id="name" type="text" className="w-72" 
+                                value={organizationData.name}
+                                onChange ={ (e) => {
+                                    setOrganizationData({...organizationData, name: e.target.value});
+                                }}
+                                required
+                                />
                             </div>
                             <div className="grid grid-cols-1 gap-2">
-                                <Label htmlFor="street">
-                                    Street
+                                <Label htmlFor="middle_name">Representative Name
                                     <span className="text-redBase">*</span>
                                 </Label>
-                                <DropdownMenu id="street">
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="outline">
-                                            {userData.street || 'Select'}
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent className="w-72">
-                                        <DropdownMenuRadioGroup 
-                                        value={userData.street} onValueChange={(value) => 
-                                        setUserData({...userData, street: value})}>
-
-                                        { getStreets(userData.barangay).map(street => (
-                                                <DropdownMenuRadioItem key={street} 
-                                                value={street}>{street}
-                                                </DropdownMenuRadioItem>
-                                            ))
-                                        }
-                                        </DropdownMenuRadioGroup>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
+                                <Input id="middle_name" type="text" className="w-72"
+                                value={organizationData.representative_name} 
+                                onChange ={ (e) => {
+                                    setOrganizationData({...organizationData, representative_name: e.target.value});
+                                }}
+                                />
                             </div>
+                            <div className="grid grid-cols-1 gap-2">
+                                <Label htmlFor="last_name">Email
+                                    <span className="text-redBase">*</span>
+                                </Label>
+                                <Input id="email" type="text" className="w-72"
+                                value={organizationData.email}
+                                onChange ={ (e) => {
+                                    setOrganizationData({...organizationData, email: e.target.value});
+                                }}
+                                required/>
+                            </div>
+                            <div className="grid grid-cols-1 gap-2">
+                                <Label htmlFor="contact">
+                                    Contact Number
+                                    <span className="text-redBase">*</span>
+                                </Label>
+                                <Input id="contact" type="tel"
+                                placeholder="09876543210"
+                                inputMode="numeric"         
+                                pattern="[0-9]*"              
+                                maxLength={11} 
+                                className="w-72"
+                                value={organizationData.contact_number}
+                                onChange={(e) => {
+                                    const onlyDigits = e.target.value.replace(/\D/g, "");
+                                    setOrganizationData({...organizationData, contact_number: onlyDigits});
+                                }} />
+                            </div>
+                            
+                            <div className="grid grid-cols-1 col-span-2 gap-2">
+                                <Label htmlFor="address">Address
+                                </Label>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="grid grid-cols-1 gap-2">
+                                        <Label htmlFor="barangay">
+                                            Barangay
+                                            <span className="text-redBase">*</span>
+                                        </Label>
+                                        <DropdownMenu id="barangay">
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="outline">
+                                                    {getBarangayName(organizationData.barangay) || 'Select'}
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent className="w-72">
+                                                <DropdownMenuRadioGroup 
+                                                value={organizationData.barangay} 
+                                                onValueChange={(value) => {
+                                                    const streetsForBarangay = getStreets(value);
+                                                    setOrganizationData({
+                                                        ...organizationData,
+                                                        barangay: value,
+                                                        street: streetsForBarangay[0] || "", 
+                                                    });
+                                                }}>
+
+                                                {barangays.map(b => (
+                                                    <DropdownMenuRadioItem key={b.name} value={b.id}>{b.name}
+                                                    </DropdownMenuRadioItem>
+                                                ))}
+
+                                                </DropdownMenuRadioGroup>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-2">
+                                        <Label htmlFor="street">
+                                            Street
+                                            <span className="text-redBase">*</span>
+                                        </Label>
+                                        <DropdownMenu id="street">
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="outline">
+                                                    {organizationData.street || 'Select'}
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent className="w-72">
+                                                <DropdownMenuRadioGroup 
+                                                value={organizationData.street} onValueChange={(value) => 
+                                                setOrganizationData({...organizationData, street: value})}>
+
+                                                { getStreets(organizationData.barangay).map(street => (
+                                                        <DropdownMenuRadioItem key={street} 
+                                                        value={street}>{street}
+                                                        </DropdownMenuRadioItem>
+                                                    ))
+                                                }
+                                                </DropdownMenuRadioGroup>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 gap-2 mt-2">
+                                    <Label htmlFor="additional_info">Additional Information</Label>
+                                    <Input id="additional_info" type="text" className="w-full"
+                                    value={organizationData.additional_info}
+                                    onChange={(e) => 
+                                        setOrganizationData({...organizationData, additional_info: e.target.value})} 
+                                    />
+                                </div>
+                            </div>    
                         </div>
-                        <div className="grid grid-cols-1 gap-2 mt-2">
-                            <Label htmlFor="additional_info">Additional Information</Label>
-                            <Input id="additional_info" type="text" className="w-full"
-                            value={userData.additional_info}
-                            onChange={(e) => 
-                                setUserData({...userData, additional_info: e.target.value})} 
-                            />
-                        </div>
-                    </div>    
-                </div>
-                
-                <DialogFooter>
-                    <DialogClose asChild>
-                    <Button variant="outline">Cancel</Button>
-                    </DialogClose>
-                    { action === 'Add' ? (
-                        <Button 
-                        onClick={handleSubmit}>
-                            Add {typeLabel}
-                        </Button>
-                    ) : (
-                        <Button 
-                        onClick={handleSubmit}>
-                            Save Changes
-                        </Button>
-                    )}
-                </DialogFooter>
+                         <DialogFooter>
+                            <DialogClose asChild>
+                            <Button variant="outline">Cancel</Button>
+                            </DialogClose>
+                            { action === 'Add' ? (
+                                <Button 
+                                onClick={() => handleSubmit("organization")}>
+                                    Add Organization
+                                </Button>
+                            ) : (
+                                <Button 
+                                onClick={() => handleSubmit("organization")}>
+                                    Save Changes
+                                </Button>
+                            )}
+                        </DialogFooter> 
+                    </div>
+                )}
+
             </DialogContent>
         </Dialog>
     )

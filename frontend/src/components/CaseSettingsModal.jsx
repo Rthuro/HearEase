@@ -8,7 +8,8 @@ import {
   CheckCircle, 
   Bell, 
   Pencil, 
-  AlertTriangle 
+  AlertTriangle ,
+  Loader2
 } from "lucide-react";
 import {
   Dialog,
@@ -26,13 +27,15 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input"; 
 import { useCaseStore } from "@/store/useCaseStore";
-
-export function CaseSettingsModal({ caseData, onDelete, onUpdate }) {
-  const {deleteCase} = useCaseStore();
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+export function CaseSettingsModal({ role, caseData}) {
+  const {deleteCase, updateCaseInfo} = useCaseStore();
   const [open, setOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteInput, setDeleteInput] = useState("");
-
+  const [loader, setLoader] = useState(false);
+  const navigate = useNavigate();
   // Placeholder handlers
   const handleExportPDF = () => console.log("Exporting PDF for", caseData.id);
   const handlePrint = () => window.print();
@@ -42,10 +45,32 @@ export function CaseSettingsModal({ caseData, onDelete, onUpdate }) {
   // Secure Delete Logic
   const handleDelete = () => {
     if (deleteInput === "DELETE") {
-      deleteCase(caseData.id);
+      deleteCase(caseData.id , 'delete');
       setOpen(false);
     }
   };
+
+  const handleCancelCase = async () => {
+    setLoader(true);
+    let  updateData = null;
+    if( caseData.summon_status !=='served'){
+      updateData = { case_status: 'archived'};
+    }
+    if(caseData.summon_status =='served'){
+      updateData = { case_status: 'resolved', remarks: 'Settled outside Katarungang Pambarangay Jurisdiction' };
+    }
+    await updateCaseInfo(updateData, 'case', caseData.id);
+    navigate(-1);
+    toast.success("Case cancelled successfully");
+    setLoader(false);
+  };
+
+  const handleWithdrawCase = async () => {
+      setLoader(true);
+      await deleteCase(caseData.id, 'withdraw');
+      navigate(-1);
+      setLoader(false);
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -83,7 +108,7 @@ export function CaseSettingsModal({ caseData, onDelete, onUpdate }) {
               <Button variant="ghost" size="sm">Edit</Button>
             </div>
 
-            <div className="flex items-center justify-between">
+            {/* <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-yellow-50 text-yellow-600 rounded-md">
                   <Bell className="h-4 w-4" />
@@ -94,7 +119,7 @@ export function CaseSettingsModal({ caseData, onDelete, onUpdate }) {
                 </div>
               </div>
               <Switch defaultChecked />
-            </div>
+            </div> */}
           </div>
 
           <Separator />
@@ -125,22 +150,28 @@ export function CaseSettingsModal({ caseData, onDelete, onUpdate }) {
           <Separator />
 
           {/* Section 3: Case Management */}
-          <div className="space-y-4">
-            <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Management</h4>
-            
-            <div className="flex flex-col gap-2">
-                <Button variant="ghost" className="justify-start w-full" onClick={handleResolve}>
-                    <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
-                    Mark as Resolved / Closed
-                </Button>
-                <Button variant="ghost" className="justify-start w-full" onClick={handleArchive}>
-                    <Archive className="h-4 w-4 mr-2 text-orange-600" />
-                    Archive Case (Hide from active list)
-                </Button>
-            </div>
-          </div>
+          { role == 'admin' && (
+            <>
+              <div className="space-y-4">
+                <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Management</h4>
+                
+                <div className="flex flex-col gap-2">
+                    <Button variant="ghost" className="justify-start w-full" onClick={handleResolve}>
+                        <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+                        Mark as Resolved / Closed
+                    </Button>
+                    <Button variant="ghost" className="justify-start w-full" onClick={handleArchive}>
+                        <Archive className="h-4 w-4 mr-2 text-orange-600" />
+                        Archive Case (Hide from active list)
+                    </Button>
+                </div>
+              </div>
+              <Separator />
+            </>
+          
+          )}
+          
 
-          <Separator />
 
           {/* Section 4: Danger Zone (Delete) */}
           <div className="rounded-lg border border-red-200 bg-red-50 p-4">
@@ -153,8 +184,52 @@ export function CaseSettingsModal({ caseData, onDelete, onUpdate }) {
                     <p className="text-xs text-red-700">Irreversible actions regarding this case.</p>
                 </div>
             </div>
+            { role !== 'admin' && caseData?.case_status == 'approved' && (
+                <Button 
+                    variant="destructive" 
+                    className="w-full bg-red-600 hover:bg-red-700"
+                    onClick={handleCancelCase}
+                    disabled={loader}
+                >
+                  {loader ? (
+                    <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Cancelling Case
+                    </>
+                  ) : (
+                    <>
+                    <Trash2 className="h-4 w-4" />
+                    Cancel Case
+                    </>
+                  )}
+                    
+                </Button>
+            )}
 
-            {!showDeleteConfirm ? (
+            { role !== 'admin' && caseData?.case_status == 'pending_approval' && (
+               <Button 
+                    variant="destructive" 
+                    className="w-full bg-red-600 hover:bg-red-700"
+                    onClick={handleWithdrawCase}
+                    disabled={loader}
+                >
+                  {loader ? (
+                    <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Withdrawing your case...
+                    </>
+                  ) : (
+                    <>
+                    <Trash2 className="h-4 w-4" />
+                    Withdraw Case
+                    </>
+                  )}
+                    
+                </Button>
+            )}
+
+            {role === 'admin' ? 
+                !showDeleteConfirm ? (
                 <Button 
                     variant="destructive" 
                     className="w-full bg-red-600 hover:bg-red-700"
@@ -195,7 +270,7 @@ export function CaseSettingsModal({ caseData, onDelete, onUpdate }) {
                         </Button>
                     </div>
                 </div>
-            )}
+            ) : null}            
           </div>
 
         </div>
