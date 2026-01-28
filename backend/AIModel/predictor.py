@@ -10,14 +10,9 @@ import pandas as pd
 import joblib
 
 # Suppress warnings for cleaner output
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-warnings.filterwarnings('ignore')
+# os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+# warnings.filterwarnings('ignore')
 
-import tensorflow as tf
-tf.get_logger().setLevel('ERROR')
-
-# from tensorflow.keras.models import load_model
-from keras.models import load_model
 
 # Get the directory where this module is located
 MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -47,6 +42,13 @@ def _load_global_artifacts():
     
     if _model_cache:
         return _model_cache
+
+    print("Initializing TensorFlow and loading model artifacts...")
+
+    import tensorflow as tf
+    from keras.models import load_model
+    # tf.get_logger().setLevel('ERROR')
+
     
     global_dir = os.path.join(MODELS_DIR, "GLOBAL")
     
