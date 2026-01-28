@@ -1,4 +1,3 @@
-import cv2
 from django.shortcuts import render
 from rest_framework import generics, status, permissions
 from django.contrib.auth import get_user_model
@@ -8,18 +7,12 @@ from rest_framework.response import Response
 from firebase_admin import auth
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
-import time
 from django.utils import timezone
 from datetime import timedelta
 import random
 from .models import OTP
 from .utils import send_otp_email, send_otp_sms
 import os
-import uuid
-import easyocr
-from thefuzz import fuzz
-from django.core.files.storage import default_storage
-from deepface import DeepFace
 from .serializers import RegisterSerializer, LoginSerializer, UserInfoSerializer, NotificationPreferenceSerializer
 from django.core.files.base import ContentFile
 
@@ -258,10 +251,17 @@ class VerifyOTPView(APIView):
             return Response({"error": "Invalid code"}, status=status.HTTP_400_BAD_REQUEST)
     permission_classes = [IsAuthenticated] 
 
-reader = easyocr.Reader(['en'])
 
 class VerifyIdentityView(APIView):
     def post(self, request):
+        import cv2
+        import uuid
+        from thefuzz import fuzz
+        from django.core.files.storage import default_storage
+        
+        import easyocr
+        from deepface import DeepFace
+
         id_image = request.FILES.get('id_image')
         user_image = request.FILES.get('user_image')
 
@@ -282,6 +282,8 @@ class VerifyIdentityView(APIView):
         abs_user_path = default_storage.path(user_path)
 
         try:
+            reader = easyocr.Reader(['en'], gpu=False) 
+
             id_img_cv2 = cv2.imread(abs_id_path)
             user_img_cv2 = cv2.imread(abs_user_path)
 
