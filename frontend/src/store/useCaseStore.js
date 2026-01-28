@@ -329,7 +329,7 @@ export const useCaseStore = create((set, get) => ({
                 return;
             }
 
-            const data = await getCasePersonByUserEmail(user_data.userInfo.email);
+            const data = await getUser(user_data.userInfo.email);
 
             const user = data;
             set({ initialUserComplainantInfo: {
