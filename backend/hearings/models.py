@@ -10,6 +10,7 @@ class Hearing(models.Model):
         ("pending_schedule", "Pending Schedule"),
         ("scheduled", "Scheduled"),
         ("rescheduled", "Rescheduled"),
+        ("cancelled", "Cancelled"),
         ("completed", "Completed"),
         ("pending_decision", "Pending Decision"),
     ]
