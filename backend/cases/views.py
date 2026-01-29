@@ -88,6 +88,7 @@ class CaseView(APIView):
 
                     complainants_individuals_ids.append(check_complainant.id)
                 else:
+                    complainant.pop('type', None) 
                     complainant_obj = CasePerson.objects.create(**complainant)
                     complainants_individuals_ids.append(complainant_obj.id)
             else:
