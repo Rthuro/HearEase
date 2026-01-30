@@ -329,20 +329,21 @@ export const useCaseStore = create((set, get) => ({
                 return;
             }
 
-            const data = await getUser(user_data.userInfo.email);
+            const data = await getUser(user_data?.userInfo.email);
+            console.log("Fetched complainant info data:", data);
 
-            const user = data;
+            if(!data) return;
+
             set({ initialUserComplainantInfo: {
-                id: user?.id,
-                first_name: user?.first_name,
-                last_name:user?.last_name,
-                middle_name: user?.middle_name,
-                birth_date: user?.birth_date,
-                sex: user?.sex,
-                contact_number: user?.contact_number,
-                barangay: user?.barangay,
-                street: user?.street,
-                additional_info: user?.additional_info,
+                first_name: data?.user?.first_name,
+                last_name:data?.user?.last_name,
+                middle_name: data?.user?.middle_name,
+                birth_date: data?.user?.birth_date,
+                sex: data?.user?.sex,
+                contact_number: data?.user?.contact_number,
+                barangay: data?.user?.barangay,
+                street: data?.user?.street,
+                additional_info: data?.user?.additional_info,
                 type: "individual"
                 }
             });

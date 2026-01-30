@@ -1,5 +1,5 @@
 import { Edit, Plus, CalendarIcon} from "lucide-react";
-import { useEffect, useState } from "react";
+import { act, useEffect, useState } from "react";
 import { Dialog,
     DialogContent,
     DialogTrigger,
@@ -29,7 +29,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import toast from "react-hot-toast";
-export function AddEditParticipant({action, type, form_type, open, onOpenChange}) {
+
+export function AddEditParticipant({action, type, form_type, open, onOpenChange, editUserData, editOrganizationData}) {
     const typeLabel = type.charAt(0).toUpperCase() + type.slice(1);
     const [openCalendar, setOpenCalendar] = useState(false);
     const { set_complainants, set_respondents, complainantList, respondentList } = useCaseStore(); 
@@ -76,6 +77,25 @@ export function AddEditParticipant({action, type, form_type, open, onOpenChange}
 
     });
 
+   useEffect(() => {
+        if (open) { 
+            if (action === "Edit") {
+                if (editUserData) setUserData(editUserData);
+                if (editOrganizationData) setOrganizationData(editOrganizationData);
+            } else {
+                setUserData({
+                    first_name: "", last_name: "", middle_name: "", birth_date: null,
+                    sex: "", contact_number: "", barangay: 2, street: "",
+                    additional_info: "", type: "individual"
+                });
+                setOrganizationData({
+                    name: "", representative_name: "", email: "", contact_number: "",
+                    barangay: 2, street: "", additional_info: "", type: "organization"
+                });
+            }
+        }
+    }, [open, action, editUserData, editOrganizationData]);
+
     const handleSubmit = (form_type) => {
         if (form_type == 'individual') {
             if (!userData.first_name || !userData.last_name || !userData.birth_date || !userData || !userData.sex || !userData.contact_number || !userData.barangay || !userData.street) {
@@ -83,25 +103,42 @@ export function AddEditParticipant({action, type, form_type, open, onOpenChange}
                 return;
             }
 
-            if(action == "Add" && type == "complainant") {
-                set_complainants([...complainantList, userData])
+            if(action == "Add" ) {
+                if(type == "complainant"){
+                    set_complainants([...complainantList, userData])
+                }
+                if(type == "respondent"){
+                    set_respondents([...respondentList, userData])
+                }
+                setUserData({
+                    first_name: "",
+                    last_name: "",
+                    middle_name: "",
+                    birth_date: null,
+                    sex: "",
+                    contact_number: "",
+                    barangay: 2,
+                    street: "",
+                    additional_info: "",
+                    type: "individual"
+                });
             }
-            if(action == "Add" && type == "respondent") {
-                set_respondents([...respondentList, userData])
+            if (action === "Edit") {
+                const isComplainant = type === "complainant";
+                const list = isComplainant ? complainantList : respondentList;
+                const setter = isComplainant ? set_complainants : set_respondents;
+
+                const updatedList = list.map((p) => {
+                    if (p.first_name === editUserData.first_name && p.last_name === editUserData.last_name) {
+                        return userData;
+                    }
+                    return p;
+                });
+
+                setter(updatedList);
             }
 
-            setUserData({
-                first_name: "",
-                last_name: "",
-                middle_name: "",
-                birth_date: null,
-                sex: "",
-                contact_number: "",
-                barangay: 2,
-                street: "",
-                additional_info: "",
-                type: "individual"
-            });
+           
         }
 
         if (form_type == 'organization') {
@@ -109,23 +146,37 @@ export function AddEditParticipant({action, type, form_type, open, onOpenChange}
                 toast.error("Please fill out all required fields.");
                 return;
             }
-            if(action == "Add" && type == "complainant") {
-                set_complainants([...complainantList, organizationData])
+             if(action == "Add" ) {
+                if(type == "complainant"){
+                   set_complainants([...complainantList, organizationData])
+
+                }
+                if(type == "respondent"){
+                    set_respondents([...respondentList, organizationData])
+                }
+                 setOrganizationData({
+                    name: "",
+                    representative_name: "",
+                    email: "",
+                    contact_number: "",
+                    barangay: 2,
+                    street: "",
+                    additional_info: "",
+                    type: "organization"
+                });
             }
-            if(action == "Add" && type == "respondent") {
-                set_respondents([...respondentList, organizationData])
+            if (action === "Edit") {
+                const list = type === "complainant" ? complainantList : respondentList;
+                const setter = type === "complainant" ? set_complainants : set_respondents;
+                
+                const updatedList = list.map((p) => 
+                    p.representative_name === editOrganizationData.representative_name ? organizationData : p
+                );
+                setter(updatedList);
             }
-            setOrganizationData({
-                name: "",
-                representative_name: "",
-                email: "",
-                contact_number: "",
-                barangay: 2,
-                street: "",
-                additional_info: "",
-                type: "organization"
-            });
+           
         }
+        onOpenChange(false);
         
     }
     
@@ -344,7 +395,7 @@ export function AddEditParticipant({action, type, form_type, open, onOpenChange}
                     <div className="flex flex-col gap-3">
                         <div className="grid grid-cols-2 gap-4 overflow-y-scroll max-h-[350px] px-3 py-2 mb-4 ">                                
                             <div className="grid grid-cols-1 gap-2">
-                                <Label htmlFor="first_name">Name
+                                <Label htmlFor="first_name">Organization Name
                                     <span className="text-redBase">*</span>
                                 </Label>
                                 <Input id="name" type="text" className="w-72" 

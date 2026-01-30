@@ -18,18 +18,18 @@ import { Dialog,
   DialogTitle,
   DialogDescription
 } from "@/components/ui/dialog"
+import { checkIndividual , checkOrg } from "@/lib/helpers";
 
 export function RetrievePopover({participantType}) {
     const { complainantList, set_complainants, respondentList, set_respondents} = useCaseStore();
     const { complainants, respondents, complainants_orgs, respondents_orgs } = useRetrieveUsersStore();
+
     const display_complainants = () => {
         const complainant_indiv = complainants.map((c) => ({
-            id: c.id,
-            name: `${c.first_name} ${c.middle_name || ''} ${c.last_name}`,
+            name: `${c.first_name} ${c.middle_name} ${c.last_name}`,
             type: 'individual'}));
 
         const complainant_orgs = complainants_orgs.map((c) => ({
-            id: c.id,
             name: c.representative_name,
             type: 'organization'}));
 
@@ -38,11 +38,9 @@ export function RetrievePopover({participantType}) {
 
     const display_respondents = () => {
         const respondent_indiv = respondents.map((r) => ({
-            id: r.id,
-            name: `${r.first_name} ${r.middle_name || ''} ${r.last_name}`,
+            name: `${r.first_name} ${r.middle_name} ${r.last_name}`,
             type: 'individual'}));
         const respondent_orgs = respondents_orgs.map((r) => ({
-            id: r.id,
             name: r.representative_name,
             type: 'organization'}));
         return [...respondent_indiv, ...respondent_orgs];
@@ -53,31 +51,19 @@ export function RetrievePopover({participantType}) {
     const participantKey = participantType === "complainant" ? "complainant" : "respondent";
 
     const handleSelect = (user) => {
-        // const userData = {
-        //         id: user.id,
-        //         first_name: user.first_name,
-        //         middle_name: user.middle_name,
-        //         last_name: user.last_name,
-        //         sex: user.sex,
-        //         contact_number: user.contact_number,
-        //         birth_date: user.birth_date,
-        //         barangay: user.barangay,
-        //         street: user.street,
-        //         additional_info: user.additional_info,
-        //         type: "individual"
-        //     };
         let data = null;
 
         if (participantType === "complainant" ) {
             
             if (user.type === 'individual') {
-                data = complainants.find((c) => c.id === user.id) || respondents.find((r) => r.id === user.id);
+                data = complainants.find((c) => 
+                `${c.first_name} ${c.middle_name || ''} ${c.last_name}` === user.name);
                 data = {
                         ...data,
                         type: 'individual'
                 };
             } else {
-                data = complainants_orgs.find((c) => c.id === user.id) || respondents_orgs.find((r) => r.id === user.id);
+                data = complainants_orgs.find((c) => c.representative_name === user.name);
                 data = {
                         ...data,
                         type: 'organization'
@@ -86,13 +72,14 @@ export function RetrievePopover({participantType}) {
             set_complainants([...complainantList, data]);
         } else {
             if (user.type === 'individual') {
-                data = respondents.find((r) => r.id === user.id) || complainants.find((c) => c.id === user.id);
+                data = respondents.find((r) => 
+                `${r.first_name} ${r.middle_name || ''} ${r.last_name}` === user.name);
                 data = {
                         ...data,
                         type: 'individual'
                 };
             } else {
-                data = respondents_orgs.find((r) => r.id === user.id) || complainants_orgs.find((c) => c.id === user.id);
+                data = respondents_orgs.find((r) => r.representative_name === user.name);
                 data = {
                         ...data,
                         type: 'organization'
@@ -103,12 +90,32 @@ export function RetrievePopover({participantType}) {
     }
 
     const handleReselect = (user) => {
-         if (participantType === "complainant") {
-            set_complainants(complainantList.filter((p) => p.id !== user.id && p.type !== user.type));
-        } else {
-            set_respondents(respondentList.filter((p) => p.id !== user.id && p.type !== user.type));
-        }
-    }
+    // 1. Determine which list and which setter to use
+    const isComplainant = participantType === "complainant";
+    const currentList = isComplainant ? complainantList : respondentList;
+    const setter = isComplainant ? set_complainants : set_respondents;
+
+    // 2. Filter out the selected user using the same normalization logic as your helpers
+    const updatedList = currentList.filter((u) => {
+            if (user.type === 'individual') {
+                const fullName = `${u.first_name}${u.middle_name || ''}${u.last_name}`;
+                const normalizedItem = fullName.toLowerCase().replace(/\s+/g, '');
+                const normalizedInput = user.name.toLowerCase().replace(/\s+/g, '');
+                
+                // Keep the item if it DOES NOT match the clicked user
+                return !(normalizedItem === normalizedInput && u.type === user.type);
+            } else {
+                const fullName = u.representative_name;
+                const normalizedItem = fullName.toLowerCase().replace(/\s+/g, '');
+                const normalizedInput = user.name.toLowerCase().replace(/\s+/g, '');
+                
+                return !(normalizedItem === normalizedInput && u.type === user.type);
+            }
+        });
+
+        // 3. Update the store
+        setter(updatedList);
+    };
 
     const participantsList = participantType == "complainant" ? display_complainants() : display_respondents();
 
@@ -119,13 +126,21 @@ export function RetrievePopover({participantType}) {
     }
 
    const isSelected = (user) => {
+        // data format: name and type
+        // console.log("Checking if selected (filteredParticipantsList):", user);
+        
         const list = participantType === "complainant" ? complainantList : respondentList;
-        return list.some((u) => 
-            u?.id === user?.id && u?.type === user?.type
-        );
+
+        // data format: original datas from db
+        // console.log("ComplainantList:", list);
+
+        if(user.type === 'individual') {   
+            return checkIndividual(list, user);
+                
+        } else {
+            return checkOrg(list, user);
+        }
     };
-
-
 
 
 return <div className="flex justify-end gap-3">
@@ -157,22 +172,26 @@ return <div className="flex justify-end gap-3">
                         <CommandList>
                             {filteredParticipantsList().length > 0 ? (
                                 filteredParticipantsList().map((user) => (
-                                    <DialogClose  key={user.id} asChild>
                                         <CommandItem
-                                        key={user.id}
-                                        onSelect={() => {
-                                            if (isSelected(user)) {
-                                                handleReselect(user);
-                                            } else {
-                                                handleSelect(user)
-                                            }
-                                        }}
-                                        className="cursor-pointer"
+                                            key={user.id}
+                                            onSelect={() => {
+                                                if (isSelected(user)) {
+                                                    handleReselect(user);
+                                                } else {
+                                                    handleSelect(user);
+                                                }
+                                            }}
+                                            className="cursor-pointer"
                                         >
-                                        {isSelected(user) && <Check />}
-                                        {user.name}
+                                            <div className="flex items-center gap-2">
+                                                {isSelected(user) ? (
+                                                    <Check className="h-4 w-4 text-green-500" /> 
+                                                ) : (
+                                                    <div className="w-4" /> // Spacer for alignment
+                                                )}
+                                                {user.name}
+                                            </div>
                                         </CommandItem>
-                                    </DialogClose>
                                     
                                 ))
                             ) : (

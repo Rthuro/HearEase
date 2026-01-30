@@ -40,6 +40,7 @@ export function FileCase(){
             try {
                 
                 await Promise.all([
+                    setComplainantInfo(),
                     fetchComplainants(),
                     fetchOrganizationComplainants(),
                     fetchRespondents(),
@@ -58,17 +59,19 @@ export function FileCase(){
     }, []);
 
     const isSelected = (user) => {
+        const name = `${user.first_name} ${user.middle_name} ${user.last_name}`;
         return complainantList.some((u) => 
-            u.id === user.id && u.type === user.type
+            u.name === name && u.type === user.type
         );
     };
 
     useEffect(() => {
-        setComplainantInfo()
         if(userRole === 'user' && !isSelected(initialUserComplainantInfo)) {
             set_complainants([initialUserComplainantInfo])
         }
     }, [])
+
+    // console.log("Initial User Complainant Info:", initialUserComplainantInfo);
 
     return (
         <main className='flex flex-col w-full items-center justify-center gap-6 mt-14 '>
