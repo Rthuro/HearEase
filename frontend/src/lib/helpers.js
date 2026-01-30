@@ -49,3 +49,26 @@ export const getBarangay = (barangayList, barangayName) => {
         return barangay;
 }
 
+export const checkIndividual = (list, check) => {
+    return list.some((u) => {
+        const fullName = `${u.first_name}${u.middle_name || ''}${u.last_name}`;
+        
+        const normalizedListImg = fullName.toLowerCase().replace(/\s+/g, '');
+        
+        const normalizedInputName = check.name.toLowerCase().replace(/\s+/g, '');
+
+        return normalizedListImg === normalizedInputName && u?.type === check?.type;
+    });
+}
+
+export const checkOrg = (list, check) => {
+    return list.some((u) => {
+        const fullName = u.representative_name;
+        
+        const normalizedListImg = fullName.toLowerCase().replace(/\s+/g, '');
+        
+        const normalizedInputName = check.name.toLowerCase().replace(/\s+/g, '');
+
+        return normalizedListImg === normalizedInputName && u?.type === check?.type;
+    });
+}
