@@ -21,8 +21,9 @@ export function SummonConfirmationDisplay({ hearing, caseInfo }) {
     const [summonDeliveryInfo, setSummonDeliveryInfo] = useState({
         date_received: null,
         received_by: null,
-        summon_status: caseInfo.summon_status,
+        summon_status: caseInfo?.summon_status,
         remarks: null,
+        case_status: caseInfo?.case_status,
     });
     
 
@@ -93,6 +94,7 @@ export function SummonConfirmationDisplay({ hearing, caseInfo }) {
                         onValueChange={(value) => setSummonDeliveryInfo((prev) => ({
                             ...prev,
                             summon_status: value,
+                            case_status: value === 'served' ? 'in_progress' : prev.case_status,
                         }))}>
                             <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Select summon status" />

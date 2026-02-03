@@ -185,7 +185,7 @@ export default function Hearing() {
                 )}   
 
                 { caseInfo?.summon_status == 'served' && (
-                    <HearingProgressDisplay hearing={hearing} case_complainants={caseInfo?.complainants} case_respondents={caseInfo?.respondents} case_organization_complainants={caseInfo?.organization_complainants} case_organization_respondents={caseInfo?.organization_respondents} />
+                    <HearingProgressDisplay hearing={hearing} case_complainants={caseInfo?.complainants} case_respondents={caseInfo?.respondents} case_organization_complainants={caseInfo?.organization_complainants} case_organization_respondents={caseInfo?.organization_respondents}/>
                 )}          
             </div>
         )

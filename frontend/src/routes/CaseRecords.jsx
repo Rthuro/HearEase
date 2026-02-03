@@ -96,7 +96,7 @@ export function CaseRecords(){
             )}
 
             {userInfo?.role === 'admin' && (
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2 flex-wrap">
                     <h1 className="text-2xl font-bold">Case Records</h1>    
                     <div className="grid grid-cols-4 gap-4">
                         {adminCards.map((card) => (
@@ -111,10 +111,10 @@ export function CaseRecords(){
 
             
             <section className="flex flex-col gap-3 mt-3 bg-white border border-zinc-200 rounded-lg p-6">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center">
+                <div className="flex items-center justify-between flex-wrap-reverse md:flex-nowrap gap-3">
+                    <div className="flex items-center w-full">
                         <Search className="text-zinc-400 ml-3" size={16} />
-                        <Input type="text" placeholder="Search for case..." className="w-72 -ml-6 pl-8" />
+                        <Input type="text" placeholder="Search for case..." className="w-full md:w-72 -ml-6 pl-8" />
                     </div>
                     <div className="flex items-center gap-2">
                         <div className="flex items-center">

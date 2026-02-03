@@ -53,6 +53,11 @@ export const getHearingsByCase = async (case_id) => {
   return response.data;
 };
 
+export const updateHearingProgress = async (hearingId, payload) => {
+  const response = await axios.put(`${API_URL}/hearing-progress-update/${hearingId}/`, payload);
+  return response.data;
+};
+
 const useHearingStore = create((set, get) => ({
   hearings: [],
   loading: false,
@@ -168,6 +173,19 @@ const useHearingStore = create((set, get) => ({
     }
   },
 
+  updateCaseHearingProgress: async (hearingId, payload) => {
+    try {
+      const response = await updateHearingProgress(hearingId, payload);
+      return { success: true, data: response };
+    } catch (error) {
+      const isNetworkError = !error.response;
+      const errorMessage = isNetworkError
+        ? "Network error. Please check your connection."
+        : "Failed to update hearing progress";
+      toast.error(errorMessage);
+      return { success: false, retry: isNetworkError };
+    }
+  },
 }));
 
 export default useHearingStore;

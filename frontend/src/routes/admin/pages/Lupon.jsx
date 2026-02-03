@@ -147,10 +147,8 @@ export function Lupon(){
                             <TableRow>
                             <TableHead className="text-left px-4 py-2">Case #</TableHead>
                             <TableHead className="text-left px-4 py-2">Case Type</TableHead>
+                            <TableHead className="text-left px-4 py-2">Severity</TableHead>
                             <TableHead className="text-left px-4 py-2">Status</TableHead>
-                            <TableHead className="text-left px-4 py-2">Date</TableHead>
-                            <TableHead className="text-left px-4 py-2">Time</TableHead>
-                            <TableHead className="text-left px-4 py-2">Hearing #</TableHead>
                             <TableHead className="px-4 py-2"></TableHead>
                             </TableRow>
                         </TableHeader>
@@ -161,10 +159,8 @@ export function Lupon(){
                                 <TableRow key={c.id} className="border-t">
                                 <TableCell className="px-4 py-2">{c.id}</TableCell>
                                 <TableCell className="px-4 py-2">{c.case_type.case_name}</TableCell>
+                                <TableCell className="px-4 py-2">{c.case_type.severity}</TableCell>
                                 <TableCell className="px-4 py-2"> <CaseStatusDisplay caseStatus={c.case_status} /></TableCell>
-                                <TableCell className="px-4 py-2">date</TableCell>
-                                <TableCell className="px-4 py-2">time</TableCell>
-                                <TableCell className="px-4 py-2">hearing #</TableCell>
                                 <TableCell className={cn("py-4")}>
                                     <Link
                                     to = {`/Admin/Case/${c.id}`}
@@ -207,7 +203,7 @@ export function Lupon(){
                             memberDetails?.hearings?.map((h) => (
                                 <TableRow key={h.id} className="border-t">
                                 <TableCell className="px-4 py-2">{h.id}</TableCell>
-                                <TableCell className="px-4 py-2">{h.case_id}</TableCell>
+                                <TableCell className="px-4 py-2">{h.case}</TableCell>
                                 <TableCell className="px-4 py-2"> <CaseStatusDisplay caseStatus={h.hearing_status} /></TableCell>
                                 <TableCell className="px-4 py-2">{h.hearing_date}</TableCell>
                                 <TableCell className="px-4 py-2">{h.time}</TableCell>

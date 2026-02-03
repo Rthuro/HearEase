@@ -98,7 +98,7 @@ export function LuponManagement(){
     return(
         <div className="p-6 flex flex-col gap-2">
             <PageSync page="Lupon Management" />
-                <div className="border rounded-lg overflow-hidden bg-white">
+                <div className="border rounded-lg overflow-hidden bg-white w-5xl">
                     <Table>
                         <TableHeader>
                         <TableRow>
@@ -307,7 +307,7 @@ export function LuponManagement(){
                                                         <DropdownMenuRadioGroup 
                                                         value={formData.street.value} onValueChange={(value) => setFormData('street', value)}>
 
-                                                        {getStreets(formData.barangay.value).map(street => (
+                                                        {getStreets(barangays, formData?.barangay?.value).map(street => (
                                                             <DropdownMenuRadioItem key={street} value={street}>{street}</DropdownMenuRadioItem>
                                                         ))}
 

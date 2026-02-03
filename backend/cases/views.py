@@ -468,6 +468,59 @@ class UpdateCaseInfoView(APIView):
             return Response(response_data, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UpdateHearingProgressView(APIView):
+    def put(self, request, pk):
+        outcome = request.data.get("outcome")
+        hearing_id = request.data.get("hearing_id")
+        hearing_number = request.data.get("hearing_number")
+
+        try:
+            case = Case.objects.get(pk=pk)
+        except Case.DoesNotExist:
+            return Response({"error": "Case not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Start a transaction so that if one part fails, nothing is saved
+        with transaction.atomic():
+            
+            if outcome == "rescheduled":
+                resched_date = request.data.get("rescheduled_hearing_date")
+                if not resched_date:
+                    return Response({"error": "Rescheduled date required."}, status=400)
+                
+                Hearing.objects.filter(id=hearing_id).update(
+                    hearing_date=resched_date,
+                    hearing_status="rescheduled",
+                    remarks="Hearing rescheduled."
+                )
+
+            elif outcome in ["settled", "court"]:
+                # 1. Update the CURRENT and all FUTURE hearings for this case to completed
+                Hearing.objects.filter(
+                    case=case, 
+                    hearing_number__gte=hearing_number
+                ).update(
+                    hearing_status="completed",
+                    remarks="Hearing completed (Case finalized)."
+                )
+
+                # 2. Update Case Status based on outcome
+                if outcome == "settled":
+                    case.settlement_type_id = request.data.get("settlement_type_id")
+                    case.case_status = "resolved"
+                    case.remarks = request.data.get("remarks")
+                else: # court
+                    case.case_status = "escalated"
+                    case.remarks = request.data.get("remarks")
+                
+                case.save()
+
+            serializer = CaseSerializer(case, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
     
 class SingleCaseView(APIView):
     def get(self, request):

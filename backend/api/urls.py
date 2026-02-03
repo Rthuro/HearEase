@@ -51,10 +51,12 @@ urlpatterns = [
 
     path('relationship-list/', CaseViews.RelationshipListView.as_view(), name='relationship-list'),
     path('settlement-types/', CaseViews.SettlementTypeListView.as_view(), name='settlement-type-list'),
+
     path('hearings/', HearingViews.HearingView.as_view(), name='all-hearing-list'),
     path('hearing-cases/', HearingViews.HearingCaseView.as_view(), name='hearing-case-list'),
     path('update-hearings/<str:pk>/', HearingViews.SetCaseHearingsView.as_view(), name='update-hearings'),
     path('update-single-hearing/<int:pk>/', HearingViews.UpdateHearingView.as_view(), name='update-hearing'),
+    path('hearing-progress-update/<str:pk>/', CaseViews.UpdateHearingProgressView.as_view(), name='hearing-progress-update'),
     
     # Scheduling endpoints
     path('check-time-conflict/', HearingViews.CheckTimeConflictView.as_view(), name='check-time-conflict'),

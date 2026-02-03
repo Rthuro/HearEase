@@ -214,7 +214,7 @@ export function EditLuponMember({lupon}){
                                             <DropdownMenuRadioGroup
                                             value={info?.street} onValueChange={(value) => setInfo({...info, street: value})}>
 
-                                            {getStreets(info?.barangay).map(street => (
+                                            {getStreets(barangays, info?.barangay).map(street => (
                                                 <DropdownMenuRadioItem key={street} value={street}>{street}</DropdownMenuRadioItem>
                                             ))}
 

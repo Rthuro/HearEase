@@ -52,7 +52,11 @@ export function TableHearings({hearingsList, showPagination, navigateTo}) {
                                 ) : (
                                     hearings?.map((hearing) => (
                                         <TableRow key={hearing?.id} className="text-zinc-700">
-                                            <TableCell>{hearing?.id}</TableCell>
+                                            <TableCell>
+                                                <Link to={`/${navigateTo}/Case/${hearing?.case}`} className="text-redBase underline">
+                                                {hearing?.case}
+                                                </Link>
+                                            </TableCell>
                                             <TableCell>
                                                 {hearing?.hearing_date ?? '-'}
                                             </TableCell>

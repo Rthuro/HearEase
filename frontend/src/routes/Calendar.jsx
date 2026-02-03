@@ -177,9 +177,9 @@ export function Calendar() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold">Hearing Calendar</h1>
-          <p className="mb-4">
+          <p className="mb-4 text-sm md:text-lg">
             You have{" "}
-            <span className="font-medium text-redBase">{thisMonthCount}</span>{" "}
+            <span className=" font-medium text-redBase">{thisMonthCount}</span>{" "}
             upcoming hearings this month.
           </p>
         </div>
