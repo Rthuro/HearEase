@@ -49,7 +49,7 @@ export function EditCoAttendee({co_attendees, type, attendeeInfo}){
             <DialogTrigger asChild>     
                 <Button variant="outline"><Edit />Edit</Button>
             </DialogTrigger>
-        <DialogContent className={cn('w-2/3')}>
+        <DialogContent className={cn('w-full md:w-2/3')}>
                 <DialogHeader>
                     <DialogTitle>Edit {type}</DialogTitle>
                     <DialogDescription>Edit {type} information.</DialogDescription>

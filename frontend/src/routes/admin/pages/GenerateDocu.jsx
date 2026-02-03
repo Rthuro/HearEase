@@ -129,7 +129,27 @@ export function GenerateDocument() {
                                                     <p className="text-zinc-800 text-sm font-medium">Case #{c.id}: {c.case_type.case_name}</p>
                                                 </div>
                                                 <div className="flex justify-between">
-                                                    <p className="text-zinc-600 text-sm">Complainant: {c.complainant_user.first_name} {c.complainant_user.last_name}</p>
+                                                    <p className="text-zinc-600 text-sm">Complainant: 
+                                                        {c?.complainant_organizations.length > 0 && (
+                                                            <>
+                                                                {c?.complainant_organizations.map( (org, index) => (
+                                                                    <span key={org.id}>
+                                                                        {org.name} (Rep.:{org.representative_name}){index < c.complainant_organizations.length - 1 ? ", " : ""}
+                                                                    </span>
+                                                                ))}
+                                                            </>
+                                                        )}
+                                                        {c?.complainants.length > 0 && (
+                                                            <>
+                                                                {c?.complainants.map( (p, index) => (
+                                                                    <span key={p.id}>
+                                                                        {p.first_name} {p.last_name}{index < c.complainants.length - 1 ? ", " : ""}
+                                                                    </span>
+                                                                ))}
+                                                            </>
+                                                        )}
+
+                                                    </p>
                                                     <CaseStatusDisplay caseStatus={c.case_status} />
                                                 </div>
 

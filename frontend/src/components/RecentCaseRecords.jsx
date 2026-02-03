@@ -15,38 +15,13 @@ export function RecentCaseRecords({cases, user}) {
     // const { deleteCase } = useCaseStore();
 
     return (
-        <div className="flex items-center flex-wrap gap-3 ">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 ">
             {cases?.length > 0 ? (
                     cases?.map((caseItem) => (
-                        <Link to={`/${user}/Case/${caseItem?.id}`} key={caseItem?.id} className="border border-zinc-200 rounded-lg p-4 w-60 hover:shadow-md transition-shadow">
+                        <Link to={`/${user}/Case/${caseItem?.id}`} key={caseItem?.id} className="border border-zinc-200 rounded-lg p-4 
+                         hover:shadow-md transition-shadow">
                             <div className="flex justify-between">
                                 <CaseStatusDisplay caseStatus={caseItem?.case_status} />
-                                {/* <DropdownMenu>
-                                    <DropdownMenuTrigger asChild  >
-                                        <Ellipsis />
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent className="w-fit" align="end">
-                                            {caseItem?.case_status != 'approved' ? (
-                                                <div>
-                                                    <DropdownMenuItem value="archive">Draft</DropdownMenuItem>
-                                                    {caseItem?.case_status === 'pending_approval' && (
-                                                        <DropdownMenuItem value="delete" onClick={() => deleteCase(caseItem?.id)}>Delete</DropdownMenuItem>
-                                                    )}
-                                                </div>
-                                            ):(
-                                                <div>
-                                                    <DropdownMenuItem value="approve">
-                                                        <Check />
-                                                        Approve
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem value="cancel">
-                                                        <X />
-                                                        Cancel
-                                                    </DropdownMenuItem>
-                                                </div>
-                                            )}
-                                    </DropdownMenuContent>
-                                </DropdownMenu> */}
                             </div>
                             <img src={folder_img} alt="folder" className="mx-auto mb-2"/>
                             <p className="font-medium text-sm mb-1 text-center">{caseItem?.id}</p>

@@ -87,7 +87,7 @@ export function UserDashboard() {
       {/* testing */}
       {/* <Button onClick={testEmail} className="bg-redBase w-fit">Test Email</Button> */}
 
-      <div className="grid grid-cols-2 gap-4 mt-6" >
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6" >
         <Greetings />
 
         <div className="flex flex-col gap-3 w-full bg-white rounded-lg border p-6">
