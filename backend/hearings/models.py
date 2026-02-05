@@ -73,3 +73,53 @@ class NonWorkingDay(models.Model):
 
     def __str__(self):
         return f"{self.date} - {self.get_reason_display()}"
+
+
+class HearingAttendance(models.Model):
+    """
+    Tracks attendance of participants (Lupon members, complainants, respondents) for hearings.
+    """
+    PARTICIPANT_ROLE_CHOICES = [
+        ('lupon', 'Lupon Member'),
+        ('complainant', 'Complainant'),
+        ('respondent', 'Respondent'),
+    ]
+    
+    ATTENDANCE_STATUS_CHOICES = [
+        ('present', 'Present'),
+        ('absent', 'Absent'),
+        ('excused', 'Excused'),
+    ]
+    
+    hearing = models.ForeignKey(
+        Hearing,
+        on_delete=models.CASCADE,
+        related_name='attendances'
+    )
+    lupon_member = models.ForeignKey(
+        LuponMember,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='lupon_attendances'
+    )
+    case_person = models.ForeignKey(
+        'case_persons.CasePerson',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='case_person_attendances'
+    )
+    participant_role = models.CharField(max_length=20, choices=PARTICIPANT_ROLE_CHOICES)
+    attendance_status = models.CharField(
+        max_length=10,
+        choices=ATTENDANCE_STATUS_CHOICES,
+        default='present'
+    )
+    remarks = models.TextField(blank=True, null=True, help_text="Reason for absence or other notes")
+    
+    class Meta:
+        verbose_name_plural = "Hearing Attendances"
+    
+    def __str__(self):
+        return f"Attendance for Hearing #{self.hearing.id} - {self.get_participant_role_display()}"

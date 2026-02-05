@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Hearing
+from .models import Hearing, HearingAttendance
 from lupon_members.serializers import LuponMemberSerializer
 from cases.serializers import CaseSerializer
 
@@ -45,3 +45,9 @@ class HearingSerializer(serializers.ModelSerializer):
         if obj.lupon_member:
             return f"{obj.lupon_member.first_name} {obj.lupon_member.last_name}"
         return None
+
+
+class HearingAttendanceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HearingAttendance
+        fields = '__all__'

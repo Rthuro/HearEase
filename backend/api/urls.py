@@ -10,7 +10,7 @@ from case_persons import views as CasePersonViews
 from case_organizations import views as CaseOrganizationViews
 
 urlpatterns = [
-    path("test-email/", CaseViews.TestEmailView.as_view(), name="test-email"),
+    # path("test-email/", CaseViews.TestEmailView.as_view(), name="test-email"),  # View not implemented
     
     path("register/", UserViews.RegisterView.as_view(), name="register"),
     path('auth/google/', UserViews.GoogleLoginView.as_view(), name='google-login'),
@@ -53,7 +53,7 @@ urlpatterns = [
     path('hearing-cases/', HearingViews.HearingCaseView.as_view(), name='hearing-case-list'),
     path('update-hearings/<str:pk>/', HearingViews.SetCaseHearingsView.as_view(), name='update-hearings'),
     path('update-single-hearing/<int:pk>/', HearingViews.UpdateHearingView.as_view(), name='update-hearing'),
-    path('hearing-progress-update/<str:pk>/', CaseViews.UpdateHearingProgressView.as_view(), name='hearing-progress-update'),
+    # path('hearing-progress-update/<str:pk>/', CaseViews.UpdateHearingProgressView.as_view(), name='hearing-progress-update'),  # View not implemented
     
     # Scheduling endpoints
     path('check-time-conflict/', HearingViews.CheckTimeConflictView.as_view(), name='check-time-conflict'),
