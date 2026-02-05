@@ -15,6 +15,7 @@ from .utils import send_otp_email, send_otp_sms
 import os
 from .serializers import RegisterSerializer, LoginSerializer, UserInfoSerializer, NotificationPreferenceSerializer
 from django.core.files.base import ContentFile
+import cv2
 
 User = get_user_model()
 
@@ -378,7 +379,7 @@ class VerifyIdentityView(APIView):
             
         return processed
     
-    def extract_text_with_strategies(self, img_path, img_cv2):
+    def extract_text_with_strategies(self, img_path, img_cv2, reader):
         """
         Try multiple OCR strategies and return the one with most text.
         """
@@ -902,7 +903,7 @@ class VerifyIdentityView(APIView):
             cv2.imwrite(ocr_id_path, id_img_cv2)
             
             # ============ OCR TEXT EXTRACTION ============
-            ocr_text, ocr_result = self.extract_text_with_strategies(ocr_id_path, id_img_cv2.copy())
+            ocr_text, ocr_result = self.extract_text_with_strategies(ocr_id_path, id_img_cv2.copy(), reader)
             
             print(f"DEBUG OCR TEXT: {ocr_text}")
             print(f"DEBUG OCR WORDS: {ocr_result}")
