@@ -17,7 +17,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Input } from "./ui/input";
 import { Separator } from "./ui/separator";
 
-export function HearingProgressDisplay({ hearing, case_complainants, case_respondents, case_organization_complainants, case_organization_respondents, case_hearings }) {
+export function HearingProgressDisplay({ hearing, case_complainants, case_respondents, case_hearings }) {
     const { hearings, fetchHearings} = useHearingStore();
     const { members } = useLuponStore();
     const [ outcome, setSelectedOutcome ] = useState(null);
@@ -165,30 +165,6 @@ export function HearingProgressDisplay({ hearing, case_complainants, case_respon
                         </Label>
                     );
                 })}
-                {case_organization_complainants?.map((complainant, idx) => {
-                    const uniqueKey = complainant.id || idx; 
-                    const inputId = `complainant-${uniqueKey}`;
-
-                    return (
-                        <Label 
-                            key={uniqueKey} 
-                            htmlFor={inputId}
-                            className="hover:bg-accent/50 flex items-start gap-3 rounded-sm border p-3 cursor-pointer transition-colors has-[[aria-checked=true]]:border-blue-600 has-[[aria-checked=true]]:bg-blue-50 dark:has-[[aria-checked=true]]:border-blue-900 dark:has-[[aria-checked=true]]:bg-blue-950"
-                        >
-                            <Checkbox
-                                id={inputId}
-                                className="data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600 data-[state=checked]:text-white dark:data-[state=checked]:border-blue-700 dark:data-[state=checked]:bg-blue-700"
-                            />
-                            <div className="grid gap-1">
-                                <p className="text-sm leading-none font-medium">
-                                    {[complainant?.name, complainant?.representative_name]
-                                        .filter(Boolean)
-                                        .join(" ")}
-                                </p>
-                            </div>
-                        </Label>
-                    );
-                })}
                 <Label className="font-semibold text-gray-600 ">Respondents</Label>
                 {case_respondents?.map((respondent, idx) => {
                     const uniqueKey = respondent.id || idx; 
@@ -207,30 +183,6 @@ export function HearingProgressDisplay({ hearing, case_complainants, case_respon
                             <div className="grid gap-1">
                                 <p className="text-sm leading-none font-medium">
                                     {[respondent?.first_name, respondent?.middle_name, respondent?.last_name]
-                                        .filter(Boolean)
-                                        .join(" ")}
-                                </p>
-                            </div>
-                        </Label>
-                    );
-                })}
-                {case_organization_respondents?.map((respondent, idx) => {
-                    const uniqueKey = respondent.id || idx; 
-                    const inputId = `respondent-${uniqueKey}`;
-
-                    return (
-                        <Label 
-                            key={uniqueKey} 
-                            htmlFor={inputId}
-                            className="hover:bg-accent/50 flex items-start gap-3 rounded-sm border p-3 cursor-pointer transition-colors has-[[aria-checked=true]]:border-blue-600 has-[[aria-checked=true]]:bg-blue-50 dark:has-[[aria-checked=true]]:border-blue-900 dark:has-[[aria-checked=true]]:bg-blue-950"
-                        >
-                            <Checkbox
-                                id={inputId}
-                                className="data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600 data-[state=checked]:text-white dark:data-[state=checked]:border-blue-700 dark:data-[state=checked]:bg-blue-700"
-                            />
-                            <div className="grid gap-1">
-                                <p className="text-sm leading-none font-medium">
-                                    {[respondent?.name, respondent?.representative_name]
                                         .filter(Boolean)
                                         .join(" ")}
                                 </p>

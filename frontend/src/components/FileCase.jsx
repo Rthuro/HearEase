@@ -13,8 +13,8 @@ import { useRetrieveUsersStore } from '@/store/useRetrieveUsersStore'
 
 export function FileCase(){
     const { userRole, userLinkName } = useAuthenticationStore();
-    const { setCaseInfo,fetchCaseTypes, fetchSettlementTypes, complainantList, setComplainantInfo, set_complainants, initialUserComplainantInfo } = useCaseStore();
-    const { fetchComplainants, fetchRespondents, fetchOrganizationComplainants, fetchOrganizationRespondents } = useRetrieveUsersStore();
+    const { setCaseInfo,fetchCaseTypes, fetchSettlementTypes, complainantList, setComplainantInfo, set_complainants, initialUserComplainantInfo, settlementTypes, caseTypes } = useCaseStore();
+    const { fetchComplainants, fetchRespondents, complainants, respondents} = useRetrieveUsersStore();
     const [loader, setLoader] =  useState(false);
 
     const [today] = useState(() => dateFormatter(new Date()));
@@ -35,19 +35,18 @@ export function FileCase(){
     }
 
     useEffect(() => {
-    const loadData = async () => {
-        setLoader(true);
+        const loadData = async () => {
+            setLoader(true);
             try {
-                
-                await Promise.all([
-                    setComplainantInfo(),
-                    fetchComplainants(),
-                    fetchOrganizationComplainants(),
-                    fetchRespondents(),
-                    fetchOrganizationRespondents(),
-                    fetchCaseTypes(),
-                    fetchSettlementTypes()
-                ]);
+                const requests = [setComplainantInfo()];
+
+                // Only push the actual Promise to the array
+                if (complainants?.length === 0)           requests.push(fetchComplainants());
+                if (respondents?.length === 0)            requests.push(fetchRespondents());
+                if (caseTypes?.length === 0)             requests.push(fetchCaseTypes());
+                if (settlementTypes?.length === 0)        requests.push(fetchSettlementTypes());
+
+                await Promise.all(requests);
             } catch (error) {
                 console.error("Failed to load data", error);
             } finally {
@@ -56,12 +55,12 @@ export function FileCase(){
         };
 
         loadData();
-    }, []);
+    }, [initialUserComplainantInfo]);
 
     const isSelected = (user) => {
         const name = `${user.first_name} ${user.middle_name} ${user.last_name}`;
         return complainantList.some((u) => 
-            u.name === name && u.type === user.type
+            u.name === name
         );
     };
 

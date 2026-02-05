@@ -78,19 +78,7 @@ class Case(models.Model):
         CasePerson, 
         related_name="cases_as_respondent",
         blank=True)
-
-    complainant_organizations = models.ManyToManyField(
-        CaseOrganization,
-        related_name="cases_as_complainant_org",
-        blank=True
-    )
-
-    respondent_organizations = models.ManyToManyField(
-        CaseOrganization,
-        related_name="cases_as_respondent_org",
-        blank=True
-    )
-
+    
     case_status = models.CharField(
         max_length=20,
         choices=CASE_STATUS_CHOICES,
