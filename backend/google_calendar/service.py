@@ -74,10 +74,14 @@ def exchange_code_for_tokens(code):
     }
 
 
-def get_calendar_service(token_data):
+def get_calendar_service(token_data, token_obj=None):
     """
     Build Google Calendar API service from stored tokens.
     Automatically refreshes token if expired.
+    
+    Args:
+        token_data: Dict with access_token and refresh_token
+        token_obj: Optional GoogleCalendarToken model instance to delete on failure
     """
     from google.auth.transport.requests import Request
     
@@ -97,7 +101,16 @@ def get_calendar_service(token_data):
             credentials.refresh(Request())
             print("[Calendar Service] Token refreshed successfully")
         except Exception as e:
+            error_str = str(e).lower()
             print(f"[Calendar Service] Token refresh failed: {e}")
+            
+            # If invalid_grant (token revoked), delete the stored token
+            if "invalid_grant" in error_str or "token has been expired or revoked" in error_str:
+                if token_obj:
+                    print(f"[Calendar Service] Deleting invalid token for user {token_obj.user.email}")
+                    token_obj.delete()
+                raise Exception("TOKEN_REVOKED: Your Google Calendar connection has expired. Please reconnect.")
+            
             # Token is revoked or invalid - need to re-authenticate
             raise Exception(f"Token expired or revoked. Please reconnect Google Calendar. Error: {e}")
     

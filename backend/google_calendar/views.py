@@ -221,7 +221,7 @@ class SyncAllHearingsView(APIView):
             service, credentials = get_calendar_service({
                 "access_token": token.access_token,
                 "refresh_token": token.refresh_token
-            })
+            }, token_obj=token)
             
             # Update token if refreshed
             if credentials.token != token.access_token:
@@ -297,10 +297,19 @@ class SyncAllHearingsView(APIView):
             
         except Exception as e:
             import traceback
-            print(f"[Sync] FATAL ERROR: {str(e)}")
+            error_str = str(e)
+            print(f"[Sync] FATAL ERROR: {error_str}")
             print(traceback.format_exc())
+            
+            # Check if this was a token revocation issue
+            if "TOKEN_REVOKED" in error_str:
+                return Response({
+                    "error": "Your Google Calendar connection has expired. Please reconnect.",
+                    "token_revoked": True
+                }, status=status.HTTP_401_UNAUTHORIZED)
+            
             return Response(
-                {"error": str(e)},
+                {"error": error_str},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -338,7 +347,7 @@ def sync_hearing_to_google(hearing, action="create"):
         service, credentials = get_calendar_service({
             "access_token": token.access_token,
             "refresh_token": token.refresh_token
-        })
+        }, token_obj=token)
         
         # Update token if refreshed
         if credentials.token != token.access_token:

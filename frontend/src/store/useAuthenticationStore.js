@@ -29,17 +29,17 @@ const useAuthenticationStore = create((set) => ({
 
   getLocalInfo: () => {
     const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-    
+
     if (stored) {
       const data = JSON.parse(stored);
-       set({
+      set({
         isAuthenticated: true,
         userRole: data.userRole,
         userInfo: data.userInfo,
         userLinkName: data.userLinkName,
         username: data.username,
       });
-      return  data
+      return data
     }
     return;
   },
@@ -65,7 +65,21 @@ const useAuthenticationStore = create((set) => ({
   },
 
   // Logout and clear localStorage
-  logout: () => {
+  logout: async () => {
+    // Get user email before clearing to disconnect Google Calendar
+    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (stored) {
+      try {
+        const data = JSON.parse(stored);
+        // Disconnect Google Calendar for this user (fire and forget)
+        axios.post(`${API_URL}/google-calendar/disconnect/`, {
+          email: data.userInfo?.email
+        }).catch(() => { }); // Ignore errors silently
+      } catch (e) {
+        // Ignore JSON parse errors
+      }
+    }
+
     localStorage.removeItem(LOCAL_STORAGE_KEY);
     set({
       isAuthenticated: false,
@@ -79,7 +93,7 @@ const useAuthenticationStore = create((set) => ({
   googleLogin: async (token) => {
     try {
       const res = await axios.post(`${API_URL}/auth/google/`, {
-        token:token
+        token: token
       });
       const user = res.data.user;
       useAuthenticationStore.getState().login(user.role, user);
