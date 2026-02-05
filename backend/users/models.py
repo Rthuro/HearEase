@@ -57,6 +57,8 @@ class User(AbstractUser):
     is_superadmin = models.BooleanField(default=False)
     is_email_verified = models.BooleanField(default=False)
     is_phone_verified = models.BooleanField(default=False)
+    is_identity_verified = models.BooleanField(default=False)
+    identity_verified_at = models.DateTimeField(blank=True, null=True)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []

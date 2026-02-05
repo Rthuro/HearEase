@@ -2,16 +2,17 @@ from django.db import models
 from users.models import User
 from lupon_members.models import LuponMember
 from case_persons.models import CasePerson
-from case_organizations.models import CaseOrganization
 
 
 class CaseType(models.Model):
     case_name = models.CharField(max_length=100)
     severity = models.IntegerField(default=1)
     description = models.TextField(blank=True, null=True)
+    is_custom = models.BooleanField(default=False)  # Track user-created custom case types
 
     def __str__(self):
-        return f"{self.case_name} (Severity {self.severity})"
+        custom_marker = " [Custom]" if self.is_custom else ""
+        return f"{self.case_name} (Severity {self.severity}){custom_marker}"
 
 
 class SettlementType(models.Model):
@@ -30,14 +31,13 @@ class Relationship(models.Model):
 class Case(models.Model):
 
     CASE_STATUS_CHOICES = [
-        ("draft", "Draft"),
         ("pending_approval", "Pending Approval"),
         ("approved", "Approved"),
         ("in_progress", "In Progress"),
         ("resolved", "Resolved"),
         ("escalated", "Escalated"),
         ("rejected", "Rejected"),
-        ("archived", "Archived"),
+        ("cancelled", "Cancelled"),
     ]
 
     REJECTION_SECTION = [
@@ -45,18 +45,6 @@ class Case(models.Model):
         ("case_details", "Case Details"),
         ("complainant_info", "Complainant Information"),
         ("respondent_info", "Respondent Information")
-    ]
-
-    SUMMON_STATUS = [
-        ("served", "Served"),
-        ("not_served", "Not Served"),
-        ("pending", "Pending"),
-    ]
-
-    CFA = [
-        ("municipal", "Municipal"),
-        ("pnp", "PNP"),
-        ("vawc", "VAWC"),
     ]
 
     case_type = models.ForeignKey(
@@ -70,15 +58,9 @@ class Case(models.Model):
         Relationship, on_delete=models.SET_NULL, null=True, related_name="cases"
     )
 
-    complainants = models.ManyToManyField(
-        CasePerson, 
-        related_name="cases_as_complainant",
-        blank=True)
-    respondents = models.ManyToManyField(
-        CasePerson, 
-        related_name="cases_as_respondent",
-        blank=True)
-    
+    complainants = models.ManyToManyField(CasePerson, related_name="cases_as_complainant")
+    respondents = models.ManyToManyField(CasePerson, related_name="cases_as_respondent")
+
     case_status = models.CharField(
         max_length=20,
         choices=CASE_STATUS_CHOICES,
@@ -99,19 +81,18 @@ class Case(models.Model):
         default="none",
     )
 
-    summon_date_received = models.DateTimeField(blank=True, null=True)
-    summon_received_by = models.CharField(max_length=100, blank=True, null=True)
+    SUMMON_STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("sent", "Sent"),
+        ("received", "Received"),
+        ("none", "None"),
+    ]
+
     summon_status = models.CharField(
         max_length=20,
-        choices=SUMMON_STATUS,
-        default="pending",
-    )
-
-    cfa_destination = models.CharField(
-        max_length=20,
-        choices=CFA,
+        choices=SUMMON_STATUS_CHOICES,
+        default="none",
         blank=True,
-        null=True,
     )
 
 

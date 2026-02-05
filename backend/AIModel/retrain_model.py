@@ -191,8 +191,8 @@ def fine_tune_model(epochs=50, validation_split=0.2):
         df = extract_resolved_cases()
         print(f"[Retrain] Found {len(df)} resolved cases")
         
-        if len(df) < 5:
-            result["message"] = f"Insufficient data: only {len(df)} cases. Need at least 5."
+        if len(df) < 50:
+            result["message"] = f"Insufficient data: only {len(df)} cases. Need at least 50."
             return result
         
         # 2. Engineer features
@@ -252,6 +252,30 @@ def fine_tune_model(epochs=50, validation_split=0.2):
         
         print(f"[Retrain] Final loss: {final_loss:.4f}, Val loss: {val_loss:.4f if val_loss else 'N/A'}")
         
+        # 7.5 Calculate MAPE (Mean Absolute Percentage Error) for interpretability
+        predictions = model.predict(X_all, verbose=0)
+        pred_hearings = predictions[0].flatten()
+        pred_days = predictions[1].flatten()
+        
+        # MAPE for hearings (avoid division by zero)
+        hearings_mask = y_hearings > 0
+        if np.sum(hearings_mask) > 0:
+            mape_hearings = np.mean(np.abs((y_hearings[hearings_mask] - pred_hearings[hearings_mask]) / y_hearings[hearings_mask])) * 100
+        else:
+            mape_hearings = None
+        
+        # MAPE for days (avoid division by zero)
+        days_mask = y_days > 0
+        if np.sum(days_mask) > 0:
+            mape_days = np.mean(np.abs((y_days[days_mask] - pred_days[days_mask]) / y_days[days_mask])) * 100
+        else:
+            mape_days = None
+        
+        if mape_hearings is not None:
+            print(f"[Retrain] MAPE (Hearings): {mape_hearings:.1f}%")
+        if mape_days is not None:
+            print(f"[Retrain] MAPE (Days): {mape_days:.1f}%")
+        
         # 8. Save updated model
         print("[Retrain] Saving updated model...")
         model.save(os.path.join(GLOBAL_DIR, "model.keras"))
@@ -275,7 +299,9 @@ def fine_tune_model(epochs=50, validation_split=0.2):
             "final_loss": float(final_loss),
             "val_loss": float(val_loss) if val_loss else None,
             "epochs_trained": len(history.history['loss']),
-            "backup_location": backup_dir
+            "backup_location": backup_dir,
+            "mape_hearings": float(mape_hearings) if mape_hearings is not None else None,
+            "mape_days": float(mape_days) if mape_days is not None else None
         }
         
         print(f"[Retrain] Complete! {result['message']}")
@@ -367,10 +393,10 @@ def check_and_trigger_retrain(force=False, triggered_by='automatic', user=None):
     
     # Check minimum resolved cases
     resolved_count = Case.objects.filter(case_status='resolved').count()
-    if resolved_count < 5:
+    if resolved_count < 50:
         return {
             "success": False,
-            "message": f"Need at least 5 resolved cases. Currently have {resolved_count}.",
+            "message": f"Need at least 50 resolved cases. Currently have {resolved_count}.",
             "triggered": False
         }
     
@@ -390,6 +416,8 @@ def check_and_trigger_retrain(force=False, triggered_by='automatic', user=None):
         final_loss=result.get("metrics", {}).get("final_loss"),
         val_loss=result.get("metrics", {}).get("val_loss"),
         epochs_trained=result.get("metrics", {}).get("epochs_trained", 0),
+        mape_hearings=result.get("metrics", {}).get("mape_hearings"),
+        mape_days=result.get("metrics", {}).get("mape_days"),
         success=result.get("success", False),
         message=result.get("message", ""),
         backup_location=result.get("metrics", {}).get("backup_location", "")
@@ -425,12 +453,14 @@ def get_training_status():
         "threshold_cases": config.threshold_cases,
         "cases_since_last_train": config.cases_since_last_train,
         "total_resolved_cases": resolved_count,
-        "ready_to_retrain": resolved_count >= 5,
+        "ready_to_retrain": resolved_count >= 50,
         "threshold_reached": config.cases_since_last_train >= config.threshold_cases,
         "last_training": {
             "trained_at": last_training.trained_at.isoformat() if last_training else None,
             "samples": last_training.samples_trained if last_training else 0,
             "triggered_by": last_training.triggered_by if last_training else None,
+            "mape_hearings": last_training.mape_hearings if last_training else None,
+            "mape_days": last_training.mape_days if last_training else None,
         } if last_training else None
     }
 

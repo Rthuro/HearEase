@@ -24,6 +24,10 @@ class TrainingHistory(models.Model):
     val_loss = models.FloatField(null=True, blank=True)
     epochs_trained = models.IntegerField(default=0)
     
+    # MAPE (Mean Absolute Percentage Error) for interpretability
+    mape_hearings = models.FloatField(null=True, blank=True, help_text="MAPE for hearings prediction (%)")
+    mape_days = models.FloatField(null=True, blank=True, help_text="MAPE for days prediction (%)")
+    
     # Status
     success = models.BooleanField(default=False)
     message = models.TextField(blank=True)

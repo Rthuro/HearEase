@@ -48,7 +48,9 @@ export const addCase = async (caseData) => {
             return response.data;
         }
     } catch (error) {
-        console.error("Error adding case:", error.response?.data || error.message);
+        const errorMessage = error.response?.data?.error || error.message || "Unknown error";
+        console.error("Error adding case:", errorMessage, error.response?.data);
+        toast.error(`Failed to file case: ${errorMessage}`);
         return null;
     }
 };
@@ -68,9 +70,10 @@ export const getCases = async () => {
 export const getCaseList = async () => {
     const userData = await getUser();
     const response = await axios.get(`${API_URL}/case-list/`, {
-        params: { 
+        params: {
             is_admin: userData.user.is_admin,
-            email: userData.user.email }
+            email: userData.user.email
+        }
     });
     return response.data;
 };
@@ -101,6 +104,10 @@ export const useCaseStore = create((set, get) => ({
     relationshipTypes: [],
     relationshipList: [],
     loading: false,
+
+    // Jurisdiction validation state
+    jurisdictionWarning: null,
+    setJurisdictionWarning: (warning) => set({ jurisdictionWarning: warning }),
 
     predictions: null,
     predictionsLoading: false,
@@ -149,6 +156,7 @@ export const useCaseStore = create((set, get) => ({
         },
         caseDetails: {
             nature_of_complaint_code: { value: null, required: true },
+            custom_case_type_name: { value: "", required: false },  // For "Other" case types
             severity: { value: null, required: false },
             relationship: { value: "", required: true },
             description: { value: "", required: true },
@@ -210,6 +218,7 @@ export const useCaseStore = create((set, get) => ({
                 },
                 caseDetails: {
                     nature_of_complaint_code: { value: "", required: true },
+                    custom_case_type_name: { value: "", required: false },
                     severity: { value: null, required: false },
                     relationship: { value: "", required: true },
                     description: { value: "", required: true },
@@ -237,13 +246,15 @@ export const useCaseStore = create((set, get) => ({
         const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
         const data = JSON.parse(stored);
 
-        const { formData, complainantList, respondentList } = get();       
+        const { formData, complainantList, respondentList } = get();
 
         const caseData = {
             id: get().case.case_number,
             complainants: complainantList,
             respondents: respondentList,
             case_type: formData.caseDetails.nature_of_complaint_code.value,
+            custom_case_type_name: formData.caseDetails.custom_case_type_name?.value || "",
+            custom_severity: formData.caseDetails.severity?.value || null,  // For custom case types
             description: formData.caseDetails.description.value,
             predicted_hearings: formData.caseDetails.predicted_number.value || 0,
             remarks: "",
@@ -569,7 +580,7 @@ export const useCaseStore = create((set, get) => ({
                 set({ loading: false });
                 return;
             };
-   
+
             const res_hearing = await axios.post(`${API_URL}/update-hearings/${case_id}/`, {
                 hearings: hearing_data,
             });
@@ -583,7 +594,7 @@ export const useCaseStore = create((set, get) => ({
 
             if (!(res_case.status === 200)) return;
 
-            if(res_case.status === 200 && res_hearing.status === 200) {
+            if (res_case.status === 200 && res_hearing.status === 200) {
                 set({ loading: false });
                 toast.success("Hearings successfully created.");
                 get().resetFormData();
@@ -649,6 +660,13 @@ export const useCaseStore = create((set, get) => ({
                 return response.data.predictions;
             } else {
                 console.error("Prediction failed:", response.data.error);
+                // Check if case is beyond jurisdiction
+                if (response.data.beyond_jurisdiction) {
+                    toast.error(response.data.error);
+                    if (response.data.recommendation) {
+                        toast(response.data.recommendation, { icon: '⚠️', duration: 5000 });
+                    }
+                }
                 set({
                     predictions: null,
                     predictionsLoading: false
@@ -657,6 +675,13 @@ export const useCaseStore = create((set, get) => ({
             }
         } catch (error) {
             console.error("Error fetching predictions:", error);
+            // Handle jurisdiction error from API response
+            if (error.response?.data?.beyond_jurisdiction) {
+                toast.error(error.response.data.error);
+                if (error.response.data.recommendation) {
+                    toast(error.response.data.recommendation, { icon: '⚠️', duration: 5000 });
+                }
+            }
             set({
                 predictions: null,
                 predictionsLoading: false

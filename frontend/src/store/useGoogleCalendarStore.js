@@ -12,11 +12,19 @@ export const useGoogleCalendarStore = create((set, get) => ({
     syncing: false,
     lastUpdated: null,
 
-    // Check connection status
-    checkStatus: async () => {
+    // Sync settings state
+    syncSettings: null,
+
+    // Holidays state
+    holidays: [],
+    holidaysLoading: false,
+
+    // Check connection status for a specific user
+    checkStatus: async (userEmail = null) => {
         set({ loading: true });
         try {
-            const response = await axios.get(`${API_URL}/google-calendar/status/`);
+            const params = userEmail ? { email: userEmail } : {};
+            const response = await axios.get(`${API_URL}/google-calendar/status/`, { params });
             set({
                 connected: response.data.connected,
                 connectedUser: response.data.connected_user || null,
@@ -32,11 +40,15 @@ export const useGoogleCalendarStore = create((set, get) => ({
         }
     },
 
-    // Get OAuth URL and redirect
-    connectGoogleCalendar: async () => {
+    // Get OAuth URL and redirect (pass user email and role for identification)
+    connectGoogleCalendar: async (userEmail = null, userRole = 'user') => {
         set({ loading: true });
         try {
-            const response = await axios.get(`${API_URL}/google-calendar/auth-url/`);
+            const params = {};
+            if (userEmail) params.email = userEmail;
+            if (userRole) params.role = userRole;
+
+            const response = await axios.get(`${API_URL}/google-calendar/auth-url/`, { params });
             const authUrl = response.data.auth_url;
 
             // Redirect to Google OAuth
@@ -48,11 +60,12 @@ export const useGoogleCalendarStore = create((set, get) => ({
         }
     },
 
-    // Disconnect Google Calendar
-    disconnect: async () => {
+    // Disconnect Google Calendar for a specific user
+    disconnect: async (userEmail = null) => {
         set({ loading: true });
         try {
-            await axios.post(`${API_URL}/google-calendar/disconnect/`);
+            const payload = userEmail ? { email: userEmail } : {};
+            await axios.post(`${API_URL}/google-calendar/disconnect/`, payload);
             set({
                 connected: false,
                 connectedUser: null,
@@ -76,7 +89,12 @@ export const useGoogleCalendarStore = create((set, get) => ({
             const { synced, total, errors } = response.data;
 
             if (errors && errors.length > 0) {
-                toast.error(`Synced ${synced}/${total} hearings with some errors`);
+                console.error("Sync errors:", errors);
+                // Show first 3 errors max
+                const errorPreview = errors.slice(0, 3).join(", ");
+                toast.error(`Synced ${synced}/${total} hearings with some errors: ${errorPreview}`);
+            } else if (synced === 0 && total > 0) {
+                toast.error(`Failed to sync any hearings (0/${total})`);
             } else {
                 toast.success(`Successfully synced ${synced} hearings to Google Calendar!`);
             }
@@ -84,10 +102,69 @@ export const useGoogleCalendarStore = create((set, get) => ({
             set({ syncing: false });
             return response.data;
         } catch (error) {
-            console.error("Error syncing:", error);
-            toast.error("Failed to sync hearings");
+            console.error("Error syncing:", error.response?.data || error);
+            toast.error(error.response?.data?.error || "Failed to sync hearings");
             set({ syncing: false });
             return null;
+        }
+    },
+
+    // Fetch sync settings
+    fetchSyncSettings: async () => {
+        try {
+            const response = await axios.get(`${API_URL}/google-calendar/sync-settings/`);
+            set({ syncSettings: response.data });
+            return response.data;
+        } catch (error) {
+            console.error("Error fetching sync settings:", error);
+            // If no settings exist, use defaults
+            set({
+                syncSettings: {
+                    auto_sync_enabled: false,
+                    sync_on_create: true,
+                    sync_on_update: true,
+                    sync_on_delete: true,
+                }
+            });
+            return null;
+        }
+    },
+
+    // Update sync settings
+    updateSyncSettings: async (updates) => {
+        try {
+            const currentSettings = get().syncSettings || {};
+            const newSettings = { ...currentSettings, ...updates };
+
+            const response = await axios.put(`${API_URL}/google-calendar/sync-settings/`, newSettings);
+            set({ syncSettings: response.data });
+            toast.success("Sync settings updated");
+            return response.data;
+        } catch (error) {
+            console.error("Error updating sync settings:", error);
+            toast.error("Failed to update sync settings");
+            return null;
+        }
+    },
+
+    // Fetch Philippine holidays for calendar display
+    fetchHolidays: async (month, year) => {
+        set({ holidaysLoading: true });
+        try {
+            const params = new URLSearchParams();
+            if (month) params.append("month", month);
+            if (year) params.append("year", year);
+
+            const response = await axios.get(`${API_URL}/google-calendar/holidays/?${params.toString()}`);
+            set({
+                holidays: response.data.holidays || [],
+                holidaysLoading: false
+            });
+            return response.data.holidays;
+        } catch (error) {
+            console.error("Error fetching holidays:", error);
+            set({ holidaysLoading: false });
+            return [];
         }
     },
 }));
