@@ -31,13 +31,15 @@ import { useLuponStore } from "@/store/useLuponStore";
 import { EditCoAttendee } from "@/components/EditCoAttendee";
 import { CaseSettingsModal } from "@/components/CaseSettingsModal";
 import { fetchCase } from "@/store/useCaseStore";
+import toast from "react-hot-toast";
+
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 export function Case() {
     const { case_number } = useParams();
     const { cases, updateCaseStatus, deleteCase, setFormData, set_complainants, set_respondents } = useCaseStore();
-    const { hearings, fetchHearingsByCase } = useHearingStore();
+    const { hearings, fetchHearingsByCase, fetchHearings } = useHearingStore();
     const [template, setTemplate] = useState({});
     const { case_documents, fetchCaseDocuments } = useCaseDocumentsStore();
     const [ viewImg, setViewImg ] = useState(null);
@@ -46,6 +48,7 @@ export function Case() {
     const [ noShowModal, setNoShowModal ] = useState(false);
     const [ noShowUserData, setNoShowUserData ] = useState({});
     const [deleteLoader, setDeleteLoader] = useState(false);
+    const [refreshLoader, setRefreshLoader] = useState(false);
 
     const stored = localStorage.getItem("authData");
     const data = JSON.parse(stored);
@@ -70,7 +73,9 @@ export function Case() {
         }
     }, [caseInfo]);
 
-    const [findHearingCase, setFindHearingCase] = useState(hearings.length > 0 ? hearings.filter( hearing => hearing.case == case_number) : []);
+    const [findHearingCase, setFindHearingCase] = useState(
+        hearings.length > 0 ? hearings.filter( hearing => hearing.case == case_number)
+        .sort((a, b) => a.hearing_number - b.hearing_number) : []);
     // const findHearingCase = ;
 
     const lupon = members.find(member => member.id === findHearingCase[0]?.lupon_member);
@@ -237,6 +242,7 @@ export function Case() {
         }
     };
 
+
    
     return (
         <div className="relative flex flex-col gap-4 p-6 ">
@@ -270,13 +276,23 @@ export function Case() {
                     <Button
                     variant="outline"
                     onClick={async () => {
-                        const updatedCase = await fetchCase(caseInfo?.id);
+                        try{
+                            setRefreshLoader(true);
+                            const updatedCase = await fetchCase(caseInfo?.id);
+                            setCaseInfo(updatedCase);
+                            fetchHearings();
+                            setFindHearingCase(hearings.filter( hearing => hearing.case == case_number).sort((a, b) => a.hearing_number - b.hearing_number));
+                            setRefreshLoader(false);
+                        }
+                        catch(error){
+                            setRefreshLoader(false);
+                            toast.error("Failed to refresh case data. Please try again.");
+                        }
                         // const updatedHearings = await fetchHearingsByCase(caseInfo?.id);
-                        setCaseInfo(updatedCase);
                         // setFindHearingCase(updatedHearings);
                     }}>
 
-                        <RefreshCcw />
+                        <RefreshCcw className={refreshLoader ? "animate-spin" : ""} />
                     </Button>
                 </div>
                 
@@ -603,7 +619,7 @@ export function Case() {
                             {findHearingCase.length > 0 ? (
                             findHearingCase.map((hearing, index) => (
                                 <TableRow key={hearing.id} className="border-t">
-                                <TableCell className="px-4 py-2">{index + 1}</TableCell>
+                                <TableCell className="px-4 py-2">{hearing?.hearing_number}</TableCell>
                                 <TableCell className="px-4 py-2">{hearing.hearing_date}</TableCell>
                                 <TableCell className="px-4 py-2">{hearing.time}</TableCell>
                                 <TableCell className="px-4 py-2">hearing attendance</TableCell>
