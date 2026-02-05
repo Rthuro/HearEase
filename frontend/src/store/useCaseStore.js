@@ -12,7 +12,7 @@ export const getUser = async () => {
     const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
     const data = JSON.parse(stored);
     const response = await axios.post(`${API_URL}/find-user/`, {
-        email: data.userInfo.email
+        email: data?.userInfo?.email
     });
     return response.data;
 };
@@ -343,8 +343,7 @@ export const useCaseStore = create((set, get) => ({
                 contact_number: data?.user?.contact_number,
                 barangay: data?.user?.barangay,
                 street: data?.user?.street,
-                additional_info: data?.user?.additional_info,
-                type: "individual"
+                additional_info: data?.user?.additional_info
                 }
             });
 

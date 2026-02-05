@@ -81,8 +81,8 @@ export function CaseForm(){
                 setStepNumber(5);
             }
         } catch (error) {
-            toast.error("An error occurred while submitting the case. Please try again.");
             setLoading(false);
+            toast.error("An error occurred while submitting the case. Please try again.");
         }
         
     };

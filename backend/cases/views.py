@@ -61,7 +61,7 @@ class CaseView(APIView):
         complainants_organizations_ids = []
 
         for complainant in complainants:
-            if complainant.get("type") == "individual":
+            # if complainant.get("type") == "individual":
                 if "birth_date" in complainant and complainant["birth_date"]:
                     raw_bd = str(complainant["birth_date"])
                     if "T" in raw_bd:
@@ -91,17 +91,17 @@ class CaseView(APIView):
                     complainant.pop('type', None) 
                     complainant_obj = CasePerson.objects.create(**complainant)
                     complainants_individuals_ids.append(complainant_obj.id)
-            else:
-                check_complainant = CaseOrganization.objects.filter(
-                    name__iexact=complainant.get("name"),
-                ).first()
+            # else:
+            #     check_complainant = CaseOrganization.objects.filter(
+            #         name__iexact=complainant.get("name"),
+            #     ).first()
 
-                if check_complainant:
-                    complainants_organizations_ids.append(check_complainant.id)
-                else:
-                    complainant.pop('type', None) 
-                    complainant_obj = CaseOrganization.objects.create(**complainant)
-                    complainants_organizations_ids.append(complainant_obj.id)
+            #     if check_complainant:
+            #         complainants_organizations_ids.append(check_complainant.id)
+            #     else:
+            #         complainant.pop('type', None) 
+            #         complainant_obj = CaseOrganization.objects.create(**complainant)
+            #         complainants_organizations_ids.append(complainant_obj.id)
         
 
         respondents = data.get("respondents", [])
@@ -109,7 +109,7 @@ class CaseView(APIView):
         respondents_organizations_ids = []
 
         for respondent in respondents:
-            if respondent.get("type") == "individual":
+            # if respondent.get("type") == "individual":
                 if "birth_date" in respondent and respondent["birth_date"]:
                     raw_bd = str(respondent["birth_date"])
                     if "T" in raw_bd:
@@ -123,20 +123,20 @@ class CaseView(APIView):
                 if check_respondent:
                     respondents_individuals_ids.append(check_respondent.id)
                 else:
-                    respondent.pop('type', None) 
+                    respondent.pop('type', None)
                     respondent_obj = CasePerson.objects.create(**respondent)
                     respondents_individuals_ids.append(respondent_obj.id)    
-            else:
-                check_respondent = CaseOrganization.objects.filter(
-                    name__iexact=respondent.get("name"),
-                ).first()
+            # else:
+            #     check_respondent = CaseOrganization.objects.filter(
+            #         name__iexact=respondent.get("name"),
+            #     ).first()
 
-                if check_respondent:
-                    respondents_organizations_ids.append(check_respondent.id)
-                else:
-                    respondent.pop('type', None) 
-                    respondent_obj = CaseOrganization.objects.create(**respondent)
-                    respondents_organizations_ids.append(respondent_obj.id)    
+                # if check_respondent:
+                #     respondents_organizations_ids.append(check_respondent.id)
+                # else:
+                #     respondent.pop('type', None) 
+                #     respondent_obj = CaseOrganization.objects.create(**respondent)
+                #     respondents_organizations_ids.append(respondent_obj.id)    
 
         case_data = {
             "id": data.get("id"),
@@ -152,13 +152,13 @@ class CaseView(APIView):
 
         if complainants_individuals_ids is not None:
             new_case.complainants.add(*complainants_individuals_ids)
-        if complainants_organizations_ids is not None:
-            new_case.complainant_organizations.add(*complainants_organizations_ids)
+        # if complainants_organizations_ids is not None:
+        #     new_case.complainant_organizations.add(*complainants_organizations_ids)
 
         if respondents_individuals_ids is not None:
             new_case.respondents.add(*respondents_individuals_ids)
-        if respondents_organizations_ids is not None:
-            new_case.respondent_organizations.add(*respondents_organizations_ids)
+        # if respondents_organizations_ids is not None:
+        #     new_case.respondent_organizations.add(*respondents_organizations_ids)
 
         # If hearing info is provided, create initial hearing
         hearing_info = data.get("hearing_info")

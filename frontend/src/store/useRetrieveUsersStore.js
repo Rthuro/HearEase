@@ -33,34 +33,6 @@ export const getCaseRespondents = async (ids) => {
     return response.data;
 }
 
-export const getOrganizationComplainants = async () => {
-    const response = await axios.get(`${API_URL}/case-organizations`, {
-        params: { type: "complainant" }
-    });
-    return response.data;
-}
-
-export const getOrganizationRespondents = async () => {
-    const response = await axios.get(`${API_URL}/case-organizations`, {
-        params: { type: "respondent" }  
-    });
-    return response.data;
-}
-
-export const getOrganizationCaseComplainants = async (ids) => {
-    const response = await axios.post(`${API_URL}/case-organizations/`, {
-        ids: ids
-    });
-    return response.data;
-}
-
-export const getOrganizationCaseRespondents = async (ids) => {
-    const response = await axios.post(`${API_URL}/case-organizations/`, {
-        ids: ids
-    });
-    return response.data;
-}
-
 
 
 
@@ -83,20 +55,11 @@ export const getUser = async (email) => {
 
 export const useRetrieveUsersStore = create( (set) => ({
     complainants: [],  
-    complainants_orgs: [],
 
     fetchComplainants: async () => {
         try {
             const data = await getComplainants();
             set({ complainants: data })
-        } catch (error) {
-            toast.error(error);
-        }
-    },
-    fetchOrganizationComplainants: async () => {
-        try {
-            const data = await getOrganizationComplainants();
-            set({ complainants_orgs: data })
         } catch (error) {
             toast.error(error);
         }
@@ -121,19 +84,10 @@ export const useRetrieveUsersStore = create( (set) => ({
         }
     },
     respondents: [],
-    respondents_orgs: [],
     fetchRespondents: async () => {
         try {
             const data = await getRespondents();
             set({ respondents: data })
-        } catch (error) {
-            toast.error(error);
-        }
-    },
-    fetchOrganizationRespondents: async () => {
-        try {
-            const data = await getOrganizationRespondents();
-            set({ respondents_orgs: data })
         } catch (error) {
             toast.error(error);
         }
@@ -153,29 +107,12 @@ export const useRetrieveUsersStore = create( (set) => ({
             toast.error(error);
         }
     },
-    fetchOrganizationCaseComplainants: async (ids) => {
-        try {
-            const data = await getOrganizationCaseComplainants(ids);
-            set({ case_organization_complainants: data })
-        }
-        catch (error) {
-            toast.error(error);
-        }
-    },
 
     fetchCaseRespondents: async (ids) => {
         try {
             const data = await getCaseRespondents(ids);
             set({ case_respondents: data })
         } catch (error) {
-            toast.error(error);
-        }
-    },
-    fetchOrganizationCaseRespondents: async (ids) => {
-        try {
-            const data = await getOrganizationCaseRespondents(ids);
-            set({ case_organization_respondents: data })
-        }catch (error) {
             toast.error(error);
         }
     },

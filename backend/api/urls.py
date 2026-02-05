@@ -29,9 +29,6 @@ urlpatterns = [
     path('case-persons/', CasePersonViews.CasePersonView.as_view(), name='case-persons'),
     path('case-person/<str:email>/', CasePersonViews.SingleCasePersonView.as_view(), name='case-person-detail'),
 
-    path('case-organizations/', CaseOrganizationViews.CaseOrganizationView.as_view(), name='case-organizations'),
-    path('case-organization/<str:email>/', CaseOrganizationViews.SingleCaseOrganizationView.as_view(), name='case-organization-detail'),
-
     path('login/', UserViews.LoginView.as_view(), name='login'),
     path('barangays/', AddressViews.BarangayListView.as_view(), name='barangay-list'),
     path('streets/', AddressViews.StreetListView.as_view(), name='street-list'),

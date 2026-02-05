@@ -25,8 +25,6 @@ class CaseSerializer(serializers.ModelSerializer):
     relationship = RelationshipSerializer(read_only=True)
     complainants = CasePersonSerializer(many=True, read_only=True)
     respondents = CasePersonSerializer(many=True, read_only=True)
-    complainant_organizations = CaseOrganizationSerializer(many=True, read_only=True)
-    respondent_organizations = CaseOrganizationSerializer(many=True, read_only=True)
 
     class Meta:
         model = Case

@@ -4,7 +4,7 @@ from cases.models import Case
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
-from .serializers import HearingSerializer
+from .serializers import HearingSerializer, HearingAttendanceSerializer
 from django.contrib.auth import get_user_model
 from case_persons.models import CasePerson
 from django.db.models import Count
@@ -113,6 +113,7 @@ class HearingView(APIView):
             try:
                 user_id = CasePerson.objects.filter(email=email).first().id
                 cases = Case.objects.filter(complainants=user_id)
+                # print(user_id, email)
             except AttributeError:
                 cases = Case.objects.none()
         else:
@@ -120,7 +121,8 @@ class HearingView(APIView):
         
         case_ids = [case.id for case in cases]
         hearings = Hearing.objects.filter(case_id__in=case_ids)
-
+        # print("my hearings", hearings)
+        # print("case ids", case_ids)
         serializer = HearingSerializer(hearings, many=True)
 
         if not hearings.exists():
@@ -153,7 +155,17 @@ class HearingCaseView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class HearingAttendanceView(APIView):
+    def post(self, request):
+        data = request.data
+        serializer = HearingAttendanceSerializer(data=data, many=True)
 
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"success": "Attendance records created."}, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 class SetCaseHearingsView(APIView):
     def post(self, request, pk):
         case_id = pk 

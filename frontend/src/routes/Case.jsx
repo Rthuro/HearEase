@@ -490,10 +490,6 @@ export function Case() {
                             <TableHeader>
                                 <TableRow>
                                 <TableHead className="text-left px-4 py-2">Full Name</TableHead>
-                                {caseInfo?.complainant_organizations.length > 0 && (
-                                    <TableHead className="text-left px-4 py-2">Organization
-                                    </TableHead>
-                                )}
                                 <TableHead className="text-left px-4 py-2">Contact</TableHead>
                                 <TableHead className="px-4 py-2"></TableHead>
                                 </TableRow>
@@ -505,9 +501,6 @@ export function Case() {
                                 <TableRow key={c.id} className="border-t">
                                     <TableCell className="px-4 py-2">{c.first_name} {c.middle_name ? c.middle_name + ' ' : ''}{c.last_name}
                                     </TableCell>
-                                    {caseInfo?.complainant_organizations.length > 0 && (
-                                        <TableCell className="px-4 py-2"></TableCell>
-                                    )}
                                     <TableCell className="px-4 py-2">{c.contact_number || "-"}</TableCell>
                                     <TableCell>
                                         <EditCoAttendee co_attendees={caseInfo.complainants} type="complainant"
@@ -516,20 +509,7 @@ export function Case() {
                                 </TableRow>
                                           
                             ))}
-                            {caseInfo?.complainant_organizations?.map( c => (
-                                
-                                <TableRow key={c.id} className="border-t">
-                                    <TableCell className="px-4 py-2">{c.representative_name} </TableCell>
-
-                                    <TableCell className="px-4 py-2">{c.contact_number || "-"}</TableCell>
-                                    <TableCell>
-                                        <EditCoAttendee co_attendees={caseInfo.complainants} type="complainant"
-                                        attendeeInfo={c} />
-                                    </TableCell>
-                                </TableRow>
-                                          
-                            ))}
-                            {caseInfo?.complainants.length == 0 && caseInfo?.complainant_organizations.length == 0 && (
+                            {caseInfo?.complainants.length == 0 && (
                                 <TableRow>
                                     <TableCell className="px-4 py-2 text-center" colSpan={3}>No complainants added.</TableCell>
                                 </TableRow>
@@ -548,10 +528,6 @@ export function Case() {
                             <TableHeader>
                                 <TableRow>
                                 <TableHead className="text-left px-4 py-2">Full Name</TableHead>
-                                {caseInfo?.respondent_organizations.length > 0 && (
-                                    <TableHead className="text-left px-4 py-2">Organization
-                                    </TableHead>
-                                )}
                                 <TableHead className="text-left px-4 py-2">Contact</TableHead>
                                 <TableHead className="px-4 py-2"></TableHead>
                                 </TableRow>
@@ -561,9 +537,6 @@ export function Case() {
                                 
                                 <TableRow key={c.id} className="border-t">
                                     <TableCell className="px-4 py-2">{c.first_name} {c.middle_name ? c.middle_name + ' ' : ''}{c.last_name}</TableCell>
-                                    {caseInfo?.respondent_organizations.length > 0 && (
-                                        <TableCell className="px-4 py-2"></TableCell>
-                                    )}
                                     <TableCell className="px-4 py-2">{c.contact_number || "-"}</TableCell>
                                     <TableCell>
                                         <EditCoAttendee co_attendees={caseInfo.respondents} type="respondent"
@@ -572,23 +545,7 @@ export function Case() {
                                 </TableRow>
                                           
                             ))}
-                            {caseInfo?.respondent_organizations?.map( c => (
-                                
-                                <TableRow key={c.id} className="border-t">
-                                    <TableCell className="px-4 py-2">{c.representative_name} </TableCell>
-                                    {caseInfo?.respondent_organizations.length > 0 && (
-                                        <TableCell className="px-4 py-2">{c.name} </TableCell>
-
-                                    )}
-                                    <TableCell className="px-4 py-2">{c.contact_number || "-"}</TableCell>
-                                    <TableCell>
-                                        <EditCoAttendee co_attendees={caseInfo.respondents} type="respondent"
-                                        attendeeInfo={c} />
-                                    </TableCell>
-                                </TableRow>
-                                          
-                            ))}
-                            {caseInfo?.respondents.length == 0 && caseInfo?.respondent_organizations.length == 0 && (
+                            {caseInfo?.respondents.length == 0 && (
                                 <TableRow>
                                     <TableCell className="px-4 py-2 text-center" colSpan={3}>No respondents added.</TableCell>
                                 </TableRow>

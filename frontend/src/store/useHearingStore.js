@@ -33,12 +33,10 @@ export const getHearings = async () => {
   const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
   const data = JSON.parse(stored);
 
-  const userData = await getUser();
-
   const response = await axios.get(`${API_URL}/hearings/`, {
       params: { 
-        role: data.userRole,
-        email: userData.email
+        role: data?.userRole,
+        email: data?.userInfo?.email
       }
   });
 
