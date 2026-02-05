@@ -3,6 +3,7 @@ from .models import Case, CaseType, SettlementType, Relationship
 from case_persons.serializers import CasePersonSerializer
 from case_organizations.serializers import CaseOrganizationSerializer
 
+
 class CaseTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = CaseType
