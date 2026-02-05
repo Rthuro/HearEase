@@ -1,5 +1,5 @@
 import { Label } from "./ui/label";
-import { CalendarDaysIcon, HandshakeIcon, File, CalendarIcon, Loader2 } from "lucide-react";
+import { CalendarDaysIcon, HandshakeIcon, File, CalendarIcon, Loader2, CalendarCheck, ChevronsUpDown, Check  } from "lucide-react";
 import { useLuponStore } from "@/store/useLuponStore";
 import { Checkbox } from "./ui/checkbox";
 import { useEffect, useState } from "react";
@@ -13,14 +13,38 @@ import { Textarea } from "./ui/textarea";
 import toast from "react-hot-toast";
 import useHearingStore from "@/store/useHearingStore";
 import { useCaseStore } from "@/store/useCaseStore";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "./ui/command";
+import { Input } from "./ui/input";
+import { Separator } from "./ui/separator";
 
-export function HearingProgressDisplay({ hearing, case_complainants, case_respondents, case_organization_complainants, case_organization_respondents }) {
+export function HearingProgressDisplay({ hearing, case_complainants, case_respondents, case_organization_complainants, case_organization_respondents, case_hearings }) {
+    const { hearings, fetchHearings} = useHearingStore();
     const { members } = useLuponStore();
     const [ outcome, setSelectedOutcome ] = useState(null);
+    const [completedOutcome, setCompletedOutcome ] = useState(false);
     const [ reason, setReason ] = useState("respondent_noShow");
     const [ type, setType ] = useState(1);
     const [ resolved_remarks, setResolvedRemarks ] = useState("Case settled.");
     const [court_remarks, setCourtRemarks ] = useState("Case has been escalated to court.");
+
+    const getCurrentTime = () => {
+        const now = new Date();
+        return now.getHours().toString().padStart(2, '0') + ":" + 
+            now.getMinutes().toString().padStart(2, '0');
+        };
+
+    const [completedTime, setCompletedTime] = useState("");
+    const [completedRemarks, setCompletedRemarks ] = useState("Hearing completed successfully.");
+
+    const [newHearingTime, setNewHearingTime ] = useState(getCurrentTime());
+    const [newHearingDate, setNewHearingDate ] = useState(new Date());
+    const [newHearingLuponMember, setNewHearingLuponMember ] = useState(null);
+
+    useEffect(() => {
+        if (outcome === 1) {
+            setCompletedTime(getCurrentTime());
+        }
+    }, [outcome]);
 
     const [ destination, setDestination ] = useState("court");
     const [loader, setLoader ] = useState(false);
@@ -37,31 +61,41 @@ export function HearingProgressDisplay({ hearing, case_complainants, case_respon
     
     
     // AI for new date suggestion can be implemented later
-    const new_date = new Date();
+    const [newDate, setNewDate ] = useState(new Date());
 
     const session_outcome = [
         { 
             id: 1,
+            label: "Completed Hearing",
+            icon: <CalendarCheck className="text-green-800" />,
+            hover: 'hover:bg-green-50 hover:border-green-800',            
+            visible: 'border-green-800 bg-green-50'
+        },{ 
+            id: 2,
             label: "Reschedule",
             icon: <CalendarDaysIcon className="text-blue-800" />,
             hover: 'hover:bg-blue-50 hover:border-blue-800',
             visible: 'border-blue-800 bg-blue-50'
         }, 
         {
-            id: 2,
+            id: 3,
             label: "Settled",
             icon: <HandshakeIcon className="text-green-800" />,
             hover: 'hover:bg-green-50 hover:border-green-800',
             visible: 'border-green-800 bg-green-50'
         },
         {
-            id: 3,
+            id: 4,
             label: "Issue CFA",
             icon: <File className="text-redBase" />,
             hover: 'hover:bg-redBase/10 hover:border-redBase',
             visible: 'border-redBase bg-redBase/10'
         }
     ]
+
+    const filterOutcomeChoices = hearing?.hearing_number === 6 ?
+        session_outcome.filter(o => o.id !== 2 && o.id !==1) :
+        session_outcome;
 
     const mediator = members?.find( member => member.id === hearing?.lupon_member);
 
@@ -79,6 +113,7 @@ export function HearingProgressDisplay({ hearing, case_complainants, case_respon
             if(res.success){
                 setLoader(false);
                 toast.success("Hearing progress updated successfully.");
+                fetchHearings();
             }else {
                 setLoader(false);
             }
@@ -230,7 +265,7 @@ export function HearingProgressDisplay({ hearing, case_complainants, case_respon
         <div className="flex flex-col gap-4 p-4 border bg-gray-50 rounded-md">
             <Label className="font-semibold text-gray-800 ">SESSION OUTCOME</Label>
             <div className="flex gap-4">
-                {session_outcome.map((o) => (
+                {filterOutcomeChoices.map((o) => (
                     <div key={o.id} className={`flex flex-col items-center justify-center gap-2 border 
                     ${o.hover} py-4 px-2 rounded-md w-full cursor-pointer transition-colors
                     ${ outcome === o.id ? o.visible : ''}
@@ -249,7 +284,183 @@ export function HearingProgressDisplay({ hearing, case_complainants, case_respon
                         <Loader2 className="animate-spin h-8 w-8 text-redBase" />
                     </div>
                 )}
-                { outcome === 1 && (
+                 { outcome === 1 && hearing?.hearing_number !== 6 && (
+                      <div className="flex flex-col gap-4 border-l-4 border-green-800 pl-4 w-full">
+                            <Label className="font-semibold text-green-800 text-lg">Complete Hearing</Label>
+                            
+                            {hearing?.hearing_number < 6 && 
+                            case_hearings?.length > 0 && 
+                            case_hearings[case_hearings.length - 1]?.hearing_number === hearing?.hearing_number && (
+                                <>
+                                <p className="text-sm text-gray-500">
+                                    This hearing will be the last. Would you like to schedule a new Hearing? or proceed to finalize the case?
+                                </p>
+                                <div className="flex gap-4">
+                                    <Button 
+                                        className="bg-blue-800 hover:bg-blue-600"
+                                        onClick={() => setCompletedOutcome(true)}
+                                    >
+                                        Schedule New Hearing
+                                    </Button>
+                                    <Button 
+                                        className="bg-green-800 hover:bg-green-600"
+                                        onClick={() => setSelectedOutcome(3)}
+                                    >
+                                        Finalize Case Settlement
+                                    </Button>
+                                </div>
+                                </>
+                                
+                            )}
+
+                            {completedOutcome && (
+                                <>
+                                <Separator />
+                                <div className="grid grid-cols-2 gap-3 items-center">
+                                     <div className="flex flex-col gap-3">
+                                        <Label className="font-medium text-gray-600 text-sm ">DATE (AI SUGGESTED)
+                                        </Label>
+                                            <Popover>
+                                                <PopoverTrigger asChild>
+                                                    <Button
+                                                    variant="outline"
+                                                    className={cn("justify-between font-normal", !newHearingDate && "text-muted-foreground")}
+                                                    >
+                                                    {newHearingDate
+                                                        ? dateFormatter(newHearingDate)
+                                                        : "Select date"}
+                                                    <CalendarIcon className="h-4 w-4 opacity-50" />
+                                                    </Button>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="overflow-hidden p-0 w-72" align="start">
+                                                    <Calendar
+                                                    mode="single"
+                                                    selected={newHearingDate ? new Date(newHearingDate) : null}
+                                                    onSelect={(date) => setNewHearingDate(date)}
+                                                    captionLayout="dropdown"
+                                        
+                                                    initialFocus
+                                                    />
+                                                </PopoverContent>
+                                        </Popover>
+                                    </div> 
+                                    <div className="flex flex-col gap-3">
+                                        <Label className="font-medium text-gray-600 text-sm">TIME</Label>
+                                        <Input 
+                                            type="time" 
+                                            value={newHearingTime}
+                                            onChange={(e) => setNewHearingTime(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                               
+                                <div className="grid grid-cols-1 gap-2 col-span-2">
+                                    <Label>Assigned Lupon Member</Label>
+                                    <Popover
+                                    >
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                        role="combobox"
+                                        variant="outline"
+                                        className="max-w-max min-w-full justify-between"
+                                        >
+                                        {newHearingLuponMember
+                                            ? `${newHearingLuponMember?.first_name}
+                                             ${newHearingLuponMember?.last_name}`
+                                            : "Select lupon member..."}
+                                        <ChevronsUpDown className="opacity-50" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[400px] p-0">
+                                        <Command>
+                                        <CommandInput
+                                            placeholder="Search lupon members..."
+                                            className="h-9"
+                                        />
+                                        <CommandList>
+                                            <CommandEmpty>No lupon members found.</CommandEmpty>
+                                            <CommandGroup>
+                                            {members.map((lupon) => (
+                                                <CommandItem
+                                                key={lupon.id}
+                                                value={lupon.id}
+                                                onSelect={() => {
+                                                    setNewHearingLuponMember(lupon);
+                                                }}
+                                                >
+                                                {lupon.first_name} {lupon.last_name}
+                                                <Check
+                                                    className={cn(
+                                                    "ml-auto",
+                                                    newHearingLuponMember?.id === lupon.id
+                                                        ? "opacity-100"
+                                                        : "opacity-0"
+                                                    )}
+                                                />
+                                                </CommandItem>
+                                            ))}
+                                            </CommandGroup>
+                                        </CommandList>
+                                        </Command>
+                                    </PopoverContent>
+                                    </Popover>
+                                </div>
+
+                                <Button 
+                                    className="bg-green-800 hover:bg-green-600"
+                                    onClick={() => handleSubmit({
+                                        ...payload,
+                                        outcome: "new_hearing",
+                                        new_hearing_time: newHearingTime,
+                                        new_hearing_date: newHearingDate.toISOString().split('T')[0],
+                                        time_completed: completedTime,
+                                        lupon_member_id: newHearingLuponMember?.id,
+                                    })}
+                                >
+                                    Add New Hearing
+                                </Button>
+                                </>
+                            )}
+
+                            {case_hearings[case_hearings.length - 1]?.hearing_number !== hearing?.hearing_number && !completedOutcome && (
+                                <>
+                                <div className="flex flex-col gap-3">
+                                    <Label className="font-medium text-gray-600 text-sm">TIME COMPLETED
+                                        {case_hearings[case_hearings.length - 1]?.hearing_number}
+                                    </Label>
+                                    <Input 
+                                        type="time" 
+                                        value={completedTime}
+                                        onChange={(e) => setCompletedTime(e.target.value)}
+                                    />
+                                </div>
+
+                                <div className="flex flex-col gap-3">
+                                    <Label className="font-medium text-gray-600 text-sm">REMARKS</Label>
+                                    <Textarea 
+                                        placeholder="Add remarks here..."
+                                        value={completedRemarks}
+                                        onChange={(e) => setCompletedRemarks(e.target.value)} 
+                                    />
+                                </div>
+
+                                <Button 
+                                    className="bg-green-800 hover:bg-green-600"
+                                    onClick={() => handleSubmit({
+                                        ...payload,
+                                        outcome: "completed",
+                                        time_completed: completedTime,
+                                        remarks: completedRemarks,
+                                    })}
+                                >
+                                    Complete Hearing
+                                </Button>
+                                </>
+                            ) }
+
+                        </div>
+                )}
+                { outcome === 2 && hearing?.hearing_number !== 6 && (
                     <div className="flex flex-col gap-4 border-l-4 border-blue-800 pl-4 w-full">
                         <Label className="font-semibold text-blue-800 text-lg">Reschedule Hearing</Label>
                         <div className="grid grid-cols-2 gap-4">
@@ -278,10 +489,10 @@ export function HearingProgressDisplay({ hearing, case_complainants, case_respon
                                         <PopoverTrigger asChild>
                                             <Button
                                             variant="outline"
-                                            className={cn("justify-between font-normal", !new_date && "text-muted-foreground")}
+                                            className={cn("justify-between font-normal", !newDate && "text-muted-foreground")}
                                             >
-                                            {new_date
-                                                ? dateFormatter(new_date)
+                                            {newDate
+                                                ? dateFormatter(newDate)
                                                 : "Select date"}
                                             <CalendarIcon className="h-4 w-4 opacity-50" />
                                             </Button>
@@ -289,7 +500,8 @@ export function HearingProgressDisplay({ hearing, case_complainants, case_respon
                                         <PopoverContent className="overflow-hidden p-0 w-72" align="start">
                                             <Calendar
                                             mode="single"
-                                            selected={new_date ? new Date(new_date) : null}
+                                            selected={newDate ? new Date(newDate) : null}
+                                            onSelect={(date) => setNewDate(date)}
                                             captionLayout="dropdown"
                                 
                                             initialFocus
@@ -302,11 +514,11 @@ export function HearingProgressDisplay({ hearing, case_complainants, case_respon
                         onClick={()=> handleSubmit({
                             ...payload,
                             outcome: "rescheduled",
-                            rescheduled_hearing_date: new_date.toISOString().split('T')[0],
+                            rescheduled_hearing_date: newDate.toISOString().split('T')[0],
                         })} >Save Hearing</Button>
                     </div>
                 )}
-                { outcome === 2 && (
+                { outcome === 3 && (
                       <div className="flex flex-col gap-4 border-l-4 border-green-800 pl-4 w-full">
                         <Label className="font-semibold text-green-800 text-lg">Finalize Settlement</Label>
                         <div className="flex flex-col gap-3">
@@ -343,7 +555,7 @@ export function HearingProgressDisplay({ hearing, case_complainants, case_respon
                         })}  >Mark as Settled</Button>
                     </div>
                 )}
-                { outcome === 3 && (
+                { outcome === 4 && (
                     <div className="flex flex-col gap-4 border-l-4 border-redBase pl-4 w-full">
                         <Label className="font-semibold text-redBase text-lg">Issue Court of Appeal</Label>
                         <div className="flex flex-col gap-3">

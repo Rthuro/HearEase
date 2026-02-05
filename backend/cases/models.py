@@ -53,6 +53,12 @@ class Case(models.Model):
         ("pending", "Pending"),
     ]
 
+    CFA = [
+        ("municipal", "Municipal"),
+        ("pnp", "PNP"),
+        ("vawc", "VAWC"),
+    ]
+
     case_type = models.ForeignKey(
         CaseType, on_delete=models.SET_NULL, null=True, related_name="cases"
     )
@@ -78,6 +84,7 @@ class Case(models.Model):
         related_name="cases_as_complainant_org",
         blank=True
     )
+
     respondent_organizations = models.ManyToManyField(
         CaseOrganization,
         related_name="cases_as_respondent_org",
@@ -110,6 +117,13 @@ class Case(models.Model):
         max_length=20,
         choices=SUMMON_STATUS,
         default="pending",
+    )
+
+    cfa_destination = models.CharField(
+        max_length=20,
+        choices=CFA,
+        blank=True,
+        null=True,
     )
 
 

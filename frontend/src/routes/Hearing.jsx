@@ -52,7 +52,7 @@ export default function Hearing() {
     const hearing = hearings.find( hearing => hearing.id == hearing_id);
     const caseInfo = cases.find( c => c.id == hearing.case);
     console.log("caseInfo", caseInfo);
-    const caseHearings = hearings.filter( h => h.case == hearing.case);
+    const caseHearings = hearings.filter( h => h.case == hearing.case).sort((a, b) => a.hearing_number - b.hearing_number);
     // console.log("caseHearings", caseHearings);
 
     const lupon = members.find( l => l.id == hearing.lupon_member)
@@ -180,12 +180,13 @@ export default function Hearing() {
                     </div>
                     
                 </div>
+
                 { hearing?.hearing_number == 1 && caseInfo?.summon_status != 'served' && (
                     <SummonConfirmationDisplay hearing={hearing} caseInfo={caseInfo} />
                 )}   
 
-                { caseInfo?.summon_status == 'served' && (
-                    <HearingProgressDisplay hearing={hearing} case_complainants={caseInfo?.complainants} case_respondents={caseInfo?.respondents} case_organization_complainants={caseInfo?.organization_complainants} case_organization_respondents={caseInfo?.organization_respondents}/>
+                { caseInfo?.summon_status == 'served' && hearing?.hearing_status == 'scheduled' && (
+                    <HearingProgressDisplay hearing={hearing} case_complainants={caseInfo?.complainants} case_respondents={caseInfo?.respondents} case_organization_complainants={caseInfo?.organization_complainants} case_organization_respondents={caseInfo?.organization_respondents} case_hearings={caseHearings}/>
                 )}          
             </div>
         )

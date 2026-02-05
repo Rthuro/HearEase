@@ -23,7 +23,9 @@ export function Hearings() {
     const [filteredHearings, setFilteredHearings] = useState(hearings);
 
     useEffect(() => {
+        if(hearings.length === 0) {
         fetchHearings();
+        }
     }, [fetchHearings]);
 
     useEffect(() => {

@@ -123,6 +123,7 @@ class CaseView(APIView):
                 if check_respondent:
                     respondents_individuals_ids.append(check_respondent.id)
                 else:
+                    respondent.pop('type', None) 
                     respondent_obj = CasePerson.objects.create(**respondent)
                     respondents_individuals_ids.append(respondent_obj.id)    
             else:
@@ -482,8 +483,36 @@ class UpdateHearingProgressView(APIView):
 
         # Start a transaction so that if one part fails, nothing is saved
         with transaction.atomic():
-            
-            if outcome == "rescheduled":
+            if outcome == "completed":
+                time_completed = request.data.get("time_completed")
+                Hearing.objects.filter(id=hearing_id).update(
+                    hearing_status="completed",
+                    time_completed=time_completed,
+                    remarks=request.data.get("remarks")
+                )
+                Hearing.objects.filter(case=case, hearing_number=hearing_number+1).update(
+                    hearing_status="scheduled",
+                    remarks="Hearing scheduled."
+                )
+
+            elif outcome == "new_hearing":
+                Hearing.objects.filter(id=hearing_id).update(
+                    hearing_status="completed",
+                    time_completed=request.data.get("time_completed"),
+                    remarks=request.data.get("remarks")
+                )
+                
+                Hearing.objects.create(
+                    case=case,
+                    hearing_number=hearing_number + 1,
+                    hearing_date=request.data.get("new_hearing_date"),
+                    time=request.data.get("new_hearing_time"),
+                    lupon_member_id=request.data.get("lupon_member_id"),
+                    remarks="Subsequent hearing pending. Summon to be served.",
+                    hearing_status="scheduled",
+                )
+
+            elif outcome == "rescheduled":
                 resched_date = request.data.get("rescheduled_hearing_date")
                 if not resched_date:
                     return Response({"error": "Rescheduled date required."}, status=400)

@@ -71,14 +71,20 @@ export function CaseForm(){
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
+        try{
+            setLoading(true);
 
-        const res = await addCaseData(); 
+            const res = await addCaseData(); 
 
-        if (res) {
+            if (res) {
+                setLoading(false);
+                setStepNumber(5);
+            }
+        } catch (error) {
+            toast.error("An error occurred while submitting the case. Please try again.");
             setLoading(false);
-            setStepNumber(5);
         }
+        
     };
     
 
