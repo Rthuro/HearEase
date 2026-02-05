@@ -17,17 +17,17 @@ export function Complainant() {
 
     }
 
-    
+
     return (
         <div className="grid grid-cols-2 gap-3">
-            
+
             <p className="col-span-2 text-center text-2xl mb-3">Complainant Information</p>
 
             <div className="flex gap-3 col-span-2">
                 <div className="flex gap-2">
                     <AddEditParticipant type="complainant" action="Add" />
 
-                    {userRole === 'admin' && (
+                    {(userRole === 'admin' || userRole === 'lupon') && (
                         <RetrievePopover participantType="complainant" />
                     )}
                 </div>
@@ -37,10 +37,10 @@ export function Complainant() {
 
             <Separator className="col-span-2" />
 
-            {complainantList.length > 0 && complainantList.map( (c) => (
+            {complainantList.length > 0 && complainantList.map((c) => (
                 <ParticipantCard participant={c} type="complainant" />
             ))}
-            
+
         </div>
     )
 }

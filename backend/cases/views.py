@@ -181,13 +181,14 @@ class CaseView(APIView):
         role = request.query_params.get("role")
         email = request.query_params.get("email")
 
-        user_id = User.objects.filter(email=email).first()
-        user_as_complainant = CasePerson.objects.filter(email=email).first()
-
         if role == "user":
-            cases = Case.objects.filter(complainants=user_as_complainant.id)
+            user_as_complainant = CasePerson.objects.filter(email=email).first()
+            if user_as_complainant:
+                cases = Case.objects.filter(complainants=user_as_complainant.id)
+            else:
+                cases = Case.objects.none()
         else:
-            cases = Case.objects.all().select_related("case_type", "settlement_type", "respondent_user", "complainant_user")
+            cases = Case.objects.all().select_related("case_type", "settlement_type", "relationship")
 
         serializer = CaseSerializer(cases, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

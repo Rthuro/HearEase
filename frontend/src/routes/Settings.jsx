@@ -339,16 +339,27 @@ export function Settings() {
                         <div className="flex items-center justify-between bg-white p-4 border rounded-lg">
                             <div className="flex flex-col gap-1">
                                 <p className="text-lg font-medium">Verify your account</p>
-                                <p className="text-sm text-zinc-500">Please verify your account to access all features.</p>
+                                <p className="text-sm text-zinc-500">
+                                    {user?.is_identity_verified
+                                        ? "Your identity has been verified."
+                                        : "Please verify your account to access all features."}
+                                </p>
                             </div>
-                            <Dialog>
-                                <DialogTrigger asChild>
-                                    <Button className="bg-redBase">Verify Now</Button>
-                                </DialogTrigger>
-                                <DialogContent className="sw-fit">
-                                    <AccountVerification />
-                                </DialogContent>
-                            </Dialog>
+                            {user?.is_identity_verified ? (
+                                <div className="flex items-center gap-2 text-green-600 bg-green-50 px-4 py-2 rounded-lg">
+                                    <Check className="w-5 h-5" />
+                                    <span className="font-medium">Verified</span>
+                                </div>
+                            ) : (
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <Button className="bg-redBase">Verify Now</Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="sw-fit">
+                                        <AccountVerification />
+                                    </DialogContent>
+                                </Dialog>
+                            )}
                         </div>
                     )}
 
@@ -834,7 +845,7 @@ export function Settings() {
                                     </span>
                                 ) : (
                                     <span className="flex items-center gap-1 text-amber-600 text-sm">
-                                        Need 5+ resolved cases
+                                        Need 50+ resolved cases
                                     </span>
                                 )}
                             </div>
@@ -844,10 +855,32 @@ export function Settings() {
                                     <p><strong>Total Resolved Cases:</strong> {aiStatus.total_resolved_cases || 0}</p>
                                     <p><strong>Cases Since Last Train:</strong> {aiStatus.cases_since_last_train || 0} / {aiStatus.threshold_cases || 10}</p>
                                     {aiStatus.last_training && (
-                                        <p className="text-gray-500">
-                                            Last trained: {new Date(aiStatus.last_training.trained_at).toLocaleString()}
-                                            ({aiStatus.last_training.samples} samples, {aiStatus.last_training.triggered_by})
-                                        </p>
+                                        <>
+                                            <p className="text-gray-500">
+                                                Last trained: {new Date(aiStatus.last_training.trained_at).toLocaleString()}
+                                                ({aiStatus.last_training.samples} samples, {aiStatus.last_training.triggered_by})
+                                            </p>
+                                            {/* MAPE Display - Model Accuracy */}
+                                            {(aiStatus.last_training.mape_hearings !== null || aiStatus.last_training.mape_days !== null) && (
+                                                <div className="mt-2 pt-2 border-t border-gray-200">
+                                                    <p className="font-medium text-gray-700 mb-1">Model Accuracy:</p>
+                                                    {aiStatus.last_training.mape_hearings !== null && (
+                                                        <p className="text-gray-600">
+                                                            Hearings Prediction: <span className={`font-medium ${aiStatus.last_training.mape_hearings <= 15 ? 'text-green-600' : aiStatus.last_training.mape_hearings <= 30 ? 'text-amber-600' : 'text-red-600'}`}>
+                                                                {aiStatus.last_training.mape_hearings.toFixed(1)}% error
+                                                            </span>
+                                                        </p>
+                                                    )}
+                                                    {aiStatus.last_training.mape_days !== null && (
+                                                        <p className="text-gray-600">
+                                                            Resolution Days: <span className={`font-medium ${aiStatus.last_training.mape_days <= 15 ? 'text-green-600' : aiStatus.last_training.mape_days <= 30 ? 'text-amber-600' : 'text-red-600'}`}>
+                                                                {aiStatus.last_training.mape_days.toFixed(1)}% error
+                                                            </span>
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </>
                                     )}
                                 </div>
                             )}

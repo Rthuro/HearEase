@@ -42,11 +42,11 @@ export const useUserStore = create((set, get) => ({
     syncUserCases: async (case_persons, email) => {
         try {
             const res = await axios.post(`${API_URL}/sync-user-cases/`,
-            { case_persons: case_persons, email: email });
+                { case_persons: case_persons, email: email });
 
             if (res.status === 200) {
                 toast.success("Cases successfully synced to your account!");
-            } 
+            }
         } catch (error) {
             toast.error("Failed to sync cases. Please try again.");
             console.error("Sync error:", error);
@@ -54,32 +54,32 @@ export const useUserStore = create((set, get) => ({
     },
     notificationSettings: null,
     fetchNotificationSettings: async () => {
-        try{ 
-            
-        const res = await axios.get(`${API_URL}/user/notifications/`, {
-            headers: { Authorization: `Token ${storedUserInfo()?.token}` }
-        });
+        try {
 
-        set({ notificationSettings: res.data });
+            const res = await axios.get(`${API_URL}/user/notifications/`, {
+                headers: { Authorization: `Token ${storedUserInfo()?.token}` }
+            });
+
+            set({ notificationSettings: res.data });
 
         } catch (error) {
             toast.error("Failed to fetch notification settings.");
         }
-       
+
     },
 
     patchNotificationSettings: async (updatedSettings) => {
         try {
             const res = await axios.patch(
-            `${API_URL}/user/notifications/`,
-            updatedSettings,
-            {
-                headers: { Authorization: `Token ${storedUserInfo()?.token}` }
-            }
+                `${API_URL}/user/notifications/`,
+                updatedSettings,
+                {
+                    headers: { Authorization: `Token ${storedUserInfo()?.token}` }
+                }
             );
             set({ notificationSettings: res.data });
             toast.success("Settings saved");
-        
+
         }
         catch (error) {
             toast.error("Failed to update notification settings.");
@@ -96,8 +96,8 @@ export const useUserStore = create((set, get) => ({
             const user = auth.currentUser;
             if (!user) return;
 
-            await user.reload(); 
-            
+            await user.reload();
+
             if (user.emailVerified) {
                 // 2. Get fresh token
                 const token = await user.getIdToken(true);
@@ -105,8 +105,8 @@ export const useUserStore = create((set, get) => ({
                 const response = await axios.post(
                     `${API_URL}/auth/verify-email-sync/`,
                     { token: token },
-                    { 
-                        headers: { Authorization: `Token ${data?.userInfo.token}` } 
+                    {
+                        headers: { Authorization: `Token ${data?.userInfo.token}` }
                     }
                 );
 
@@ -131,7 +131,7 @@ export const useUserStore = create((set, get) => ({
                 { type: type, contact_number: contact_number },
                 { headers: { Authorization: `Token ${data?.userInfo.token}` } }
             );
-        toast.success("Code sent! ");
+            toast.success("Code sent! ");
         } catch (error) {
             console.error(error);
             toast.error("Failed to send code.");
@@ -151,30 +151,56 @@ export const useUserStore = create((set, get) => ({
                 { headers: { Authorization: `Token ${data?.userInfo?.token}` } }
             );
 
-        if (response.status === 200) {
-            toast.success(`${type === "email" ? "Email" : "Phone"} successfully verified!`);
-        }
+            if (response.status === 200) {
+                toast.success(`${type === "email" ? "Email" : "Phone"} successfully verified!`);
+            }
 
         } catch (error) {
             console.error(error);
             toast.error(error.response?.data?.error || "Verification failed");
-        } 
-    },
-
-    verifyIdentity: async (formData) => {
-        try{
-            const response = await axios.post(`${API_URL}/verify-identity/`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-        });
-
-            return response.data;
-        }catch (error) {
-            console.error("Verification error:", error);
         }
     },
 
-    
+    verifyIdentity: async (formData) => {
+        try {
+            const response = await axios.post(`${API_URL}/verify-identity/`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+            return response.data;
+        } catch (error) {
+            console.error("Verification error:", error);
+            // Return the error response data so the frontend can handle it properly
+            if (error.response?.data) {
+                return {
+                    success: false,
+                    ...error.response.data,
+                    statusCode: error.response.status
+                };
+            }
+            // Network or other error
+            return {
+                success: false,
+                error: "Connection failed. Please check your internet connection.",
+                statusCode: 0
+            };
+        }
+    },
+
+    // Update user verification status
+    updateVerificationStatus: async (userId, isVerified) => {
+        try {
+            const response = await axios.put(`${API_URL}/update-user/${userId}/`, {
+                is_identity_verified: isVerified
+            });
+            return response.data;
+        } catch (error) {
+            console.error("Failed to update verification status:", error);
+            throw error;
+        }
+    },
+
+
 
 }));
