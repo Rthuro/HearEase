@@ -40,6 +40,8 @@ export function EditCaseInfo({section, caseInfo, forResubmission}){
 
     const stored = localStorage.getItem("authData");
     const data = JSON.parse(stored);
+    // need to create multiple edit forms for complainants and respondents
+    console.log(caseInfo);
 
     useEffect(() => {
         if (open === true) {
@@ -237,7 +239,7 @@ export function EditCaseInfo({section, caseInfo, forResubmission}){
                                             onValueChange={(value) => {
                                                 setInfo({...info, barangay: value});
                                         
-                                                const streets = getStreets(value);
+                                                const streets = getStreets(barangays, value);
                                                 if (streets.length > 0) {
                                                 setInfo({...info, street: streets[0]});
                                                 } else {
@@ -268,7 +270,7 @@ export function EditCaseInfo({section, caseInfo, forResubmission}){
                                             <DropdownMenuRadioGroup
                                             value={info?.street} onValueChange={(value) => setInfo({...info, street: value})}>
 
-                                            {getStreets(info?.barangay).map(street => (
+                                            {getStreets(barangays, info?.barangay).map(street => (
                                                 <DropdownMenuRadioItem key={street} value={street}>{street}</DropdownMenuRadioItem>
                                             ))}
 

@@ -56,6 +56,13 @@ export const updateHearingProgress = async (hearingId, payload) => {
   return response.data;
 };
 
+export const getHearingAttendance = async (hearingId) => {
+  const response = await axios.get(`${API_URL}/hearing-attendance/`, {
+    params: { hearing_id: hearingId }
+  });
+  return response.data;
+};
+
 const useHearingStore = create((set, get) => ({
   hearings: [],
   loading: false,
@@ -180,6 +187,19 @@ const useHearingStore = create((set, get) => ({
       const errorMessage = isNetworkError
         ? "Network error. Please check your connection."
         : "Failed to update hearing progress";
+      toast.error(errorMessage);
+      return { success: false, retry: isNetworkError };
+    }
+  },
+  fetchHearingAttendance: async (hearingId) => {
+    try {
+      const response = await getHearingAttendance(hearingId);
+      return { success: true, data: response };
+    } catch (error) {
+      const isNetworkError = !error.response;
+      const errorMessage = isNetworkError
+        ? "Network error. Please check your connection."
+        : "Failed to fetch hearing attendance";
       toast.error(errorMessage);
       return { success: false, retry: isNetworkError };
     }

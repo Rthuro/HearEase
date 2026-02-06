@@ -74,7 +74,7 @@ export function Case() {
     }, [caseInfo]);
 
     const [findHearingCase, setFindHearingCase] = useState(
-        hearings.length > 0 ? hearings.filter( hearing => hearing.case == case_number)
+        hearings.length > 0 ? hearings?.filter( hearing => hearing.case == case_number)
         .sort((a, b) => a.hearing_number - b.hearing_number) : []);
     // const findHearingCase = ;
 
@@ -281,7 +281,7 @@ export function Case() {
                             const updatedCase = await fetchCase(caseInfo?.id);
                             setCaseInfo(updatedCase);
                             fetchHearings();
-                            setFindHearingCase(hearings.filter( hearing => hearing.case == case_number).sort((a, b) => a.hearing_number - b.hearing_number));
+                            setFindHearingCase(hearings?.filter( hearing => hearing.case == case_number).sort((a, b) => a.hearing_number - b.hearing_number));
                             setRefreshLoader(false);
                         }
                         catch(error){
@@ -339,7 +339,7 @@ export function Case() {
                 </div>
                 {userRole == 'user' && (
                     <div className="flex flex-col">
-                        {userStatusDisplay(caseInfo.case_status)}
+                        {userStatusDisplay(caseInfo?.case_status)}
                     </div>
                 )}
             </div>

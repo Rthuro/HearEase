@@ -41,8 +41,7 @@ import { HearingProgressDisplay } from "@/components/HearingProgressDisplay";
 
 export default function Hearing() {
     const { hearing_id } = useParams();
-    const { hearings, updatedHearings, updateCaseHearings, loading, setUpdatedHearings } = useHearingStore();
-    const { case_complainants, case_respondents, fetchCaseComplainants, fetchCaseRespondents} = useRetrieveUsersStore();
+    const { hearings, updatedHearings, updateCaseHearings, loading, setUpdatedHearings, fetchHearingAttendance } = useHearingStore();
     const { cases } = useCaseStore()
     const { members } = useLuponStore();
     const navigate = useNavigate();
@@ -88,15 +87,17 @@ export default function Hearing() {
           lupon_member: foundLupon ? foundLupon.id : null,
         };
       });
+
+    const [attendanceRecords, setAttendanceRecords] = useState([]);
     
     useEffect(() => {
       setUpdatedHearings(initializedHearings);
+      if(!attendanceRecords.length)
+        fetchHearingAttendance(hearing.id).then(data => setAttendanceRecords(data?.data || []));
+
     }, []);
 
-    // useEffect( () => {
-    //     fetchCaseComplainants(caseInfo?.complainants);
-    //     fetchCaseRespondents(caseInfo?.respondents);
-    // }, [caseInfo])
+    console.log("attendanceRecords", hearing);
     
     if(userRole == 'admin'){
         return (
@@ -173,10 +174,48 @@ export default function Hearing() {
                     </Table>
                     </div>
     
-                    <div className="flex gap-3 self-end">
-                        <Button variant="outline" className={cn("text-redBase")}>
-                            Cancel Hearing
-                        </Button>
+                     { hearing?.hearing_status !== 'completed' && (
+                        <div className="flex gap-3 self-end">
+                            <Button variant="outline" className={cn("text-redBase")}>
+                                Cancel Hearing
+                            </Button>
+                        </div>
+                    )}
+                    
+                </div>
+
+                <div className="flex gap-3 bg-white p-4 rounded-lg border flex-col">
+                    <h2 className="text-lg font-semibold">Hearing Attendance</h2>
+                    <div className="border rounded-lg overflow-hidden">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                            <TableHead className="text-left px-4 py-2">Name</TableHead>
+                            <TableHead className="text-left px-4 py-2">Role</TableHead>
+                            <TableHead className="text-left px-4 py-2">Attendance Status</TableHead>
+                            </TableRow>
+                        </TableHeader>
+
+                        <TableBody>
+                                {attendanceRecords.length > 0 && attendanceRecords.map((record) => (
+                                    <TableRow key={record.id} className="border-t">
+                                        <TableCell className="px-4 py-2">
+                                            {record?.case_person ? `${record?.case_person?.first_name} 
+                                            ${record?.case_person?.last_name}` : `${record?.lupon_member ? `${record?.lupon_member?.first_name} ${record?.lupon_member?.last_name}` : "Unknown"}`}
+                                        </TableCell>
+                                        <TableCell className="px-4 py-2">{record?.participant_role}</TableCell>
+                                        <TableCell className="px-4 py-2">{record?.attendance_status}</TableCell>
+                                    </TableRow>
+                                ))}
+                                {!attendanceRecords.length && (
+                                    <TableRow>
+                                        <TableCell colSpan={3} className="px-4 py-2 text-center">
+                                            No attendance recorded.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                        </TableBody>
+                    </Table>
                     </div>
                     
                 </div>
@@ -233,25 +272,30 @@ export default function Hearing() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                            <TableHead className="text-left px-4 py-2">Assigned Lupon</TableHead>
-                            <TableHead className="text-left px-4 py-2">Complainant</TableHead>
-                            <TableHead className="text-left px-4 py-2">Respondent</TableHead>
+                            <TableHead className="text-left px-4 py-2">Name</TableHead>
+                            <TableHead className="text-left px-4 py-2">Role</TableHead>
+                            <TableHead className="text-left px-4 py-2">Attendance Status</TableHead>
                             </TableRow>
                         </TableHeader>
 
                         <TableBody>
-                            <TableRow className="border-t">
-                                <TableCell className="px-4 py-2">
-                                    { hearing.hearing_status == 'scheduled' ? "Scheduled" : "Pending..."}
-                                </TableCell>
-                                <TableCell className="px-4 py-2">
-                                    { hearing.hearing_status == 'scheduled' ? "Scheduled" : "Pending..."}
-                                </TableCell>
-                                <TableCell className="px-4 py-2">
-                                    { hearing.hearing_status == 'scheduled' ? "Scheduled" : "Pending..."}
-                                </TableCell>
-                    
-                            </TableRow>
+                                {attendanceRecords.length > 0 && attendanceRecords.map((record) => (
+                                    <TableRow key={record.id} className="border-t">
+                                        <TableCell className="px-4 py-2">
+                                            {record?.case_person ? `${record?.case_person?.first_name} 
+                                            ${record?.case_person?.last_name}` : `${record?.lupon_member ? `${record?.lupon_member?.first_name} ${record?.lupon_member?.last_name}` : "Unknown"}`}
+                                        </TableCell>
+                                        <TableCell className="px-4 py-2">{record?.participant_role}</TableCell>
+                                        <TableCell className="px-4 py-2">{record?.attendance_status}</TableCell>
+                                    </TableRow>
+                                ))}
+                                {!attendanceRecords.length && (
+                                    <TableRow>
+                                        <TableCell colSpan={3} className="px-4 py-2 text-center">
+                                            No attendance recorded.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
                         </TableBody>
                     </Table>
                     </div>

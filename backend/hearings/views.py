@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .models import Hearing
+from .models import Hearing, HearingAttendance
 from cases.models import Case
 from rest_framework.views import APIView
 from rest_framework import status
@@ -156,6 +156,20 @@ class HearingCaseView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class HearingAttendanceView(APIView):
+    def get(self, request):
+        hearing_id = request.query_params.get("hearing_id")
+        
+        if not hearing_id:
+            attendances = HearingAttendance.objects.all()
+        else:
+            attendances = HearingAttendance.objects.filter(hearing_id=hearing_id)
+
+        serializer = HearingAttendanceSerializer(attendances, many=True)
+
+        if not attendances.exists():
+            return Response({"error": "No attendance records found for this hearing."}, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
     def post(self, request):
         data = request.data
         serializer = HearingAttendanceSerializer(data=data, many=True)

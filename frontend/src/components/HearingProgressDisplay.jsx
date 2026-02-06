@@ -1,5 +1,5 @@
 import { Label } from "./ui/label";
-import { CalendarDaysIcon, HandshakeIcon, File, CalendarIcon, Loader2, CalendarCheck, ChevronsUpDown, Check  } from "lucide-react";
+import { CalendarDaysIcon, HandshakeIcon, File, CalendarIcon, Loader2, CalendarCheck, ChevronsUpDown, Check, AlertTriangle  } from "lucide-react";
 import { useLuponStore } from "@/store/useLuponStore";
 import { Checkbox } from "./ui/checkbox";
 import { useEffect, useState } from "react";
@@ -16,6 +16,14 @@ import { useCaseStore } from "@/store/useCaseStore";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "./ui/command";
 import { Input } from "./ui/input";
 import { Separator } from "./ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 export function HearingProgressDisplay({ hearing, case_complainants, case_respondents, case_hearings }) {
     const { hearings, fetchHearings} = useHearingStore();
@@ -99,6 +107,36 @@ export function HearingProgressDisplay({ hearing, case_complainants, case_respon
 
     const mediator = members?.find( member => member.id === hearing?.lupon_member);
 
+    const attendanceParticipants = () => {
+        const participants = [];
+        case_complainants.map( complainant => {
+            participants.push({
+                id: complainant.id,
+                attendance_status: "absent",
+                participant_role: "complainant"
+            })
+        })
+        case_respondents.map( respondent => {
+            participants.push({
+                id: respondent.id,
+                attendance_status: "absent",
+                participant_role: "respondent"
+            })
+        })
+
+        if(mediator){
+            participants.push({
+                id: mediator.id,
+                attendance_status: "absent",
+                participant_role: "lupon"
+            })
+        }
+
+        return participants;
+    }
+    const [attendance, setAttendance] = useState(attendanceParticipants());
+    const [noticeConfirmation, setNoticeConfirmation] = useState(false);
+
     useEffect(() => {
         if (settlementTypes.length === 0) {
             fetchSettlementTypes();
@@ -109,7 +147,11 @@ export function HearingProgressDisplay({ hearing, case_complainants, case_respon
     const handleSubmit = async (data) => {
         try{
             setLoader(true);
-            const res = await updateCaseHearingProgress(hearing.case, data);
+            const payload = {
+                ...data,
+                attendance: attendance
+            }
+            const res = await updateCaseHearingProgress(hearing.case, payload);
             if(res.success){
                 setLoader(false);
                 toast.success("Hearing progress updated successfully.");
@@ -154,6 +196,20 @@ export function HearingProgressDisplay({ hearing, case_complainants, case_respon
                             <Checkbox
                                 id={inputId}
                                 className="data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600 data-[state=checked]:text-white dark:data-[state=checked]:border-blue-700 dark:data-[state=checked]:bg-blue-700"
+
+                                checked={attendance?.find(a => 
+                                    a.id === complainant.id && a.participant_role === "complainant"
+                                )?.attendance_status === "present"}
+                                
+                                onCheckedChange={(checked) => {
+                                    const newStatus = checked ? "present" : "absent";
+                                    
+                                    setAttendance(prev => prev.map(a => 
+                                        (a.id === complainant.id && a.participant_role === "complainant")
+                                            ? { ...a, attendance_status: newStatus }
+                                            : a
+                                    ));
+                                }}
                             />
                             <div className="grid gap-1">
                                 <p className="text-sm leading-none font-medium">
@@ -179,6 +235,19 @@ export function HearingProgressDisplay({ hearing, case_complainants, case_respon
                             <Checkbox
                                 id={inputId}
                                 className="data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600 data-[state=checked]:text-white dark:data-[state=checked]:border-blue-700 dark:data-[state=checked]:bg-blue-700"
+                                checked={attendance?.find(a => 
+                                    a.id === respondent.id && a.participant_role === "respondent"
+                                )?.attendance_status === "present"}
+                                
+                                onCheckedChange={(checked) => {
+                                    const newStatus = checked ? "present" : "absent";
+                                    
+                                    setAttendance(prev => prev.map(a => 
+                                        (a.id === respondent.id && a.participant_role === "respondent")
+                                            ? { ...a, attendance_status: newStatus }
+                                            : a
+                                    ));
+                                }}
                             />
                             <div className="grid gap-1">
                                 <p className="text-sm leading-none font-medium">
@@ -201,6 +270,19 @@ export function HearingProgressDisplay({ hearing, case_complainants, case_respon
                         <Checkbox
                             id="mediator"
                             className="data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600 data-[state=checked]:text-white dark:data-[state=checked]:border-blue-700 dark:data-[state=checked]:bg-blue-700"
+                            checked={attendance?.find(a => 
+                                a.id === mediator.id && a.participant_role === "lupon"
+                            )?.attendance_status === "present"}
+                            
+                            onCheckedChange={(checked) => {
+                                const newStatus = checked ? "present" : "absent";
+                                
+                                setAttendance(prev => prev.map(a => 
+                                    (a.id === mediator.id && a.participant_role === "lupon")
+                                        ? { ...a, attendance_status: newStatus }
+                                        : a
+                                ));
+                            }}
                         />
                         <div className="grid gap-1">
                             <p className="text-sm leading-none font-medium">
@@ -214,7 +296,29 @@ export function HearingProgressDisplay({ hearing, case_complainants, case_respon
             </div>
         </div>
 
-        <div className="flex flex-col gap-4 p-4 border bg-gray-50 rounded-md">
+        <div className="flex flex-col gap-4 p-4 border bg-gray-50 rounded-md relative">
+
+            { attendance.filter(a => a.attendance_status === "present").length === 0 && !noticeConfirmation && ( 
+            <div className="absolute top-0 right-0 left-0 bottom-0 
+            flex flex-col items-center justify-center gap-3 p-5 rounded-xl border border-amber-200 bg-amber-50 shadow-sm">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 bg-amber-100 rounded-full">
+                        <AlertTriangle className="h-5 w-5 text-amber-600" />
+                    </div>
+                    <p className="text-sm font-medium text-amber-800 leading-tight">
+                        You haven't marked any hearing participants as present.
+                    </p>
+                </div>
+                
+                <Button 
+                    className="flex-1 md:flex-none bg-redBase hover:bg-redBase/90 text-white shadow-md transition-all active:scale-95"
+                    onClick={() => setNoticeConfirmation(true)}
+                >
+                    Proceed anyway
+                </Button>
+            </div>
+            )}
+
             <Label className="font-semibold text-gray-800 ">SESSION OUTCOME</Label>
             <div className="flex gap-4">
                 {filterOutcomeChoices.map((o) => (
@@ -236,6 +340,8 @@ export function HearingProgressDisplay({ hearing, case_complainants, case_respon
                         <Loader2 className="animate-spin h-8 w-8 text-redBase" />
                     </div>
                 )}
+ 
+
                  { outcome === 1 && hearing?.hearing_number !== 6 && (
                       <div className="flex flex-col gap-4 border-l-4 border-green-800 pl-4 w-full">
                             <Label className="font-semibold text-green-800 text-lg">Complete Hearing</Label>

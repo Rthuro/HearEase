@@ -10,7 +10,7 @@ from case_persons.models import CasePerson
 from case_organizations.models import CaseOrganization
 from .models import Case, SettlementType, CaseType, Relationship
 from .serializers import CaseSerializer, CaseTypeSerializer, SettlementTypeSerializer, RelationshipSerializer
-from hearings.models import Hearing
+from hearings.models import Hearing, HearingAttendance
 from django.contrib.auth import get_user_model
 from django.db.models.functions import TruncMonth
 from django.db.models import Count
@@ -475,6 +475,8 @@ class UpdateHearingProgressView(APIView):
         outcome = request.data.get("outcome")
         hearing_id = request.data.get("hearing_id")
         hearing_number = request.data.get("hearing_number")
+        attendance = request.data.get("attendance")
+        print("Received attendance data:", attendance)
 
         try:
             case = Case.objects.get(pk=pk)
@@ -483,6 +485,27 @@ class UpdateHearingProgressView(APIView):
 
         # Start a transaction so that if one part fails, nothing is saved
         with transaction.atomic():
+            for a in attendance:
+                role = a.get("participant_role")
+                attendee_id = a.get("id")
+                attendance_status = a.get("attendance_status")
+
+                if role == "lupon":
+                    HearingAttendance.objects.update_or_create(
+                        hearing_id=hearing_id,
+                        lupon_member_id=attendee_id,
+                        participant_role=role,
+                        defaults={"attendance_status": attendance_status}
+                    )
+                
+                elif role in ["complainant", "respondent"]:
+                    HearingAttendance.objects.update_or_create(
+                        hearing_id=hearing_id,
+                        case_person_id=attendee_id,
+                        participant_role=role,
+                        defaults={"attendance_status": attendance_status}
+                    )
+
             if outcome == "completed":
                 time_completed = request.data.get("time_completed")
                 Hearing.objects.filter(id=hearing_id).update(
