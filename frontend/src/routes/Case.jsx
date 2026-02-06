@@ -68,7 +68,10 @@ export function Case() {
         }
     }, [caseInfo]);
 
-    const findHearingCase = hearings.length > 0 ? hearings.filter(hearing => hearing.case == case_number) : [];
+    const [findHearingCase, setFindHearingCase] = useState(
+        hearings.length > 0 ? hearings?.filter( hearing => hearing.case == case_number)
+        .sort((a, b) => a.hearing_number - b.hearing_number) : []);
+    // const findHearingCase = ;
 
     const lupon = members.find(member => member.id === findHearingCase[0]?.lupon_member);
 
@@ -273,17 +276,28 @@ export function Case() {
                             </Button>
                         </div>
                     )}
-                    {userRole == 'user' && caseInfo.case_status == 'pending_approval' && (
-                        <div className="flex gap-2">
-                            <Button variant="default" className={cn("bg-redBase")}
-                                onClick={() => {
-                                    deleteCase(caseInfo.id);
-                                }}>
-                                Withdraw Application
-                            </Button>
-                        </div>
-                    )}
-                    <CaseSettingsModal caseData={caseInfo} />
+                    <CaseSettingsModal role={userRole} caseData={caseInfo} />
+                    <Button
+                    variant="outline"
+                    onClick={async () => {
+                        try{
+                            setRefreshLoader(true);
+                            const updatedCase = await fetchCase(caseInfo?.id);
+                            setCaseInfo(updatedCase);
+                            fetchHearings();
+                            setFindHearingCase(hearings?.filter( hearing => hearing.case == case_number).sort((a, b) => a.hearing_number - b.hearing_number));
+                            setRefreshLoader(false);
+                        }
+                        catch(error){
+                            setRefreshLoader(false);
+                            toast.error("Failed to refresh case data. Please try again.");
+                        }
+                        // const updatedHearings = await fetchHearingsByCase(caseInfo?.id);
+                        // setFindHearingCase(updatedHearings);
+                    }}>
+
+                        <RefreshCcw className={refreshLoader ? "animate-spin" : ""} />
+                    </Button>
                 </div>
 
             </div>
@@ -318,7 +332,7 @@ export function Case() {
                 </div>
                 {userRole == 'user' && (
                     <div className="flex flex-col">
-                        {userStatusDisplay(caseInfo.case_status)}
+                        {userStatusDisplay(caseInfo?.case_status)}
                     </div>
                 )}
             </div>

@@ -21,6 +21,7 @@ export function Hearings() {
     const { fetchHearings, hearings, loading } = useHearingStore();
     const [status, setStatus] = useState("all");
     const [filteredHearings, setFilteredHearings] = useState(hearings);
+    const [searchQuery, setSearchQuery] = useState("");
 
     useEffect(() => {
         fetchHearings();
@@ -52,7 +53,8 @@ export function Hearings() {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center">
                         <Search className="text-zinc-400 ml-3" size={16} />
-                        <Input type="text" placeholder="Search for case..." className="w-72 -ml-6 pl-8" />
+                        <Input type="text" placeholder="Search for case..." className="w-72 -ml-6 pl-8"
+                         value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
                     </div>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>

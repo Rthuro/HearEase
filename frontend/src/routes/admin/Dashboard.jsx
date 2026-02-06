@@ -30,7 +30,6 @@ export function Dashboard() {
       <PageSync page="Dashboard" />
       <div className="flex  gap-4 mt-6">
         <Greetings />
-        <DashboardNotification />
       </div>
 
       <div className="flex flex-col gap-4 bg-white border border-zinc-200 rounded-lg p-6">

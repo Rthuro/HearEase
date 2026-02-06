@@ -9,7 +9,7 @@ from case_persons.serializers import CasePersonSerializer
 from case_persons.models import CasePerson
 from .models import Case, SettlementType, CaseType, Relationship
 from .serializers import CaseSerializer, CaseTypeSerializer, SettlementTypeSerializer, RelationshipSerializer
-from hearings.models import Hearing
+from hearings.models import Hearing, HearingAttendance
 from django.contrib.auth import get_user_model
 from django.db.models.functions import TruncMonth
 from django.db.models import Count
@@ -392,6 +392,110 @@ class UpdateCaseInfoView(APIView):
             return Response(response_data, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UpdateHearingProgressView(APIView):
+    def put(self, request, pk):
+        outcome = request.data.get("outcome")
+        hearing_id = request.data.get("hearing_id")
+        hearing_number = request.data.get("hearing_number")
+        attendance = request.data.get("attendance")
+        print("Received attendance data:", attendance)
+
+        try:
+            case = Case.objects.get(pk=pk)
+        except Case.DoesNotExist:
+            return Response({"error": "Case not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Start a transaction so that if one part fails, nothing is saved
+        with transaction.atomic():
+            for a in attendance:
+                role = a.get("participant_role")
+                attendee_id = a.get("id")
+                attendance_status = a.get("attendance_status")
+
+                if role == "lupon":
+                    HearingAttendance.objects.update_or_create(
+                        hearing_id=hearing_id,
+                        lupon_member_id=attendee_id,
+                        participant_role=role,
+                        defaults={"attendance_status": attendance_status}
+                    )
+                
+                elif role in ["complainant", "respondent"]:
+                    HearingAttendance.objects.update_or_create(
+                        hearing_id=hearing_id,
+                        case_person_id=attendee_id,
+                        participant_role=role,
+                        defaults={"attendance_status": attendance_status}
+                    )
+
+            if outcome == "completed":
+                time_completed = request.data.get("time_completed")
+                Hearing.objects.filter(id=hearing_id).update(
+                    hearing_status="completed",
+                    time_completed=time_completed,
+                    remarks=request.data.get("remarks")
+                )
+                Hearing.objects.filter(case=case, hearing_number=hearing_number+1).update(
+                    hearing_status="scheduled",
+                    remarks="Hearing scheduled."
+                )
+
+            elif outcome == "new_hearing":
+                Hearing.objects.filter(id=hearing_id).update(
+                    hearing_status="completed",
+                    time_completed=request.data.get("time_completed"),
+                    remarks=request.data.get("remarks")
+                )
+                
+                Hearing.objects.create(
+                    case=case,
+                    hearing_number=hearing_number + 1,
+                    hearing_date=request.data.get("new_hearing_date"),
+                    time=request.data.get("new_hearing_time"),
+                    lupon_member_id=request.data.get("lupon_member_id"),
+                    remarks="Subsequent hearing pending. Summon to be served.",
+                    hearing_status="scheduled",
+                )
+
+            elif outcome == "rescheduled":
+                resched_date = request.data.get("rescheduled_hearing_date")
+                if not resched_date:
+                    return Response({"error": "Rescheduled date required."}, status=400)
+                
+                Hearing.objects.filter(id=hearing_id).update(
+                    hearing_date=resched_date,
+                    hearing_status="rescheduled",
+                    remarks="Hearing rescheduled."
+                )
+
+            elif outcome in ["settled", "court"]:
+                # 1. Update the CURRENT and all FUTURE hearings for this case to completed
+                Hearing.objects.filter(
+                    case=case, 
+                    hearing_number__gte=hearing_number
+                ).update(
+                    hearing_status="completed",
+                    remarks="Hearing completed (Case finalized)."
+                )
+
+                # 2. Update Case Status based on outcome
+                if outcome == "settled":
+                    case.settlement_type_id = request.data.get("settlement_type_id")
+                    case.case_status = "resolved"
+                    case.remarks = request.data.get("remarks")
+                else: # court
+                    case.case_status = "escalated"
+                    case.remarks = request.data.get("remarks")
+                
+                case.save()
+
+            serializer = CaseSerializer(case, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
     
 class SingleCaseView(APIView):
     def get(self, request):

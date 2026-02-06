@@ -1,13 +1,13 @@
 from rest_framework import serializers
+
+from case_persons.serializers import CasePersonSerializer
 from .models import Hearing, HearingAttendance
 from lupon_members.serializers import LuponMemberSerializer
 from cases.serializers import CaseSerializer
 
 class HearingSerializer(serializers.ModelSerializer):
-    # Computed fields for enhanced display
-    case_number = serializers.SerializerMethodField()
-    case_type_label = serializers.SerializerMethodField()
-    lupon_member_name = serializers.SerializerMethodField()
+    # lupon_member = LuponMemberSerializer(read_only=True)
+    # case = CaseSerializer(read_only=True)
 
     class Meta:
         model = Hearing
@@ -48,6 +48,8 @@ class HearingSerializer(serializers.ModelSerializer):
 
 
 class HearingAttendanceSerializer(serializers.ModelSerializer):
+    case_person = CasePersonSerializer(read_only=True) 
+    lupon_member = LuponMemberSerializer(read_only=True)
     class Meta:
-        model = HearingAttendance
-        fields = '__all__'
+            model = HearingAttendance
+            fields = '__all__'

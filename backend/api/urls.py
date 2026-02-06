@@ -53,6 +53,9 @@ urlpatterns = [
     path('hearing-cases/', HearingViews.HearingCaseView.as_view(), name='hearing-case-list'),
     path('update-hearings/<str:pk>/', HearingViews.SetCaseHearingsView.as_view(), name='update-hearings'),
     path('update-single-hearing/<int:pk>/', HearingViews.UpdateHearingView.as_view(), name='update-hearing'),
+    path('hearing-progress-update/<str:pk>/', CaseViews.UpdateHearingProgressView.as_view(), name='hearing-progress-update'),
+
+    path('hearing-attendance/', HearingViews.HearingAttendanceView.as_view(), name='hearing-attendance'),
     # path('hearing-progress-update/<str:pk>/', CaseViews.UpdateHearingProgressView.as_view(), name='hearing-progress-update'),  # View not implemented
     
     # Scheduling endpoints
