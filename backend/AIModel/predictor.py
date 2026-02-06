@@ -255,7 +255,9 @@ def predict_case_outcomes(
                 preds = model.predict(X_all, verbose=0)
                 
                 if isinstance(preds, list) and len(preds) >= 2:
-                    pred_hearings = max(1, int(round(preds[0].flatten()[0])))
+                    # Cap predicted hearings at 6 maximum (barangay mediation limit)
+                    raw_hearings = int(round(preds[0].flatten()[0]))
+                    pred_hearings = min(6, max(1, raw_hearings))
                     pred_days = max(1, int(round(preds[1].flatten()[0])))
                 else:
                     pred_hearings = 3

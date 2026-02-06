@@ -74,10 +74,17 @@ def exchange_code_for_tokens(code):
     }
 
 
-def get_calendar_service(token_data):
+def get_calendar_service(token_data, token_obj=None):
     """
     Build Google Calendar API service from stored tokens.
+    Automatically refreshes token if expired.
+    
+    Args:
+        token_data: Dict with access_token and refresh_token
+        token_obj: Optional GoogleCalendarToken model instance to delete on failure
     """
+    from google.auth.transport.requests import Request
+    
     credentials = Credentials(
         token=token_data["access_token"],
         refresh_token=token_data["refresh_token"],
@@ -86,6 +93,26 @@ def get_calendar_service(token_data):
         client_secret=os.environ.get("GOOGLE_CLIENT_SECRET"),
         scopes=SCOPES
     )
+    
+    # Check if token is expired and refresh if necessary
+    if credentials.expired or not credentials.valid:
+        try:
+            print("[Calendar Service] Token expired, attempting refresh...")
+            credentials.refresh(Request())
+            print("[Calendar Service] Token refreshed successfully")
+        except Exception as e:
+            error_str = str(e).lower()
+            print(f"[Calendar Service] Token refresh failed: {e}")
+            
+            # If invalid_grant (token revoked), delete the stored token
+            if "invalid_grant" in error_str or "token has been expired or revoked" in error_str:
+                if token_obj:
+                    print(f"[Calendar Service] Deleting invalid token for user {token_obj.user.email}")
+                    token_obj.delete()
+                raise Exception("TOKEN_REVOKED: Your Google Calendar connection has expired. Please reconnect.")
+            
+            # Token is revoked or invalid - need to re-authenticate
+            raise Exception(f"Token expired or revoked. Please reconnect Google Calendar. Error: {e}")
     
     service = build('calendar', 'v3', credentials=credentials)
     return service, credentials
@@ -253,3 +280,138 @@ def delete_hearing_event(service, calendar_id, event_id):
     except HttpError as e:
         print(f"Error deleting event: {e}")
         raise
+
+
+# Philippine Holidays Calendar ID (Google's public calendar)
+PHILIPPINE_HOLIDAYS_CALENDAR_ID = "en.philippines#holiday@group.v.calendar.google.com"
+
+
+def get_philippine_holidays(start_date, end_date, api_key=None):
+    """
+    Get Philippine holidays for a given date range.
+    Uses hardcoded official Philippine holidays for reliability.
+    
+    Args:
+        start_date: Start date (datetime.date or datetime)
+        end_date: End date (datetime.date or datetime)
+        api_key: Not used (kept for compatibility)
+    
+    Returns:
+        List of holidays: [{date, name, description, is_public}]
+    """
+    import datetime as dt
+    
+    # Convert to date objects if needed
+    if hasattr(start_date, 'date'):
+        start_date = start_date.date()
+    if hasattr(end_date, 'date'):
+        end_date = end_date.date()
+    
+    # Official Philippine holidays (regular and special non-working)
+    # Year-agnostic - will be applied to the requested year range
+    PHILIPPINE_HOLIDAYS = [
+        # Regular Holidays
+        {"month": 1, "day": 1, "name": "New Year's Day", "type": "regular"},
+        {"month": 4, "day": 9, "name": "Araw ng Kagitingan (Day of Valor)", "type": "regular"},
+        {"month": 5, "day": 1, "name": "Labor Day", "type": "regular"},
+        {"month": 6, "day": 12, "name": "Independence Day", "type": "regular"},
+        {"month": 8, "day": 21, "name": "Ninoy Aquino Day", "type": "regular"},
+        {"month": 8, "day": 26, "name": "National Heroes Day", "type": "regular"},  # Last Monday of August, simplified
+        {"month": 11, "day": 30, "name": "Bonifacio Day", "type": "regular"},
+        {"month": 12, "day": 25, "name": "Christmas Day", "type": "regular"},
+        {"month": 12, "day": 30, "name": "Rizal Day", "type": "regular"},
+        
+        # Special Non-Working Holidays
+        {"month": 1, "day": 2, "name": "Additional Special Non-Working Day", "type": "special"},
+        {"month": 2, "day": 25, "name": "EDSA People Power Revolution Anniversary", "type": "special"},
+        {"month": 8, "day": 21, "name": "Ninoy Aquino Day", "type": "special"},
+        {"month": 11, "day": 1, "name": "All Saints' Day", "type": "special"},
+        {"month": 11, "day": 2, "name": "All Souls' Day", "type": "special"},
+        {"month": 12, "day": 8, "name": "Feast of the Immaculate Conception", "type": "special"},
+        {"month": 12, "day": 24, "name": "Christmas Eve", "type": "special"},
+        {"month": 12, "day": 31, "name": "New Year's Eve", "type": "special"},
+        
+        # Variable holidays (approximate dates for 2026)
+        # Holy Week - typically in March/April
+        {"month": 4, "day": 2, "name": "Maundy Thursday", "type": "regular"},
+        {"month": 4, "day": 3, "name": "Good Friday", "type": "regular"},
+        {"month": 4, "day": 4, "name": "Black Saturday", "type": "special"},
+        
+        # Chinese New Year (approximate)
+        {"month": 2, "day": 17, "name": "Chinese New Year", "type": "special"},
+        
+        # Eid'l Fitr (approximate - varies by year)
+        {"month": 3, "day": 31, "name": "Eid'l Fitr (Feast of Ramadan)", "type": "regular"},
+        
+        # Eid'l Adha (approximate - varies by year)
+        {"month": 6, "day": 7, "name": "Eid'l Adha (Feast of Sacrifice)", "type": "regular"},
+    ]
+    
+    holidays = []
+    
+    # Iterate through each year in the range
+    start_year = start_date.year
+    end_year = end_date.year
+    
+    for year in range(start_year, end_year + 1):
+        for holiday in PHILIPPINE_HOLIDAYS:
+            try:
+                holiday_date = dt.date(year, holiday["month"], holiday["day"])
+                
+                # Check if holiday falls within the date range
+                if start_date <= holiday_date <= end_date:
+                    holidays.append({
+                        "date": holiday_date.isoformat(),
+                        "name": holiday["name"],
+                        "description": f"{holiday['type'].title()} Holiday",
+                        "type": holiday["type"],
+                        "is_public": True
+                    })
+            except ValueError:
+                # Invalid date (e.g., Feb 30), skip
+                continue
+    
+    # Sort by date
+    holidays.sort(key=lambda x: x["date"])
+    
+    return holidays
+
+
+def get_holidays_for_calendar(year=None, month=None, include_next_month=False):
+    """
+    Get holidays for display in the HearEase calendar.
+    
+    Args:
+        year: Year (defaults to current)
+        month: Month (defaults to current)
+        include_next_month: If True, also fetch next month (for last week display)
+    
+    Returns:
+        List of holidays
+    """
+    import datetime as dt
+    import calendar
+    
+    now = dt.datetime.now()
+    year = year or now.year
+    month = month or now.month
+    
+    # Get first and last day of month
+    _, last_day = calendar.monthrange(year, month)
+    start_date = dt.date(year, month, 1)
+    end_date = dt.date(year, month, last_day)
+    
+    # If include_next_month, extend end_date
+    if include_next_month:
+        if month == 12:
+            next_month = 1
+            next_year = year + 1
+        else:
+            next_month = month + 1
+            next_year = year
+        
+        _, next_last_day = calendar.monthrange(next_year, next_month)
+        end_date = dt.date(next_year, next_month, next_last_day)
+    
+    return get_philippine_holidays(start_date, end_date)
+

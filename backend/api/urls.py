@@ -10,7 +10,7 @@ from case_persons import views as CasePersonViews
 from case_organizations import views as CaseOrganizationViews
 
 urlpatterns = [
-    path("test-email/", CaseViews.TestEmailView.as_view(), name="test-email"),
+    # path("test-email/", CaseViews.TestEmailView.as_view(), name="test-email"),  # View not implemented
     
     path("register/", UserViews.RegisterView.as_view(), name="register"),
     path('auth/google/', UserViews.GoogleLoginView.as_view(), name='google-login'),
@@ -53,7 +53,7 @@ urlpatterns = [
     path('hearing-cases/', HearingViews.HearingCaseView.as_view(), name='hearing-case-list'),
     path('update-hearings/<str:pk>/', HearingViews.SetCaseHearingsView.as_view(), name='update-hearings'),
     path('update-single-hearing/<int:pk>/', HearingViews.UpdateHearingView.as_view(), name='update-hearing'),
-    path('hearing-progress-update/<str:pk>/', CaseViews.UpdateHearingProgressView.as_view(), name='hearing-progress-update'),
+    # path('hearing-progress-update/<str:pk>/', CaseViews.UpdateHearingProgressView.as_view(), name='hearing-progress-update'),  # View not implemented
     
     # Scheduling endpoints
     path('check-time-conflict/', HearingViews.CheckTimeConflictView.as_view(), name='check-time-conflict'),
@@ -64,6 +64,11 @@ urlpatterns = [
     path('lupon-workload/', HearingViews.LuponWorkloadView.as_view(), name='lupon-workload'),
     path('early-warning/', HearingViews.EarlyWarningView.as_view(), name='early-warning'),
     path('lupon-match/', HearingViews.LuponCaseMatchingView.as_view(), name='lupon-match'),
+    
+    # Non-working day management
+    path('non-working-day/', HearingViews.MarkNonWorkingDayView.as_view(), name='mark-non-working-day'),
+    path('non-working-days/', HearingViews.GetNonWorkingDaysView.as_view(), name='get-non-working-days'),
+    path('non-working-day/<str:date>/', HearingViews.RemoveNonWorkingDayView.as_view(), name='remove-non-working-day'),
 
     path('document-templates/', DocumentViews.DocumentTemplateListCreateView.as_view(), name='document-template-list-create'),
     path('templates/<int:pk>/generate/', DocumentViews.GenerateDocumentView.as_view(), name='generate-document'),
@@ -78,6 +83,8 @@ urlpatterns = [
     path('model-info/', AIModelViews.ModelInfoView.as_view(), name='model-info'),
     path('trigger-retrain/', AIModelViews.TriggerRetrainView.as_view(), name='trigger-retrain'),
     path('predict-settlement/', AIModelViews.SettlementPredictionView.as_view(), name='predict-settlement'),
+    path('training-status/', AIModelViews.TrainingStatusView.as_view(), name='training-status'),
+    path('retrain-config/', AIModelViews.UpdateRetrainConfigView.as_view(), name='retrain-config'),
 
     # Google Calendar Integration
     path('google-calendar/', include('google_calendar.urls')),

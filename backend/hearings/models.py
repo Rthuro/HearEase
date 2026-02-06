@@ -1,7 +1,7 @@
 from django.db import models
 from cases.models import Case
 from lupon_members.models import LuponMember
-from case_persons.models import CasePerson
+
 
 class Hearing(models.Model):
     # --- Status choices (sync with frontend)
@@ -10,7 +10,6 @@ class Hearing(models.Model):
         ("pending_schedule", "Pending Schedule"),
         ("scheduled", "Scheduled"),
         ("rescheduled", "Rescheduled"),
-        ("cancelled", "Cancelled"),
         ("completed", "Completed"),
         ("pending_decision", "Pending Decision"),
     ]
@@ -39,7 +38,6 @@ class Hearing(models.Model):
         default="pending_schedule"
     )
     hearing_number = models.IntegerField(blank=True, null=True)
-    time_completed = models.TimeField(blank=True, null=True)
     
     # --- Google Calendar sync
     google_event_id = models.CharField(max_length=255, blank=True, null=True)
@@ -50,61 +48,78 @@ class Hearing(models.Model):
     def __str__(self):
         return f"Hearing for Case #{self.case.id} on {self.hearing_date} ({self.get_hearing_status_display()})"
 
+
+class NonWorkingDay(models.Model):
+    """
+    Tracks days when the barangay is closed (holidays, typhoons, events).
+    Hearings on these days are automatically rescheduled.
+    """
+    REASON_CHOICES = [
+        ("holiday", "Holiday"),
+        ("typhoon", "Typhoon/Weather"),
+        ("event", "Barangay Event"),
+        ("other", "Other"),
+    ]
+    
+    date = models.DateField(unique=True)
+    reason = models.CharField(max_length=20, choices=REASON_CHOICES, default="holiday")
+    description = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-date']
+        verbose_name = "Non-Working Day"
+        verbose_name_plural = "Non-Working Days"
+
+    def __str__(self):
+        return f"{self.date} - {self.get_reason_display()}"
+
+
 class HearingAttendance(models.Model):
+    """
+    Tracks attendance of participants (Lupon members, complainants, respondents) for hearings.
+    """
+    PARTICIPANT_ROLE_CHOICES = [
+        ('lupon', 'Lupon Member'),
+        ('complainant', 'Complainant'),
+        ('respondent', 'Respondent'),
+    ]
+    
     ATTENDANCE_STATUS_CHOICES = [
-        ("present", "Present"),
-        ("absent", "Absent"),
-        ("excused", "Excused"),
+        ('present', 'Present'),
+        ('absent', 'Absent'),
+        ('excused', 'Excused'),
     ]
-
-    PARTICIPANT_TYPE_CHOICES = [
-        ("lupon", "Lupon Member"),
-        ("complainant", "Complainant"),
-        ("respondent", "Respondent"),
-    ]
-
+    
     hearing = models.ForeignKey(
-        Hearing, 
+        Hearing,
         on_delete=models.CASCADE,
-        related_name="attendances"
+        related_name='attendances'
     )
-
-    participant_role = models.CharField(
-        max_length=20,
-        choices=PARTICIPANT_TYPE_CHOICES
-    )
-
     lupon_member = models.ForeignKey(
-        LuponMember, 
-        on_delete=models.CASCADE, 
-        null=True, blank=True, 
-        related_name="lupon_attendances"
-    )
-
-    case_person = models.ForeignKey(
-        CasePerson,
+        LuponMember,
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name="case_person_attendances"
+        related_name='lupon_attendances'
     )
-
+    case_person = models.ForeignKey(
+        'case_persons.CasePerson',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='case_person_attendances'
+    )
+    participant_role = models.CharField(max_length=20, choices=PARTICIPANT_ROLE_CHOICES)
     attendance_status = models.CharField(
         max_length=10,
         choices=ATTENDANCE_STATUS_CHOICES,
-        default="present"
+        default='present'
     )
-    
     remarks = models.TextField(blank=True, null=True, help_text="Reason for absence or other notes")
-
+    
     class Meta:
         verbose_name_plural = "Hearing Attendances"
-
+    
     def __str__(self):
-        name = "Unknown"
-        if self.lupon_member:
-            name = str(self.lupon_member)
-        elif self.case_person:
-            name = f"{self.case_person.first_name} {self.case_person.last_name}"
-            
-        return f"{name} ({self.participant_role}) - {self.attendance_status}"
+        return f"Attendance for Hearing #{self.hearing.id} - {self.get_participant_role_display()}"

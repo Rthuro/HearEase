@@ -16,6 +16,85 @@ from .predictor import (
 )
 
 
+# Case types beyond barangay jurisdiction (Katarungang Pambarangay Law - RA 7160)
+# These cases must be referred to proper authorities (police, prosecutor, courts)
+EXCLUDED_CASE_TYPES = [
+    # Crimes against persons - serious bodily harm or death
+    "murder",
+    "homicide",
+    "parricide",
+    "infanticide",
+    "manslaughter",
+    "rape",
+    "sexual assault",
+    "acts of lasciviousness",  # when involving minors
+    "attempted murder",
+    "frustrated murder",
+    "serious physical injuries",
+    
+    # Crimes against liberty
+    "kidnapping",
+    "serious illegal detention",
+    "human trafficking",
+    "trafficking in persons",
+    "forced labor",
+    "child trafficking",
+    "slavery",
+    
+    # Crimes against property - with violence
+    "robbery",
+    "robbery with violence",
+    "robbery with homicide",
+    "carnapping",
+    "highway robbery",
+    "brigandage",
+    "arson",
+    
+    # Drug-related offenses (RA 9165)
+    "drug trafficking",
+    "drug possession",
+    "illegal drugs",
+    "drug pushing",
+    "drug manufacturing",
+    "drug importation",
+    
+    # Crimes against public order
+    "rebellion",
+    "sedition",
+    "terrorism",
+    "coup d'etat",
+    
+    # Crimes against chastity
+    "qualified seduction",
+    "child abuse",
+    "child exploitation",
+    "pedophilia",
+    
+    # Other serious crimes
+    "estafa",  # when amount exceeds barangay jurisdiction threshold
+    "qualified theft",
+    "falsification",
+    "illegal possession of firearms",
+    "illegal discharge of firearms",
+    "violation of anti-violence against women and children act",
+    "vawc",
+    "domestic violence",  # when serious, falls under VAWC
+    "cybercrime",
+    "identity theft",
+    "money laundering",
+    "corruption",
+    "graft",
+    "bribery",
+    "election offenses",
+    
+    # Additional serious offenses
+    "attempted rape",
+    "frustrated homicide",
+    "serious threats with weapon",
+    "grave coercion",
+]
+
+
 class PredictCaseView(APIView):
     """
     API endpoint for predicting case outcomes.
@@ -79,6 +158,21 @@ class PredictCaseView(APIView):
                 {"success": False, "error": "severity is required"},
                 status=status.HTTP_400_BAD_REQUEST
             )
+        
+        # Check if case type is beyond barangay jurisdiction
+        case_type_lower = case_type.lower().strip()
+        for excluded in EXCLUDED_CASE_TYPES:
+            if excluded in case_type_lower or case_type_lower in excluded:
+                print(f"[AI Predict] REJECTED: Case type '{case_type}' is beyond barangay jurisdiction")
+                return Response(
+                    {
+                        "success": False,
+                        "error": f"This case type '{case_type}' is beyond barangay jurisdiction and cannot be handled through the Katarungang Pambarangay system.",
+                        "beyond_jurisdiction": True,
+                        "recommendation": "Please refer this case to the proper authorities (Police, Prosecutor's Office, or Courts)."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
         
         # Make prediction
         result = predict_case_outcomes(
