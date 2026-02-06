@@ -1,25 +1,25 @@
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from "@/components/ui/table"
 import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
 } from "@/components/ui/pagination"
 import { Link } from "react-router-dom";
 import { CaseStatusDisplay } from "./CaseStatusDisplay";
 import { cn } from "@/lib/utils";
 
-export function TableHearings({hearingsList, showPagination, navigateTo}) {
+export function TableHearings({ hearingsList, showPagination, navigateTo }) {
     let hearings = [];
 
     if (Array.isArray(hearingsList)) {
@@ -27,79 +27,85 @@ export function TableHearings({hearingsList, showPagination, navigateTo}) {
     } else {
         hearings = [];
     }
-    
-    return(
-        <section className="flex flex-col gap-6">
-                <div className="border rounded-lg overflow-hidden">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Case #</TableHead>
-                                    <TableHead>Hearing Date</TableHead>
-                                    <TableHead>Hearing Number</TableHead>
-                                    <TableHead>Time</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead>Action</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {  hearings?.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={6}>
-                                            <p className="text-center">No hearings scheduled.</p>
-                                        </TableCell>
-                                    </TableRow>
-                                ) : (
-                                    hearings?.map((hearing) => (
-                                        <TableRow key={hearing?.id} className="text-zinc-700">
-                                            <TableCell>
-                                                <Link to={`/${navigateTo}/Case/${hearing?.case}`} className="text-redBase underline">
-                                                {hearing?.case}
-                                                </Link>
-                                            </TableCell>
-                                            <TableCell>
-                                                {hearing?.hearing_date ?? '-'}
-                                            </TableCell>
-                                            <TableCell>
-                                                {hearing?.hearing_number ?? '-'}
-                                            </TableCell>
-                                            <TableCell>
-                                                {hearing?.time ?? '-'} 
-                                            </TableCell>
-                                            <TableCell>
-                                                <CaseStatusDisplay caseStatus={hearing?.hearing_status}
-                                                />
-                                            </TableCell>
-                                            <TableCell className={cn("py-4")}>
-                                                <Link to={`/${navigateTo}/Hearing/${hearing?.id}`} className="text-redBase bg-red-100 px-3 py-2 rounded-lg text-sm">
-                                                    Details 
-                                                </Link>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                </div>
 
-                {showPagination && hearings.length > 0 && (
-                    <Pagination>
-                        <PaginationContent>
-                            <PaginationItem>
+    return (
+        <section className="flex flex-col gap-6">
+            <div className="border rounded-lg overflow-hidden">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Case #</TableHead>
+                            <TableHead>Case Type</TableHead>
+                            <TableHead>Hearing Date</TableHead>
+                            <TableHead>Hearing #</TableHead>
+                            <TableHead>Time</TableHead>
+                            <TableHead>Assigned Lupon</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Action</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {hearings?.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={8}>
+                                    <p className="text-center">No hearings scheduled.</p>
+                                </TableCell>
+                            </TableRow>
+                        ) : (
+                            hearings?.map((hearing) => (
+                                <TableRow key={hearing?.id} className="text-zinc-700">
+                                    <TableCell className="font-mono text-xs">
+                                        {hearing?.case_number || hearing?.case || '-'}
+                                    </TableCell>
+                                    <TableCell>
+                                        {hearing?.case_type_label || '-'}
+                                    </TableCell>
+                                    <TableCell>
+                                        {hearing?.hearing_date ?? '-'}
+                                    </TableCell>
+                                    <TableCell>
+                                        {hearing?.hearing_number ?? '-'}
+                                    </TableCell>
+                                    <TableCell>
+                                        {hearing?.time ?? '-'}
+                                    </TableCell>
+                                    <TableCell>
+                                        {hearing?.lupon_member_name || '-'}
+                                    </TableCell>
+                                    <TableCell>
+                                        <CaseStatusDisplay caseStatus={hearing?.hearing_status}
+                                        />
+                                    </TableCell>
+                                    <TableCell className={cn("py-4")}>
+                                        <Link to={`/${navigateTo}/Hearing/${hearing?.id}`} className="text-redBase bg-red-100 px-3 py-2 rounded-lg text-sm">
+                                            Details
+                                        </Link>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        )}
+                    </TableBody>
+                </Table>
+            </div>
+
+            {showPagination && hearings.length > 0 && (
+                <Pagination>
+                    <PaginationContent>
+                        <PaginationItem>
                             <PaginationPrevious href="#" />
-                            </PaginationItem>
-                            <PaginationItem>
+                        </PaginationItem>
+                        <PaginationItem>
                             <PaginationLink href="#">1</PaginationLink>
-                            </PaginationItem>
-                            <PaginationItem>
+                        </PaginationItem>
+                        <PaginationItem>
                             <PaginationEllipsis />
-                            </PaginationItem>
-                            <PaginationItem>
+                        </PaginationItem>
+                        <PaginationItem>
                             <PaginationNext href="#" />
-                            </PaginationItem>
-                        </PaginationContent>
-                    </Pagination>
-                )}
+                        </PaginationItem>
+                    </PaginationContent>
+                </Pagination>
+            )}
         </section>
     );
 

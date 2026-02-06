@@ -33,11 +33,13 @@ export const getHearings = async () => {
   const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
   const data = JSON.parse(stored);
 
+  const userData = await getUser();
+
   const response = await axios.get(`${API_URL}/hearings/`, {
-      params: { 
-        role: data?.userRole,
-        email: data?.userInfo?.email
-      }
+    params: {
+      role: data.userRole,
+      email: userData.email
+    }
   });
 
   return response.data;
@@ -178,17 +180,55 @@ const useHearingStore = create((set, get) => ({
     }
   },
 
-  updateCaseHearingProgress: async (hearingId, payload) => {
+  // Non-Working Day Management
+  nonWorkingDays: [],
+  nonWorkingDaysLoading: false,
+
+  fetchNonWorkingDays: async (month = null) => {
+    set({ nonWorkingDaysLoading: true });
     try {
-      const response = await updateHearingProgress(hearingId, payload);
-      return { success: true, data: response };
+      const params = month ? { month } : {};
+      const response = await axios.get(`${API_URL}/non-working-days/`, { params });
+      set({ nonWorkingDays: response.data.non_working_days || [] });
+      return response.data;
     } catch (error) {
-      const isNetworkError = !error.response;
-      const errorMessage = isNetworkError
-        ? "Network error. Please check your connection."
-        : "Failed to update hearing progress";
-      toast.error(errorMessage);
-      return { success: false, retry: isNetworkError };
+      console.error("Error fetching non-working days:", error);
+      return null;
+    } finally {
+      set({ nonWorkingDaysLoading: false });
+    }
+  },
+
+  markNonWorkingDay: async (date, reason, description) => {
+    set({ nonWorkingDaysLoading: true });
+    try {
+      const response = await axios.post(`${API_URL}/non-working-day/`, {
+        date,
+        reason,
+        description
+      });
+
+      if (response.data.success) {
+        // Refresh non-working days list
+        await get().fetchNonWorkingDays();
+        // Refresh hearings to reflect rescheduled ones
+        await get().fetchHearings();
+
+        const count = response.data.rescheduled_count;
+        if (count > 0) {
+          toast.success(`Day marked as non-working. ${count} hearing(s) rescheduled.`);
+        } else {
+          toast.success("Day marked as non-working.");
+        }
+        return response.data;
+      }
+      return null;
+    } catch (error) {
+      console.error("Error marking non-working day:", error);
+      toast.error(error.response?.data?.error || "Failed to mark day as non-working");
+      return null;
+    } finally {
+      set({ nonWorkingDaysLoading: false });
     }
   },
   fetchHearingAttendance: async (hearingId) => {
@@ -204,6 +244,23 @@ const useHearingStore = create((set, get) => ({
       return { success: false, retry: isNetworkError };
     }
   },
+
+  removeNonWorkingDay: async (date) => {
+    try {
+      const response = await axios.delete(`${API_URL}/non-working-day/${date}/`);
+      if (response.data.success) {
+        await get().fetchNonWorkingDays();
+        toast.success("Non-working day removed");
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error removing non-working day:", error);
+      toast.error(error.response?.data?.error || "Failed to remove non-working day");
+      return false;
+    }
+  },
+
 }));
 
 export default useHearingStore;

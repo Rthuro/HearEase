@@ -54,3 +54,38 @@ class CalendarSyncLog(models.Model):
 
     def __str__(self):
         return f"{self.action} - Hearing #{self.hearing.id}"
+
+
+class CalendarSyncSettings(models.Model):
+    """
+    Global settings for automatic Google Calendar sync.
+    Only one record should exist (singleton pattern).
+    """
+    auto_sync_enabled = models.BooleanField(
+        default=False,
+        help_text="Enable automatic syncing of hearings to Google Calendar"
+    )
+    sync_on_create = models.BooleanField(
+        default=True,
+        help_text="Sync when a new hearing is created"
+    )
+    sync_on_update = models.BooleanField(
+        default=True,
+        help_text="Sync when a hearing is updated"
+    )
+    sync_on_delete = models.BooleanField(
+        default=True,
+        help_text="Remove from calendar when a hearing is deleted"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Calendar Sync Settings"
+        verbose_name_plural = "Calendar Sync Settings"
+
+    def __str__(self):
+        status = "Enabled" if self.auto_sync_enabled else "Disabled"
+        return f"Calendar Sync Settings ({status})"
+

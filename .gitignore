@@ -1,6 +1,29 @@
+# Environment & Secrets
 .env
 env/
 backend/firebase-adminsdk.json
+
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
+
+# OpenCode / oh-my-opencode
+.opencode/
+.sisyphus/
+oh-my-opencode.json
+
+# Root-level Node.js (from opencode installation)
+/package.json
+/package-lock.json
+/node_modules/
+/bun.lock
+/bun.lockb
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
