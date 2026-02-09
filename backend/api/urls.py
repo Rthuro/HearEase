@@ -26,8 +26,13 @@ urlpatterns = [
     path('update-user/<int:pk>/', UserViews.UpdateUserView.as_view(), name='update-user'),
     path('admins/', UserViews.AdminView.as_view(), name='admins'),
 
-    path('case-persons/', CasePersonViews.CasePersonView.as_view(), name='case-persons'),
+    path('case-persons/', CasePersonViews.CasePersonListView.as_view(), name='case-persons-list'),
+    path('case-persons/<int:pk>/', CasePersonViews.CasePersonView.as_view(), name='case-persons'),
     path('case-person/<str:email>/', CasePersonViews.SingleCasePersonView.as_view(), name='case-person-detail'),
+    path('case-person-details/<int:pk>/', CasePersonViews.CasePersonDetailsView.as_view(), name='case-person-details'),
+
+    path('all-case-persons/', CasePersonViews.AllCasePersonsView.as_view(), name='case-person-cases'),
+    path('custom-email/', CasePersonViews.CustomEmailView.as_view(), name='custom-email'),
 
     path('login/', UserViews.LoginView.as_view(), name='login'),
     path('barangays/', AddressViews.BarangayListView.as_view(), name='barangay-list'),
@@ -56,7 +61,7 @@ urlpatterns = [
     path('hearing-progress-update/<str:pk>/', CaseViews.UpdateHearingProgressView.as_view(), name='hearing-progress-update'),
 
     path('hearing-attendance/', HearingViews.HearingAttendanceView.as_view(), name='hearing-attendance'),
-    # path('hearing-progress-update/<str:pk>/', CaseViews.UpdateHearingProgressView.as_view(), name='hearing-progress-update'),  # View not implemented
+    path('hearing-progress-update/<str:pk>/', CaseViews.UpdateHearingProgressView.as_view(), name='hearing-progress-update'), 
     
     # Scheduling endpoints
     path('check-time-conflict/', HearingViews.CheckTimeConflictView.as_view(), name='check-time-conflict'),
