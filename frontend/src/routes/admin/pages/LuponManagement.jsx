@@ -29,7 +29,7 @@ import { useRetrieveUsersStore } from "@/store/useRetrieveUsersStore"
 import { Link } from "react-router-dom"
 
 export function LuponManagement() {
-    const { barangays, fetchBarangays } = useAddressesStore();
+    const { barangays, fetchBarangays, streets } = useAddressesStore();
     const { formData, setFormData, members, fetchMembers, addMember } = useLuponStore();
     const { admin_list, fetchAdmins } = useRetrieveUsersStore();
     const [openCalendar, setOpenCalendar] = useState(false);
@@ -98,7 +98,8 @@ export function LuponManagement() {
     return (
         <div className="p-6 flex flex-col gap-2">
             <PageSync page="Lupon Management" />
-            <div className="border rounded-lg overflow-hidden bg-white">
+            <div className="overflow-hidden w-5xl">
+                <div className="border rounded-lg  bg-white ">
                 <Table>
                     <TableHeader>
                         <TableRow>
@@ -132,7 +133,9 @@ export function LuponManagement() {
                         </TableRow>
                     </TableBody>
                 </Table>
+                </div>
             </div>
+            
             <section className="flex flex-col gap-3 mt-3 bg-white border border-zinc-200 rounded-lg p-6">
                 <p> <span className="font-medium text-redBase">{members?.length}</span> Lupon Members</p>
 
@@ -276,9 +279,9 @@ export function LuponManagement() {
                                                             onValueChange={(value) => {
                                                                 setFormData("barangay", value);
                                                                 // Automatically reset streets when barangay changes
-                                                                const streets = getStreets(value);
-                                                                if (streets.length > 0) {
-                                                                    setFormData("street", streets[0]);
+                                                                const s = getStreets(streets, value);
+                                                                if (s.length > 0) {
+                                                                    setFormData("street", s[0]);
                                                                 } else {
                                                                     setFormData("street", "");
                                                                 }
@@ -307,7 +310,7 @@ export function LuponManagement() {
                                                         <DropdownMenuRadioGroup
                                                             value={formData.street.value} onValueChange={(value) => setFormData('street', value)}>
 
-                                                            {getStreets(formData.barangay.value).map(street => (
+                                                            {getStreets(streets, formData.barangay.value).map(street => (
                                                                 <DropdownMenuRadioItem key={street} value={street}>{street}</DropdownMenuRadioItem>
                                                             ))}
 
