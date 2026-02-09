@@ -10,7 +10,7 @@ import cancellation_notice from "@/assets/imgs/cancellation_notice.png"
 import { cn } from "@/lib/utils";
 import { PageSync } from "@/components/PageSync";
 import { CaseStatusDisplay } from "@/components/CaseStatusDisplay";
-import { ChevronLeft, X,Check, Edit, ArrowRight, ArrowUpRight, Loader2, FileText, CheckCircle2, PartyPopper, Loader2Icon  } from "lucide-react";
+import { ChevronLeft, X,Check, Edit, ArrowRight, ArrowUpRight, Loader2, FileText, CheckCircle2, PartyPopper, Loader2Icon, AlertCircle, RotateCw  } from "lucide-react";
 import { useEffect, useState } from "react";
 import useHearingStore from "@/store/useHearingStore";
 import { useRetrieveUsersStore } from "@/store/useRetrieveUsersStore";
@@ -31,13 +31,12 @@ import { useLuponStore } from "@/store/useLuponStore";
 import { EditCoAttendee } from "@/components/EditCoAttendee";
 import { CaseSettingsModal } from "@/components/CaseSettingsModal";
 import { fetchCase } from "@/store/useCaseStore";
-import toast from "react-hot-toast"
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 export function Case() {
     const { case_number } = useParams();
-    const { cases, updateCaseStatus, setFormData, set_complainants, set_respondents } = useCaseStore();
+    const { cases, updateCaseStatus, setFormData, set_complainants, set_respondents, reSubmitCase } = useCaseStore();
     const { hearings, fetchHearings } = useHearingStore()
     const [template, setTemplate] = useState({});
     const { case_documents, fetchCaseDocuments } = useCaseDocumentsStore();
@@ -48,6 +47,8 @@ export function Case() {
      const [ noShowModal, setNoShowModal ] = useState(false);
     const [ noShowUserData, setNoShowUserData ] = useState({});
     const [refreshLoader, setRefreshLoader] = useState(false);
+
+    const [resubmitLoader, setResubmitLoader] = useState(false);
 
     const stored = localStorage.getItem("authData");
     const data = JSON.parse(stored);
@@ -172,6 +173,19 @@ export function Case() {
         }
     }
 
+    const reSubmission = async () => {
+        try {
+            setResubmitLoader(true);
+            await reSubmitCase(caseInfo.id);
+            const updatedCase = await fetchCase(caseInfo?.id);
+            setCaseInfo(updatedCase);
+            setResubmitLoader(false);
+        } catch (error) {
+            setResubmitLoader(false);
+            console.error("Error resubmitting case:", error);
+        }
+    };
+
     const userStatusDisplay = (status) => {
         switch (status) {
             case "approved":
@@ -199,7 +213,7 @@ export function Case() {
                     </>
                 );
             }
-            case "rejected":
+            case "rejecteded":
                 return (
                     <>
                         <p className="font-medium text-lg text-redBase">
@@ -268,7 +282,7 @@ export function Case() {
                     variant="outline"
                     onClick={refreshCaseData}>
 
-                        <Loader2Icon className={refreshLoader ? "animate-spin" : ""} />
+                        <RotateCw className={refreshLoader ? "animate-spin" : ""} />
                     </Button>
                 </div>
 
@@ -312,12 +326,65 @@ export function Case() {
                         </div>
                     )}
                 </div>
-                {userRole == 'user' && (
+                {userRole == 'user' && caseInfo?.case_status != 'rejected'  && (
                     <div className="flex flex-col">
                         {userStatusDisplay(caseInfo?.case_status)}
                     </div>
                 )}
             </div>
+
+            {userRole == 'user' && caseInfo?.case_status == 'rejected' && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-6 flex items-start gap-4 shadow-sm">
+                {/* Icon Container */}
+                <div className="bg-red-100 p-3 rounded-full shrink-0">
+                    <AlertCircle className="h-6 w-6 text-red-600" />
+                </div>
+
+                {/* Content Area */}
+                <div className="flex-1 space-y-3">
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <h3 className="text-lg font-bold text-red-900 leading-none">
+                                Appointment Rejected
+                            </h3>
+                            <span className="text-[10px] bg-red-200 text-red-800 px-2 py-0.5 rounded-full uppercase tracking-widest font-bold">
+                                Action Required
+                            </span>
+                        </div>
+                        <p className="text-red-700 text-sm mt-1">
+                            Your case appointment was not approved. Please review the details below and resubmit.
+                        </p>
+                    </div>
+
+                    {/* Info Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 py-2">
+                        <div className="bg-white/50 p-3 rounded-lg border border-red-100">
+                            <p className="text-[10px] uppercase font-bold text-red-400">Section to Fix</p>
+                            <p className="text-sm font-semibold text-red-900">{caseInfo?.rejection_section}</p>
+                        </div>
+                        <div className="bg-white/50 p-3 rounded-lg border border-red-100">
+                            <p className="text-[10px] uppercase font-bold text-red-400">Reason for Rejection</p>
+                            <p className="text-sm font-medium text-red-800 italic">"{caseInfo?.remarks || "No specific reason provided."}"</p>
+                        </div>
+                    </div>
+
+                    {/* Action Button */}
+                    <div className="pt-2">
+                        <Button 
+                            onClick={reSubmission} 
+                            disabled={resubmitLoader}
+                            className="bg-red-600 hover:bg-red-700 text-white shadow-sm gap-2"
+                        >
+                            {resubmitLoader ? (
+                                <Loader2 className="animate-spin" size={18} />
+                            ) : (
+                                <RotateCw size={18} />
+                            )}
+                            Resubmit Case
+                        </Button>
+                    </div>
+                </div>
+            </div> )}
 
             {caseInfo.case_status === 'resolved' && (
                 <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-6 flex items-start gap-4 shadow-sm">

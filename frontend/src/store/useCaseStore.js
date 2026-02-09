@@ -452,6 +452,20 @@ export const useCaseStore = create((set, get) => ({
         }
     },
 
+    reSubmitCase: async (case_id) => {
+        try {
+            await axios.put(`${API_URL}/update-case/${case_id}/`, {
+                case_status: "pending_approval",
+                remarks: "",
+                rejection_section: "none"
+            });
+            get().fetchCases();
+            toast.success("Case resubmitted successfully.");
+        }
+        catch (error) {
+            toast.error("Case resubmission unsuccessful: " + (error?.response?.data || error.message));
+        }
+    },
     updateCaseInfo: async (data, update, id, forResubmission) => {
 
         // Update user info if they have account
