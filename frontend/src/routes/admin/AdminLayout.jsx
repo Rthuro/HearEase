@@ -32,7 +32,7 @@ export function AdminLayout() {
     <CheckAuth userInfo={userInfo}/>
     <SidebarProvider>
         <AppSidebar />
-        <main className="w-full bg-zinc-100/70">
+        <main className="w-lvw bg-zinc-100/70">
           <Header userInfo={userInfo}/>
           <Outlet/>
         </main>

@@ -10,7 +10,7 @@ import cancellation_notice from "@/assets/imgs/cancellation_notice.png"
 import { cn } from "@/lib/utils";
 import { PageSync } from "@/components/PageSync";
 import { CaseStatusDisplay } from "@/components/CaseStatusDisplay";
-import { ChevronLeft, X, Check, Edit, ArrowRight, ArrowUpRight } from "lucide-react";
+import { ChevronLeft, X,Check, Edit, ArrowRight, ArrowUpRight, Loader2, FileText, CheckCircle2, PartyPopper, Loader2Icon  } from "lucide-react";
 import { useEffect, useState } from "react";
 import useHearingStore from "@/store/useHearingStore";
 import { useRetrieveUsersStore } from "@/store/useRetrieveUsersStore";
@@ -24,28 +24,30 @@ import {
 } from "@/components/ui/table"
 import { Link } from "react-router-dom";
 import useCaseDocumentsStore from "@/store/useCaseDocumentStore";
-import { FileText } from "lucide-react";
 import { useGenerateDocumentStore } from "@/store/useGenerateDocumentStore";
 import { EditCaseInfo } from "@/components/EditCaseInfo";
 import { CaseCancellationModal } from "@/components/CaseCancellationModal";
 import { useLuponStore } from "@/store/useLuponStore";
 import { EditCoAttendee } from "@/components/EditCoAttendee";
 import { CaseSettingsModal } from "@/components/CaseSettingsModal";
+import { fetchCase } from "@/store/useCaseStore";
+import toast from "react-hot-toast"
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 export function Case() {
     const { case_number } = useParams();
-    const { cases, updateCaseStatus, deleteCase, setFormData, set_complainants, set_respondents } = useCaseStore();
-    const { hearings } = useHearingStore();
-    const { case_complainants, case_respondents, fetchCaseComplainants, fetchCaseRespondents } = useRetrieveUsersStore();
+    const { cases, updateCaseStatus, setFormData, set_complainants, set_respondents } = useCaseStore();
+    const { hearings, fetchHearings } = useHearingStore()
     const [template, setTemplate] = useState({});
     const { case_documents, fetchCaseDocuments } = useCaseDocumentsStore();
     const [viewImg, setViewImg] = useState(null);
     const { templates, fetchTemplates, generateDocument } = useGenerateDocumentStore();
     const { members } = useLuponStore();
-    const [noShowModal, setNoShowModal] = useState(false);
-    const [noShowUserData, setNoShowUserData] = useState({});
+
+     const [ noShowModal, setNoShowModal ] = useState(false);
+    const [ noShowUserData, setNoShowUserData ] = useState({});
+    const [refreshLoader, setRefreshLoader] = useState(false);
 
     const stored = localStorage.getItem("authData");
     const data = JSON.parse(stored);
@@ -56,7 +58,7 @@ export function Case() {
         fetchCaseDocuments(case_number);
     }, [case_number])
 
-    const caseInfo = cases.find(c => c.id == case_number);
+    const [caseInfo, setCaseInfo] = useState(cases.find( c => c.id == case_number));
 
     useEffect(() => {
         if (caseInfo) {
@@ -68,90 +70,60 @@ export function Case() {
         }
     }, [caseInfo]);
 
-    const [findHearingCase, setFindHearingCase] = useState(
-        hearings.length > 0 ? hearings?.filter( hearing => hearing.case == case_number)
+   const [findHearingCase, setFindHearingCase] = useState(
+        hearings.length > 0 ? hearings.filter( hearing => hearing.case == case_number)
         .sort((a, b) => a.hearing_number - b.hearing_number) : []);
-    // const findHearingCase = ;
 
     const lupon = members.find(member => member.id === findHearingCase[0]?.lupon_member);
 
-
-    useEffect(() => {
-        // Only fetch if caseInfo has valid complainants/respondents arrays
-        if (caseInfo?.complainants && Array.isArray(caseInfo.complainants) && caseInfo.complainants.length > 0) {
-            fetchCaseComplainants(caseInfo.complainants);
-        }
-        if (caseInfo?.respondents && Array.isArray(caseInfo.respondents) && caseInfo.respondents.length > 0) {
-            fetchCaseRespondents(caseInfo.respondents);
-        }
-    }, [caseInfo])
-
     const navigate = useNavigate();
-
-    // Show loading if cases haven't loaded yet
-    if (!cases || cases.length === 0) {
-        return (
-            <div className="p-6 flex items-center justify-center">
-                <p>Loading...</p>
-            </div>
-        );
-    }
 
     if (!caseInfo) {
         navigate(-1);
         return null;
     }
 
-    const caseDetails =
-    {
-        section: "Case Information",
-        details: [
-            {
-                label: "Case Number",
-                value: caseInfo?.id,
-            },
-            {
-                label: "Status",
-                value: caseInfo?.case_status,
-            },
-            {
-                label: "Date of Hearing",
-                value: caseInfo?.date || '-'
-            },
-            {
-                label: "Time",
-                value: caseInfo?.time || '-'
-            },
-            {
-                label: "Assigned Lupon",
-                value: lupon ? lupon?.first_name + " " + (lupon?.middle_name ? lupon?.middle_name + " " : "") + lupon?.last_name : '-'
-            },
-            {
-                label: "Predicted Hearings",
-                value: (caseInfo?.predicted_hearings ? caseInfo.predicted_hearings + ' hearings' : '-')
-            },
-            {
-                label: "Nature of Complaint",
-                value: caseInfo.case_type.case_name || '-'
-            }, {
-                label: "Settlement",
-                value: caseInfo?.settlement_type?.settlement_name || '-'
-            },
-            {
-                label: "Severity",
-                value: caseInfo?.case_type.severity || '-'
-            },
-            {
-                label: "Description",
-                value: caseInfo?.description || '-'
-            },
-            {
-                label: "Documents",
-                value: case_documents
-            }
-        ]
-    }
-        ;
+    const caseDetails = 
+        {
+            section: "Case Information",
+            details: [
+                {
+                    label:"Case Number",
+                    value: caseInfo?.id, 
+                },
+                {
+                    label:"Status",
+                    value: caseInfo?.case_status, 
+                },
+                {
+                    label: "Assigned Lupon",
+                    value: lupon ?  lupon?.first_name + " " + (lupon?.middle_name ? lupon?.middle_name + " " : "") + lupon?.last_name : '-'
+                },
+                {
+                    label:"Predicted Hearings",
+                    value: (caseInfo?.predicted_hearings ? caseInfo?.predicted_hearings + ' hearings' : '-') 
+                },
+                {
+                    label:"Nature of Complaint",
+                    value: caseInfo.case_type.case_name || '-'
+                },{
+                    label:"Settlement",
+                    value: caseInfo?.settlement_type?.settlement_name || '-'
+                },
+                {
+                    label:"Severity",
+                    value: caseInfo?.case_type.severity || '-'
+                },
+                {
+                    label:"Description",
+                    value: caseInfo?.description || '-'
+                },
+                {
+                    label:"Documents",
+                    value: case_documents
+                }
+            ]
+        }
 
     const generate = {
         user: [
@@ -206,7 +178,7 @@ export function Case() {
                 return (
                     <>
                         <p className="font-medium">Case Approved</p>
-                        <p className="text-zinc-700 text-sm">Your case is approved. A summon letter will be delivered to the respondent on: <strong>_____</strong>.</p>
+                        <p className="text-zinc-700 text-sm">Your case is approved. A summon letter will be delivered to the respondent before: <strong>{findHearingCase?.find( h => h.hearing_number == 1)?.hearing_date || '-'}</strong>.</p>
                     </>
                 );
 
@@ -214,18 +186,19 @@ export function Case() {
                 return (
                     <>
                         <p className="font-medium">Pending Approval</p>
-                        <p className="text-zinc-700 text-sm">Your case is pending approval. The Lupon Secretary will review your submission.</p>
+                        <p className="text-zinc-700 text-sm">Your case is pending approval. The Lupon Secretary will review your submission. You can still edit your case information if needed.</p>
                     </>
                 );
 
-            case "in_progress":
+            case "in_progress":{
+                const h_sched = findHearingCase?.find( h => h.hearing_status == 'scheduled');
                 return (
                     <>
                         <p className="font-medium">In progess</p>
-                        <p className="text-zinc-700 text-sm">Respondent acknowledged the summon. Your hearing schedule is on <strong>date</strong> at <strong>time</strong>.</p>
+                        <p className="text-zinc-700 text-sm">Respondent acknowledged the summon. Your hearing schedule is on <strong>{h_sched?.hearing_date || '-'}</strong> at <strong>{h_sched?.time || '-'}</strong>.</p>
                     </>
                 );
-
+            }
             case "rejected":
                 return (
                     <>
@@ -248,6 +221,20 @@ export function Case() {
         }
     };
 
+    const refreshCaseData = async () => {
+        try{
+            setRefreshLoader(true);
+            const updatedCase = await fetchCase(caseInfo?.id);
+            setCaseInfo(updatedCase);
+            fetchHearings();
+            setFindHearingCase(hearings?.filter( hearing => hearing.case == case_number).sort((a, b) => a.hearing_number - b.hearing_number));
+            setRefreshLoader(false);
+        }
+        catch(error){
+            setRefreshLoader(false);
+            toast.error("Failed to refresh case data. Please try again.");
+        }
+    }
     return (
         <div className="relative flex flex-col gap-4 p-6 ">
             <PageSync page="" />
@@ -279,31 +266,16 @@ export function Case() {
                     <CaseSettingsModal role={userRole} caseData={caseInfo} />
                     <Button
                     variant="outline"
-                    onClick={async () => {
-                        try{
-                            setRefreshLoader(true);
-                            const updatedCase = await fetchCase(caseInfo?.id);
-                            setCaseInfo(updatedCase);
-                            fetchHearings();
-                            setFindHearingCase(hearings?.filter( hearing => hearing.case == case_number).sort((a, b) => a.hearing_number - b.hearing_number));
-                            setRefreshLoader(false);
-                        }
-                        catch(error){
-                            setRefreshLoader(false);
-                            toast.error("Failed to refresh case data. Please try again.");
-                        }
-                        // const updatedHearings = await fetchHearingsByCase(caseInfo?.id);
-                        // setFindHearingCase(updatedHearings);
-                    }}>
+                    onClick={refreshCaseData}>
 
-                        <RefreshCcw className={refreshLoader ? "animate-spin" : ""} />
+                        <Loader2Icon className={refreshLoader ? "animate-spin" : ""} />
                     </Button>
                 </div>
 
             </div>
 
-            <div className="flex flex-col gap-6 bg-white p-4 rounded-md shadow-2xs border ">
-                <div className={`grid grid-cols-4 items-center gap-3`}>
+            <div className="flex flex-col gap-6 bg-white p-4 rounded-md shadow-2xs">
+                <div className={`grid grid-cols-2 md:grid-cols-4 items-center gap-3`}>
                     <div className="flex flex-col gap-2 items-center">
                         <p className="text-sm">Appointment Submitted</p>
                         <div className="h-1 w-full rounded-full bg-green-600 "></div>
@@ -319,16 +291,26 @@ export function Case() {
                         <p className="text-sm">On-Going Hearing</p>
                         <div
                             className={`w-full h-1 rounded-full 
-                                ${caseInfo.case_status === 'in_progress' ? 'bg-green-600' : 'bg-gray-300'}`}
+                                ${caseInfo.case_status === 'in_progress' || caseInfo.case_status === 'resolved' || caseInfo.case_status === 'escalated' ? 'bg-green-600' : 'bg-gray-300'}`}
                         ></div>
                     </div>
-                    <div className="flex flex-col gap-2 items-center">
-                        <p className="text-sm">Case Resolved</p>
-                        <div
-                            className={`w-full h-1 rounded-full 
-                                ${caseInfo.case_status === 'resolved' ? 'bg-green-600' : 'bg-gray-300'}`}
-                        ></div>
-                    </div>
+                    {caseInfo.case_status === 'escalated' ? (
+                        <div className="flex flex-col gap-2 items-center">
+                            <p className="text-sm">Case Escalated</p>
+                            <div
+                                className={`w-full h-1 rounded-full 
+                                    ${caseInfo.case_status === 'escalated' ? 'bg-redBase' : 'bg-gray-300'}`}
+                            ></div>
+                        </div>
+                    ): (
+                        <div className="flex flex-col gap-2 items-center">
+                            <p className="text-sm">Case Resolved</p>
+                            <div
+                                className={`w-full h-1 rounded-full 
+                                    ${caseInfo.case_status === 'resolved' ? 'bg-green-600' : 'bg-gray-300'}`}
+                            ></div>
+                        </div>
+                    )}
                 </div>
                 {userRole == 'user' && (
                     <div className="flex flex-col">
@@ -337,16 +319,67 @@ export function Case() {
                 )}
             </div>
 
+            {caseInfo.case_status === 'resolved' && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-6 flex items-start gap-4 shadow-sm">
+                    <div className="bg-emerald-100 p-3 rounded-full">
+                        <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+                    </div>
+                    <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                            <h3 className="text-lg font-bold text-emerald-900 leading-none">
+                                Case Resolved
+                            </h3>
+                            <span className="text-[10px] bg-emerald-200 text-emerald-800 px-2 py-0.5 rounded-full uppercase tracking-widest font-bold">
+                                Official
+                            </span>
+                        </div>
+                        <p className="text-emerald-700 text-sm mt-1">
+                            This case has been successfully settled and closed.
+                        </p>
+                        
+                        <div className="mt-4 p-3 bg-white/50 rounded-lg border border-emerald-100 italic text-sm text-emerald-800">
+                            <span className="font-semibold not-italic">Closing Remarks: </span> 
+                            "{caseInfo?.remarks}"
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Display for escalated or resolved cases */}
+            {caseInfo.case_status === 'escalated' && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-6 flex items-start gap-4 shadow-sm">
+                    <div className="bg-red-100 p-3 rounded-full">
+                        <CheckCircle2 className="h-6 w-6 text-redBase" />
+                    </div>
+                    <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                            <h3 className="text-lg font-bold text-redBase leading-none">
+                                Case Escalated
+                            </h3>
+                            <span className="text-[10px] bg-red-200 text-redBase px-2 py-0.5 rounded-full uppercase tracking-widest font-bold">
+                                Official
+                            </span>
+                        </div>
+                        <p className="text-redBase text-sm mt-1">
+                            This case has been escalated for further review.
+                        </p>
+                        
+                        <div className="mt-4 p-3 bg-white/50 rounded-lg border border-red-100 italic text-sm text-redBase">
+                            <span className="font-semibold not-italic">Closing Remarks: </span> 
+                            "{caseInfo?.remarks}"
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className="flex flex-col gap-4 bg-white p-4 rounded-md border shadow-2xs">
-
                 <div className="flex items-center justify-between">
                     <h2 className="text-lg font-medium">{caseDetails.section}</h2>
                     <EditCaseInfo section="case"
                         caseInfo={caseInfo} forResubmission={false} />
                 </div>
 
-                <div className="grid grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {caseDetails.details.map((detail) => (
                         <div key={detail.label}
                             className={`flex flex-col gap-1 
@@ -369,7 +402,6 @@ export function Case() {
                                                         : `${BASE_URL}${doc.file}`
                                                     : "";
 
-                                                console.log("Document file:", file);
                                                 if (!file) {
                                                     return <p key={index}>No documents submitted</p>;
                                                 }
@@ -414,7 +446,7 @@ export function Case() {
                 </div>
 
                 {viewImg && (
-                    <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50"
+                    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
                         onClick={() => setViewImg(null)}
                     >
                         <X className="text-white absolute top-4 right-4 cursor-pointer" onClick={() => setViewImg(null)} />
@@ -422,82 +454,85 @@ export function Case() {
                     </div>
                 )}
 
-
-
-
-
-
             </div>
 
-            {case_complainants?.length > 0 &&
-                (<div className="flex flex-col gap-4 bg-white p-4 rounded-md border shadow-2xs">
+            <div className="flex flex-col gap-4 bg-white p-4 rounded-md border shadow-2xs">
+                <div className="flex flex-col">
+                    <h2 className="font-medium mb-2 text-zinc-900">Complainants</h2>
+                    <div className="border rounded-lg overflow-hidden">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                <TableHead className="text-left px-4 py-2">Full Name</TableHead>
+                                <TableHead className="text-left px-4 py-2">Contact</TableHead>
+                                <TableHead className="px-4 py-2"></TableHead>
+                                </TableRow>
+                            </TableHeader>
 
-                    <div className="flex flex-col">
-                        <h2 className="font-medium mb-2 text-zinc-900">Complainants</h2>
-                        <div className="border rounded-lg overflow-hidden">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="text-left px-4 py-2">Full Name</TableHead>
-                                        <TableHead className="text-left px-4 py-2">Contact</TableHead>
-                                        <TableHead className="px-4 py-2"></TableHead>
-                                    </TableRow>
-                                </TableHeader>
-
-                                <TableBody>
-                                    {case_complainants.map(c => (
-
-                                        <TableRow key={c.id} className="border-t">
-                                            <TableCell className="px-4 py-2">{c.first_name} {c.middle_name ? c.middle_name + ' ' : ''}{c.last_name}</TableCell>
-                                            <TableCell className="px-4 py-2">{c.contact_number || "-"}</TableCell>
-                                            <TableCell>
-                                                <EditCoAttendee co_attendees={caseInfo.complainants} type="complainant"
-                                                    attendeeInfo={c} />
-                                            </TableCell>
-                                        </TableRow>
-
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </div>
+                            <TableBody>
+                            {caseInfo?.complainants?.map( c => (
+                                
+                                <TableRow key={c.id} className="border-t">
+                                    <TableCell className="px-4 py-2">{c.first_name} {c.middle_name ? c.middle_name + ' ' : ''}{c.last_name}
+                                    </TableCell>
+                                    <TableCell className="px-4 py-2">{c.contact_number || "-"}</TableCell>
+                                    <TableCell>
+                                        <EditCoAttendee co_attendees={caseInfo.complainants} type="complainant"
+                                        attendeeInfo={c}
+                                        case_id={caseInfo.id}
+                                        update_caseInfo={refreshCaseData} />
+                                    </TableCell>
+                                </TableRow>
+                                          
+                            ))}
+                            {caseInfo?.complainants.length == 0 && (
+                                <TableRow>
+                                    <TableCell className="px-4 py-2 text-center" colSpan={3}>No complainants added.</TableCell>
+                                </TableRow>
+                            )}
+                            </TableBody>
+                        </Table>
                     </div>
                 </div>
-
-                )
-            }
-
-            {case_respondents?.length > 0 &&
-                (
-                    <div className="flex flex-col gap-4 bg-white p-4 rounded-md border shadow-2xs">
-                        <div className="flex flex-col">
-                            <h2 className="font-medium mb-2 text-zinc-900">Respondents</h2>
-                            <div className="border rounded-lg overflow-hidden">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead className="text-left px-4 py-2">Full Name</TableHead>
-                                            <TableHead className="text-left px-4 py-2">Contact</TableHead>
-                                            <TableHead className="px-4 py-2"></TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {case_respondents.map(c => (
-                                            <TableRow key={c.id} className="border-t">
-                                                <TableCell className="px-4 py-2">{c.first_name} {c.middle_name ? c.middle_name + ' ' : ''}{c.last_name}</TableCell>
-                                                <TableCell className="px-4 py-2">{c.contact_number || "-"}</TableCell>
-                                                <TableCell>
-                                                    <EditCoAttendee co_attendees={caseInfo.respondents} type="respondent"
-                                                        attendeeInfo={c} />
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </div>
-                        </div>
+            </div>
+            
+            <div className="flex flex-col gap-4 bg-white p-4 rounded-md border shadow-2xs">
+                <div className="flex flex-col">
+                    <h2 className="font-medium mb-2 text-zinc-900">Respondents</h2>
+                    <div className="border rounded-lg overflow-hidden">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                <TableHead className="text-left px-4 py-2">Full Name</TableHead>
+                                <TableHead className="text-left px-4 py-2">Contact</TableHead>
+                                <TableHead className="px-4 py-2"></TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                            {caseInfo?.respondents?.map( c => (
+                                
+                                <TableRow key={c.id} className="border-t">
+                                    <TableCell className="px-4 py-2">{c.first_name} {c.middle_name ? c.middle_name + ' ' : ''}{c.last_name}</TableCell>
+                                    <TableCell className="px-4 py-2">{c.contact_number || "-"}</TableCell>
+                                    <TableCell>
+                                        <EditCoAttendee co_attendees={caseInfo.respondents} type="respondent"
+                                        attendeeInfo={c}
+                                        case_id={caseInfo.id}
+                                        update_caseInfo={refreshCaseData} />
+                                    </TableCell>
+                                </TableRow>
+                                          
+                            ))}
+                            {caseInfo?.respondents.length == 0 && (
+                                <TableRow>
+                                    <TableCell className="px-4 py-2 text-center" colSpan={3}>No respondents added.</TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
                     </div>
-                )
-            }
+                </div>
+            </div>
 
             <div className="flex flex-col gap-4 bg-white p-4 rounded-md shadow-2xs border">
                 <h2 className="text-xl font-semibold">Hearing Attendance</h2>
@@ -519,7 +554,7 @@ export function Case() {
                             {findHearingCase.length > 0 ? (
                                 findHearingCase.map((hearing, index) => (
                                     <TableRow key={hearing.id} className="border-t">
-                                        <TableCell className="px-4 py-2">{index + 1}</TableCell>
+                                        <TableCell className="px-4 py-2">{hearing?.hearing_number}</TableCell>
                                         <TableCell className="px-4 py-2">{hearing.hearing_date}</TableCell>
                                         <TableCell className="px-4 py-2">{hearing.time}</TableCell>
                                         <TableCell className="px-4 py-2">hearing attendance</TableCell>
@@ -558,7 +593,7 @@ export function Case() {
 
             <div className="flex flex-col gap-3 bg-white p-4 rounded-md shadow-2xs border">
                 <h2 className="text-xl font-medium">Generate Documents</h2>
-                <div className="grid grid-cols-5 gap-3 ">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 ">
                     {userRole === 'admin' ? (
                         generate.admin.map(doc => (
                             <button type="button" key={doc.title}
