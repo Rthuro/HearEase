@@ -11,6 +11,19 @@ const storedUserInfo = () => {
     return data?.userInfo || null;
 }
 
+export const custom_email = async (email, subject, message) => {
+    try {
+        const response = await axios.post(`${API_URL}/custom-email/`, {
+            email: email,
+            subject: subject,
+            message: message
+        });
+        return response;
+    } catch (error) {
+        console.error("Failed to send email:", error);
+    }
+};
+
 export const useUserStore = create((set, get) => ({
     loading: false,
     updateUser: async (userId, updatedData) => {

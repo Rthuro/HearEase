@@ -33,12 +33,10 @@ export const getHearings = async () => {
   const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
   const data = JSON.parse(stored);
 
-  const userData = await getUser();
-
   const response = await axios.get(`${API_URL}/hearings/`, {
     params: {
       role: data.userRole,
-      email: userData.email
+      email: data?.userInfo?.email
     }
   });
 
@@ -261,6 +259,19 @@ const useHearingStore = create((set, get) => ({
     }
   },
 
+  updateCaseHearingProgress: async (hearingId, payload) => {
+    try {
+      const response = await updateHearingProgress(hearingId, payload);
+      return { success: true, data: response };
+      } catch (error) {
+      const isNetworkError = !error.response;
+      const errorMessage = isNetworkError
+        ? "Network error. Please check your connection."
+        : "Failed to update hearing progress";
+      toast.error(errorMessage);
+      return { success: false, retry: isNetworkError };
+    }
+  },
 }));
 
 export default useHearingStore;

@@ -31,9 +31,8 @@ export const useGenerateDocumentStore = create((set) => ({
                 formData = {
                     template_id: template_id,
                     date_filed: new Date().toISOString().split('T')[0],
-                    respondent_name: case_data.respondent_user?.first_name + ' ' + case_data.respondent_user?.last_name,
-                    respondent_address: case_data.respondent_user?.address || 'N/A',
-                    complainant_name: case_data.complainant_user?.first_name + ' ' + case_data.complainant_user?.last_name,
+                    respondents: case_data.respondents?.map(r => r.first_name + ' ' + r.last_name).join(', '),
+                    complainants: case_data.complainants?.map(c => c.first_name + ' ' + c.last_name).join(', '),
                     nature_of_complaint: case_data.case_type.case_name,
                     case_number: case_data.id,
                     hearing_date: case_hearings[0]?.hearing_date || 'N/A',
@@ -54,8 +53,8 @@ export const useGenerateDocumentStore = create((set) => ({
                     formData = {
                         template_id: template_id,
                         date_filed: new Date().toISOString().split('T')[0],
-                        respondent_name: case_data.respondent_user?.first_name + ' ' + case_data.respondent_user?.last_name,
-                        complainant_name: case_data.complainant_user?.first_name + ' ' + case_data.complainant_user?.last_name,
+                        respondents: case_data.respondents?.map(r => r.first_name + ' ' + r.last_name).join(', '),
+                        complainants: case_data.complainants?.map(c => c.first_name + ' ' + c.last_name).join(', '),
 
                         predicted_hearings: case_data.predicted_hearings,
                         case_number: case_data.id,
@@ -74,8 +73,8 @@ export const useGenerateDocumentStore = create((set) => ({
                 formData = {
                     template_id: template_id,
                     date: new Date().toISOString().split('T')[0],
-                    respondent_name: case_data.respondent_user?.first_name + ' ' + case_data.respondent_user?.last_name,
-                    complainant_name: case_data.complainant_user?.first_name + ' ' + case_data.complainant_user?.last_name,
+                    respondents: case_data.respondents?.map(r => r.first_name + ' ' + r.last_name).join(', '),
+                    complainants: case_data.complainants?.map(c => c.first_name + ' ' + c.last_name).join(', '),
                     nature_of_complaint: case_data.case_type.case_name,
                     case_number: case_data.id,
                     hearing_date: case_hearings[0]?.hearing_date || 'N/A',
@@ -88,8 +87,8 @@ export const useGenerateDocumentStore = create((set) => ({
             case 'court':
                  formData = {
                     template_id: template_id,
-                    respondent_name: case_data.respondent_user?.first_name + ' ' + case_data.respondent_user?.last_name,
-                    complainant_name: case_data.complainant_user?.first_name + ' ' + case_data.complainant_user?.last_name,
+                    respondents: case_data.respondents?.map(r => r.first_name + ' ' + r.last_name).join(', '),
+                    complainants: case_data.complainants?.map(c => c.first_name + ' ' + c.last_name).join(', '),
                     nature: case_data.case_type.case_name,
                     case_number: case_data.id,
                     month: new Date().toLocaleString('default', { month: 'long' }),
@@ -102,8 +101,6 @@ export const useGenerateDocumentStore = create((set) => ({
                     const noShowUser = case_data.user;
                     const userData = case_data.data;
                     const no_show_name = noShowUser == "c" ? userData.complainant_user?.first_name + ' ' + userData.complainant_user?.last_name : userData.respondent_user?.first_name + ' ' + userData.respondent_user?.last_name;
-
-                    console.log(noShowUser, "No Show Name:", no_show_name, "complainant:", userData.complainant_user?.first_name, "respondent:", userData.respondent_user?.first_name);
 
                     const no_show_address = noShowUser == "c" ? userData.complainant_user?.address || 'N/A' : userData.respondent_user?.address || 'N/A';
 

@@ -6,14 +6,14 @@ import toast from "react-hot-toast";
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
 
 export const getComplainants = async () => {
-    const response = await axios.get(`${API_URL}/case-persons`, {
+    const response = await axios.get(`${API_URL}/case-persons/`, {
         params: { type: "complainant" }
     });
     return response.data;
 }
 
 export const getRespondents = async () => {
-    const response = await axios.get(`${API_URL}/case-persons`, {
+    const response = await axios.get(`${API_URL}/case-persons/`, {
         params: { type: "respondent" }
     });
     return response.data;
@@ -48,6 +48,10 @@ export const getUser = async (email) => {
         email: email
     });
     return response.data.user;
+}
+export const getCasePersonById = async (id) => {
+    const response = await axios.get(`${API_URL}/case-person-details/${id}/`);
+    return response.data;
 }
 
 export const useRetrieveUsersStore = create((set) => ({
@@ -124,6 +128,17 @@ export const useRetrieveUsersStore = create((set) => ({
             set({ admin_list: data })
         } catch (error) {
             toast.error(error.message || "Failed to fetch admins");
+        }
+    },
+
+    fetchCasePersonById: async (id) => {
+        try {
+            const data = await getCasePersonById(id);
+            return data;
+        }
+        catch (error) {
+            toast.error(error.message || "Failed to fetch case person details");
+            return null;
         }
     },
 }))
