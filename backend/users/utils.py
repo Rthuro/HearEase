@@ -26,6 +26,77 @@ def send_otp_email(email, code):
 
 class EmailNotification:
     @staticmethod
+    def custom_email(user_email, subject, body):
+    # Professional colors
+        primary_red = "#DC2626"
+        bg_color = "#F9FAFB"
+        text_color = "#1F2937"
+        
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; background-color: {bg_color}; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+            <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: {bg_color}; padding: 40px 20px;">
+                <tr>
+                    <td align="center">
+                        <!-- Main Card -->
+                        <table width="100%" max-width="600" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); border: 1px solid #e5e7eb;">
+                            
+                            <!-- Header -->
+                            <tr>
+                                <td style="background-color: {primary_red}; padding: 30px; text-align: center;">
+                                    <h1 style="color: #ffffff; margin: 0; font-size: 24px; letter-spacing: -0.5px; font-weight: 800;">HearEase</h1>
+                                </td>
+                            </tr>
+
+                            <!-- Content Area -->
+                            <tr>
+                                <td style="padding: 40px 30px;">
+                                    <h2 style="color: {text_color}; margin-top: 0; font-size: 20px; font-weight: 700;">{subject}</h2>
+                                    <p style="color: #4B5563; line-height: 1.6; font-size: 16px; margin-bottom: 30px;">
+                                        {body}
+                                    </p>
+                                    
+                                    <!-- Action Button (Optional) -->
+                                    <table border="0" cellspacing="0" cellpadding="0" style="margin-top: 20px;">
+                                        <tr>
+                                            <td align="center" bgcolor="{primary_red}" style="border-radius: 6px;">
+                                                <a href="https://www.hearease.me" target="_blank" style="padding: 12px 24px; color: #ffffff; text-decoration: none; font-weight: 600; display: inline-block;">Visit our website</a>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+
+                            <!-- Footer Info -->
+                            <tr>
+                                <td style="padding: 20px 30px; background-color: #F3F4F6; border-top: 1px solid #e5e7eb; text-align: center;">
+                                    <p style="font-size: 12px; color: #9CA3AF; margin-top: 10px;">
+                                        &copy; 2026 HearEase. All rights reserved.<br>
+                                        Sent from <a href="https://hearease.me" style="color: #9CA3AF; text-decoration: underline;">hearease.me</a>
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </body>
+        </html>
+        """
+
+        email_data = {
+            "from": "HearEase Notifications <updates@hearease.me>",
+            "to": user_email,
+            "subject": f"HearEase: {subject}",
+            "html": html_content
+        }
+
+        EmailThread(email_data).start() 
     def created_case_notification(user_email, name, case_number, case_status):
         subject = f"{case_number} Created Successfully"
         

@@ -130,15 +130,6 @@ export function GenerateDocument() {
                                                 </div>
                                                 <div className="flex justify-between">
                                                     <p className="text-zinc-600 text-sm">Complainant: 
-                                                        {c?.complainant_organizations.length > 0 && (
-                                                            <>
-                                                                {c?.complainant_organizations.map( (org, index) => (
-                                                                    <span key={org.id}>
-                                                                        {org.name} (Rep.:{org.representative_name}){index < c.complainant_organizations.length - 1 ? ", " : ""}
-                                                                    </span>
-                                                                ))}
-                                                            </>
-                                                        )}
                                                         {c?.complainants.length > 0 && (
                                                             <>
                                                                 {c?.complainants.map( (p, index) => (

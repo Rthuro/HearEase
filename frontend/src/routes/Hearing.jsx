@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ChevronLeft, Pencil, Loader2, File, Download } from "lucide-react";
+import { ChevronLeft, Pencil, Loader2, File, Download, Info, MessageSquareText } from "lucide-react";
 import useHearingStore from "@/store/useHearingStore";
 import { CaseStatusDisplay } from "@/components/CaseStatusDisplay";
 import {
@@ -50,7 +50,6 @@ export default function Hearing() {
 
     const hearing = hearings.find( hearing => hearing.id == hearing_id);
     const caseInfo = cases.find( c => c.id == hearing.case);
-    console.log("caseInfo", caseInfo);
     const caseHearings = hearings.filter( h => h.case == hearing.case).sort((a, b) => a.hearing_number - b.hearing_number);
     // console.log("caseHearings", caseHearings);
 
@@ -97,7 +96,7 @@ export default function Hearing() {
 
     }, []);
 
-    console.log("attendanceRecords", hearing);
+    // console.log("attendanceRecords", hearing);
     
     if(userRole == 'admin'){
         return (
@@ -109,6 +108,45 @@ export default function Hearing() {
                         </Button>
                     </div>
                 </div>
+
+                {hearing?.remarks !== "" && hearing?.remarks !== null && (
+                    <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-6 flex items-start gap-4 shadow-sm">
+                        {/* Icon Container */}
+                        <div className="bg-indigo-100 p-3 rounded-full shrink-0">
+                            <MessageSquareText className="h-6 w-6 text-indigo-600" />
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                                <h3 className="text-lg font-bold text-indigo-900 leading-none">
+                                    Hearing Remarks
+                                </h3>
+                                <span className="text-[10px] bg-indigo-200 text-indigo-800 px-2 py-0.5 rounded-full uppercase tracking-widest font-bold">
+                                    Record
+                                </span>
+                            </div>
+                            
+                            <p className="text-indigo-700 text-sm mt-1 flex items-center gap-1">
+                                <Info size={14} className="inline" />
+                                Notes, observations and updates about the hearing.
+
+                            </p>
+                            
+                            {/* The Remarks Quote Box */}
+                            <div className="mt-4 p-4 bg-white/60 rounded-lg border border-indigo-100 shadow-sm relative">
+                                {/* Decorative Quote Mark */}
+                                <span className="absolute top-2 left-2 text-indigo-200 font-serif text-4xl leading-none select-none">“</span>
+                                
+                                <div className="relative z-10 italic text-sm text-indigo-900 leading-relaxed px-4">
+                                    {hearing?.remarks}
+                                </div>
+                                
+                                <span className="absolute bottom-1 right-3 text-indigo-200 font-serif text-4xl leading-none select-none">”</span>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 <div className="flex gap-3 bg-white p-4 rounded-lg border flex-col">
                     <h2 className="text-lg font-semibold">Hearing Information</h2>
@@ -239,6 +277,44 @@ export default function Hearing() {
                         </Button>
                     </div>
                 </div>
+                {hearing?.remarks !== "" && hearing?.remarks !== null && (
+                    <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-6 flex items-start gap-4 shadow-sm">
+                        {/* Icon Container */}
+                        <div className="bg-indigo-100 p-3 rounded-full shrink-0">
+                            <MessageSquareText className="h-6 w-6 text-indigo-600" />
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                                <h3 className="text-lg font-bold text-indigo-900 leading-none">
+                                    Hearing Remarks
+                                </h3>
+                                <span className="text-[10px] bg-indigo-200 text-indigo-800 px-2 py-0.5 rounded-full uppercase tracking-widest font-bold">
+                                    Record
+                                </span>
+                            </div>
+                            
+                            <p className="text-indigo-700 text-sm mt-1 flex items-center gap-1">
+                                <Info size={14} className="inline" />
+                                Notes, observations and updates about the hearing.
+                            </p>
+                            
+                            {/* The Remarks Quote Box */}
+                            <div className="mt-4 p-4 bg-white/60 rounded-lg border border-indigo-100 shadow-sm relative">
+                                {/* Decorative Quote Mark */}
+                                <span className="absolute top-2 left-2 text-indigo-200 font-serif text-4xl leading-none select-none">“</span>
+                                
+                                <div className="relative z-10 italic text-sm text-indigo-900 leading-relaxed px-4">
+                                    {hearing?.remarks}
+                                </div>
+                                
+                                <span className="absolute bottom-1 right-3 text-indigo-200 font-serif text-4xl leading-none select-none">”</span>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 <div className="flex gap-3 bg-white p-4 rounded-lg border flex-col">
                     <h2 className="text-xl font-semibold">Hearing Information</h2>
                     <div className="border rounded-lg overflow-hidden">

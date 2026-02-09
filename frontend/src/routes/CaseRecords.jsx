@@ -42,10 +42,10 @@ export function CaseRecords(){
     const { cases, fetchCases, caseTypes, fetchCaseTypes } = useCaseStore();
     const { userInfo, userLinkName } = useAuthenticationStore();
     const [status, setStatus] = useState("all");
+    const [searchQuery, setSearchQuery] = useState("");
 
     // Table view: 1 - row, 2 - box
     const [view, setView] = useState(1);
-    const [filteredCases, setFilteredCases] = useState(cases);
 
     useEffect( ()=>{
         fetchCaseTypes()
@@ -53,11 +53,25 @@ export function CaseRecords(){
     },[fetchCases, fetchCaseTypes])
     
     // Update filteredCases when status changes
-    useEffect(() => {
-        setFilteredCases(
-            status === "all" ? cases : cases.filter(c => c.case_status === status)
-        );
-    }, [status, cases]);
+    // useEffect(() => {
+    //     setFilteredCases(
+    //         status === "all" ? cases : cases.filter(c => c.case_status === status)
+    //     );
+    // }, [status, cases]);
+
+    const filteredCases = cases.filter((c) => {
+        const query = searchQuery.toLowerCase().trim();
+
+        const id = String(c.id).toLowerCase(); 
+        const caseName = (c.case_type?.case_name || "").toLowerCase();
+
+        const matchesSearch = id.includes(query) || caseName.includes(query);
+
+        const matchesStatus = status === "all" || c.case_status === status;
+
+        return matchesSearch && matchesStatus;
+    });
+
 
     const navigateTo = userInfo?.role === 'user' ? userLinkName : 'Admin';
 
@@ -73,20 +87,20 @@ export function CaseRecords(){
         },
         {
             title: "Resolved Cases",
-            count: cases.filter(c => c.status === 'resolved').length,
+            count: cases.filter(c => c.case_status === 'resolved').length,
             style: whiteStyle,
             numClr: "text-redBase"
 
         },{
             title: "Total Escalated Cases",
-            count: cases.filter(c => c.status === 'escalated').length,
+            count: cases.filter(c => c.case_status === 'escalated').length,
             style: redStyle,
         }
     ];
 
     return (
         <div className="p-6 flex flex-col gap-2">
-            <PageSync page="My Case Records" />
+            <PageSync page={userInfo?.role === 'user' ? "My Case Records" : "Case Records"} />
 
             {userInfo?.role === 'user' && (
                 <div className="flex flex-col gap-2">
@@ -114,7 +128,8 @@ export function CaseRecords(){
                 <div className="flex items-center justify-between flex-wrap-reverse md:flex-nowrap gap-3">
                     <div className="flex items-center w-full">
                         <Search className="text-zinc-400 ml-3" size={16} />
-                        <Input type="text" placeholder="Search for case..." className="w-full md:w-72 -ml-6 pl-8" />
+                        <Input type="text" placeholder="Search for case..." className="w-full md:w-72 -ml-6 pl-8" 
+                        value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
                     </div>
                     <div className="flex items-center gap-2">
                         <div className="flex items-center">

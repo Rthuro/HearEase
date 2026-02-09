@@ -35,30 +35,27 @@ export function TableHearings({ hearingsList, showPagination, navigateTo }) {
                     <TableHeader>
                         <TableRow>
                             <TableHead>Case #</TableHead>
-                            <TableHead>Case Type</TableHead>
                             <TableHead>Hearing Date</TableHead>
-                            <TableHead>Hearing #</TableHead>
+                            <TableHead>Hearing Number</TableHead>
                             <TableHead>Time</TableHead>
-                            <TableHead>Assigned Lupon</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Action</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {hearings?.length === 0 ? (
+                        {  hearings?.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={8}>
+                                <TableCell colSpan={6}>
                                     <p className="text-center">No hearings scheduled.</p>
                                 </TableCell>
                             </TableRow>
                         ) : (
                             hearings?.map((hearing) => (
                                 <TableRow key={hearing?.id} className="text-zinc-700">
-                                    <TableCell className="font-mono text-xs">
-                                        {hearing?.case_number || hearing?.case || '-'}
-                                    </TableCell>
                                     <TableCell>
-                                        {hearing?.case_type_label || '-'}
+                                        <Link to={`/${navigateTo}/Case/${hearing?.case}`} className="text-redBase underline">
+                                        {hearing?.case}
+                                        </Link>
                                     </TableCell>
                                     <TableCell>
                                         {hearing?.hearing_date ?? '-'}
@@ -67,10 +64,7 @@ export function TableHearings({ hearingsList, showPagination, navigateTo }) {
                                         {hearing?.hearing_number ?? '-'}
                                     </TableCell>
                                     <TableCell>
-                                        {hearing?.time ?? '-'}
-                                    </TableCell>
-                                    <TableCell>
-                                        {hearing?.lupon_member_name || '-'}
+                                        {hearing?.time ?? '-'} 
                                     </TableCell>
                                     <TableCell>
                                         <CaseStatusDisplay caseStatus={hearing?.hearing_status}
@@ -78,7 +72,7 @@ export function TableHearings({ hearingsList, showPagination, navigateTo }) {
                                     </TableCell>
                                     <TableCell className={cn("py-4")}>
                                         <Link to={`/${navigateTo}/Hearing/${hearing?.id}`} className="text-redBase bg-red-100 px-3 py-2 rounded-lg text-sm">
-                                            Details
+                                            Details 
                                         </Link>
                                     </TableCell>
                                 </TableRow>

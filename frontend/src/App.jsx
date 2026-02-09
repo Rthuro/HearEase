@@ -22,14 +22,13 @@ import { NotFound } from './routes/NotFound';
 import { useEffect } from "react";
 import  useAuthenticationStore  from "./store/useAuthenticationStore";
 import { SignUp } from './routes/SignUp';
-import { useCaseStore } from './store/useCaseStore';
-import useHearingStore from './store/useHearingStore';
-import { useLuponStore } from './store/useLuponStore';
+import { CasePersonManagement } from './routes/admin/pages/CasePersonManagement';
 import { Settings } from './routes/Settings';
 import Hearing from './routes/Hearing';
 import { Lupon } from './routes/admin/pages/Lupon';
 import { Reports } from './routes/admin/pages/Reports';
 import { HearingScheduler } from './routes/admin/pages/Hearing-Scheduler';
+import { CasePerson } from './routes/admin/pages/CasePerson';
 
 function App() {
   const { initializeAuth } = useAuthenticationStore();
@@ -78,6 +77,8 @@ function App() {
               <Route path="Admin/CaseRecords" element={<CaseRecords />} />
               <Route path="Admin/Generate-Documents" element={<GenerateDocument />} />
               <Route path="Admin/Lupon-Management" element={<LuponManagement />} />
+              <Route path="Admin/Case-Person-Management" element={<CasePersonManagement />} />
+              <Route path="Admin/Case-Person/:id" element={<CasePerson />} />
               <Route path="Admin/Lupon/:id" element={<Lupon />} />
               <Route path="Admin/Reports" element={<Reports />} />
               <Route path="Admin/Settings" element={<Settings />} />

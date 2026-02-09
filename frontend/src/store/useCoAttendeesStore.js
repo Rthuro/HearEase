@@ -12,7 +12,7 @@ export const getCoAttendee = async (id, type) => {
 };
 
 export const updateCoAttendee = async (id, type, data) => {
-    const response = await axios.put(`${API_URL}/update-${type}/${id}/`, data);
+    const response = await axios.put(`${API_URL}/case-persons/${id}/`, data);
     return response.data;
 }
 
@@ -36,7 +36,7 @@ export const useCoAttendeesStore = create( (set) => ({
                 }
                 toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} information updated successfully.`);
             }
-            return;
+            return data;
         } catch (error) {
             toast.error(error);
         }

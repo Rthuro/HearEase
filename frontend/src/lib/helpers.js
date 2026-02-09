@@ -34,16 +34,7 @@ export const maskString = (str) => {
 };
 
 export const getStreets = (streetsList, barangay) => {
-    // Handle single-param call (backwards compatibility)
-    if (barangay === undefined && typeof streetsList === 'string') {
-        // Called with just barangay name - return empty array as fallback
-        // (The component should be fixed to pass streets list too)
-        return [];
-    }
-    if (!streetsList || !Array.isArray(streetsList)) {
-        return [];
-    }
-    return streetsList.filter(s => s.barangay === barangay).map(s => s.name);
+    return streetsList?.filter(s => s.barangay === barangay).map(s => s.name);
 }
 // get street by barangay id
 // {selectedStreet ? selectedStreet :

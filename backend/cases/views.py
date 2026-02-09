@@ -486,6 +486,7 @@ class UpdateHearingProgressView(APIView):
                     case.remarks = request.data.get("remarks")
                 else: # court
                     case.case_status = "escalated"
+                    case.cfa_destination = request.data.get("cfa_destination")
                     case.remarks = request.data.get("remarks")
                 
                 case.save()

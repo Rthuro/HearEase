@@ -33,7 +33,7 @@ export function Respondent() {
 
             <Separator className="col-span-2" />         
 
-            {respondentList.map( (c) => (
+            {respondentList.length > 0 && respondentList?.map( (c) => (
                 <ParticipantCard participant={c} type="respondent" />
             ))}
 

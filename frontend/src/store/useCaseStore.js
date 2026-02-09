@@ -90,6 +90,11 @@ export const fetchCase = async (case_id) => {
     return response.data;
 }
 
+export const getAllCasePersons = async () => {
+    const response = await axios.get(`${API_URL}/all-case-persons/`);
+    return response;
+}
+
 export const useCaseStore = create((set, get) => ({
     testEmail: async () => {
         try {
@@ -401,6 +406,15 @@ export const useCaseStore = create((set, get) => ({
 
         } catch (error) {
             set({ loading: false, error: error.message });
+        }
+    },
+
+    fetchAllCasePersons: async () => {
+        try {
+            const casePersons = await getAllCasePersons();
+            return casePersons.data;
+        } catch (error) {
+            console.error("Fetch case persons error:", error);
         }
     },
 
