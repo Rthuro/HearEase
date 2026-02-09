@@ -8,24 +8,9 @@ from cases.serializers import CaseSerializer
 class HearingSerializer(serializers.ModelSerializer):
     # lupon_member = LuponMemberSerializer(read_only=True)
     # case = CaseSerializer(read_only=True)
-
     class Meta:
         model = Hearing
-        fields = [
-            "id",
-            "case",
-            "case_number",
-            "case_type_label",
-            "hearing_date",
-            "hearing_number",
-            "time",
-            "lupon_member",
-            "lupon_member_name",
-            "remarks",
-            "hearing_status",
-            "created_at",
-            "updated_at",
-        ]
+        fields = '__all__'
     
     def get_case_number(self, obj):
         """Get the case ID/number from the related case"""
