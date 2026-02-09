@@ -47,6 +47,19 @@ class Case(models.Model):
         ("respondent_info", "Respondent Information")
     ]
 
+    SUMMON_STATUS = [
+        ("pending", "Pending"),
+        ("served", "Served"),
+        ("not_served", "Not Served"),
+        ("pending", "Pending"),
+    ]
+
+    CFA = [
+        ("municipal", "Municipal"),
+        ("pnp", "PNP"),
+        ("vawc", "VAWC"),
+    ]
+
     case_type = models.ForeignKey(
         CaseType, on_delete=models.SET_NULL, null=True, related_name="cases"
     )
@@ -81,18 +94,18 @@ class Case(models.Model):
         default="none",
     )
 
-    SUMMON_STATUS_CHOICES = [
-        ("pending", "Pending"),
-        ("sent", "Sent"),
-        ("received", "Received"),
-        ("none", "None"),
-    ]
-
+    summon_date_received = models.DateTimeField(blank=True, null=True)
+    summon_received_by = models.CharField(max_length=100, blank=True, null=True)
     summon_status = models.CharField(
         max_length=20,
-        choices=SUMMON_STATUS_CHOICES,
+        choices=SUMMON_STATUS,
+        default="pending",
+    )
+
+    cfa_destination = models.CharField( max_length=20, choices=CFA,
         default="none",
         blank=True,
+        null=True,
     )
 
 
