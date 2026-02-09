@@ -22,30 +22,42 @@ import { DropdownMenu,
   DropdownMenuContent,
     DropdownMenuRadioGroup,
     DropdownMenuRadioItem } from "@/components/ui/dropdown-menu"
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Loader2 } from "lucide-react";
 import { useAddressesStore } from "@/store/useAddressStore";
 import { getStreets } from "@/lib/helpers";
 import { cn } from "@/lib/utils";
 import { useCoAttendeesStore } from "@/store/useCoAttendeesStore";
 import { dateFormatter } from "@/lib/helpers";
 
-export function EditCoAttendee({co_attendees, type, attendeeInfo}){
+export function EditCoAttendee({co_attendees, type, attendeeInfo, update_caseInfo}) {
     const { barangays, streets } = useAddressesStore();
     const [openCalendar, setOpenCalendar] = useState(false);
     const { updateCoAttendeeInfo } = useCoAttendeesStore();
     const minDate = new Date("1900-01-01");
     const maxDate = new Date();
     const [info, setInfo] = useState(attendeeInfo);
+    const [open, setOpen] = useState(false);
+    const [loader, setLoader] = useState(false);
 
-
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e)  => {
         e.preventDefault();
-        updateCoAttendeeInfo(co_attendees, info.id, type, info);
+        try {
+            setLoader(true);
+            const res = await updateCoAttendeeInfo(co_attendees, info.id, type, info);
+            if (res) {
+                update_caseInfo();
+                setLoader(false);
+            }
+            setOpen(false);
+
+        } catch (error) {
+            console.error(error);
+            setLoader(false);
+        }
     }
-    // console.log(info);
 
     return (
-        <Dialog>
+        <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>     
                 <Button variant="outline"><Edit />Edit</Button>
             </DialogTrigger>
@@ -229,7 +241,9 @@ export function EditCoAttendee({co_attendees, type, attendeeInfo}){
                     <DialogClose asChild>
                     <Button variant="outline">Cancel</Button>
                     </DialogClose>
-                    <Button type="submit" onClick={handleSubmit}>Save Changes</Button>
+                    <Button type="submit" onClick={handleSubmit}>
+                        {loader ? <Loader2 className="animate-spin mr-2" /> : null}
+                        Save Changes</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

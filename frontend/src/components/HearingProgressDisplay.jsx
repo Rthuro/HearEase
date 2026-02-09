@@ -644,6 +644,7 @@ export function HearingProgressDisplay({ hearing, case_complainants, case_respon
                         <Button className=" bg-redBase hover:bg-redBase/90" 
                          onClick={()=> handleSubmit({
                             ...payload,
+                            cfa_destination: destination,
                             outcome: "court",
                             remarks: court_remarks,
                         })}>Generate CFA</Button>

@@ -1,4 +1,4 @@
-import { Calendar, House, ChartNoAxesColumnDecreasing, UserRound, FilePen, File, FolderOpen, Settings,  FolderSearch, CalendarDays } from "lucide-react"
+import { Calendar, House, ChartNoAxesColumnDecreasing, UserRound, FilePen, File, FolderOpen, Settings,  FolderSearch, CalendarDays, UsersRound, LucideUserSquare2 } from "lucide-react"
  
 import {
   Sidebar,
@@ -63,6 +63,11 @@ const third_row = [
     icon: UserRound,
   },
   {
+    title: "Case Person Management",
+    url: "Case-Person-Management",
+    icon: LucideUserSquare2,
+  },
+  {
     title: "Reports",
     url: "Reports",
     icon: ChartNoAxesColumnDecreasing,
@@ -71,7 +76,8 @@ const third_row = [
     title: "Settings",
     url: "Settings",
     icon: Settings,
-  }
+  }, 
+  
 
 ]
 

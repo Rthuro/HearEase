@@ -7,15 +7,36 @@ import { RetrievePopover } from "./retrieve-popover"
 import { AddEditParticipant } from "./add-edit-participant"
 import { ParticipantCard } from "./participant-card"
 import useAuthenticationStore from "@/store/useAuthenticationStore"
+import { useEffect } from "react"
+import { useState } from "react"
+
 export function Complainant() {
-    const { complainantList, set_complainants } = useCaseStore();
+    const { complainantList, set_complainants, initialUserComplainantInfo  } = useCaseStore();
     const { userRole } = useAuthenticationStore();
+    const [openDialog, setOpenDialog] = useState(false);
+
+    useEffect(() => {
+        if (userRole !== 'admin') {
+            if (!complainantList.some(c => c.first_name === initialUserComplainantInfo.first_name && c.last_name === initialUserComplainantInfo.last_name)) {
+            set_complainants([initialUserComplainantInfo]);
+            }
+        }  
+    }, [userRole, initialUserComplainantInfo, set_complainants]);
 
     const handleReset = (e) => {
-        e.preventDefault();
-        set_complainants([])
-
+            e.preventDefault();
+            if (userRole !== 'admin') {
+                set_complainants([initialUserComplainantInfo]);
+                return;
+            }
+            set_complainants([])        
     }
+
+    const userComplainantList = complainantList.filter( (c) => 
+                (c.first_name !== initialUserComplainantInfo.first_name || c.last_name !== initialUserComplainantInfo.last_name)
+        );
+
+    const displayList = userRole !== 'admin' ? userComplainantList : complainantList;
 
 
     return (
@@ -25,17 +46,27 @@ export function Complainant() {
 
             <div className="flex gap-3 col-span-2">
                 <div className="flex gap-2">
-                    <AddEditParticipant type="complainant" action="Add" />
+                    <AddEditParticipant 
+                        type="complainant" 
+                        action="Add" 
+                        open={openDialog === "add-complainant"}
+                        onOpenChange={(val) => setOpenDialog(val ? "add-complainant" : null)}
+                    />
+                    <RetrievePopover participantType="complainant" />
 
-                    {(userRole === 'admin' || userRole === 'lupon') && (
-                        <RetrievePopover participantType="complainant" />
-                    )}
                 </div>
                 <Button className={cn('bg-redBase w-fit')} onClick={handleReset}>Reset</Button>
             </div>
 
-
             <Separator className="col-span-2" />
+
+            {userRole !== 'admin' && (
+                <div className="flex items-center justify-between p-3 rounded-md border cursor-pointer col-span-2 ">
+                     <p>{initialUserComplainantInfo?.first_name} 
+                        {' '}
+                        {initialUserComplainantInfo?.middle_name} {initialUserComplainantInfo?.last_name}</p>
+                </div>
+            )}
 
             {complainantList.length > 0 && complainantList.map((c) => (
                 <ParticipantCard participant={c} type="complainant" />
