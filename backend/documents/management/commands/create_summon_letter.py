@@ -20,7 +20,7 @@ class Command(BaseCommand):
                     <p><strong>Date:</strong> {{ date_filed }}</p>
                     
                     <p>
-                        <strong>To:</strong> {{ respondent_name }}<br>
+                        <strong>To:</strong> {{ respondents }}<br>
                         <strong>Address:</strong> {{ respondent_address }}
                     </p>
                     
@@ -32,7 +32,7 @@ class Command(BaseCommand):
                     </p>
                     
                     <p style="margin-left: 40px;">
-                        <strong>Complainant:</strong> {{ complainant_name }}<br>
+                        <strong>Complainant/s:</strong> {{ complainants }}<br>
                         <strong>Nature of Complaint:</strong> {{ nature_of_complaint }}<br>
                         <strong>Case Number:</strong> {{ case_number }}
                     </p>

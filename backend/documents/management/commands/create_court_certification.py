@@ -24,8 +24,8 @@ class Command(BaseCommand):
                     <p style="margin: 12px 0;">This is to certify that:</p>
                     
                     <div class="document-body-section">
-                      <p><strong>Complainant:</strong> {{ complainant_name }}</p>
-                      <p><strong>Respondent:</strong> {{ respondent_name }}</p>
+                      <p><strong>Complainant/s:</strong> {{ complainants }}</p>
+                      <p><strong>Respondent/s:</strong> {{ respondents }}</p>
                       <p><strong>Nature of Complaint:</strong> {{ nature }}</p>
                       <p><strong>Case Number:</strong> {{ case_number }}</p>
                     </div>

@@ -42,7 +42,7 @@ class Command(BaseCommand):
                     <p>
                        I, <strong>{{ lupon_secretary }}</strong>, in my capacity as the Lupon Secretary of Barangay Tetuan, 
                        respectfully submit this letter requesting the cancellation of the scheduled hearing for <strong>Case No. {{ case_number }}</strong>, 
-                       involving <strong>{{ complainant_name }}</strong> and <strong>{{ respondent_name }}</strong>, originally set for <strong>{{ next_hearing_date }}</strong>.
+                       involving <strong>{{ complainants }}</strong> and <strong>{{ respondents }}</strong>, originally set for <strong>{{ next_hearing_date }}</strong>.
                     </p>
                     
                     <p>
