@@ -38,6 +38,7 @@ class Hearing(models.Model):
         default="pending_schedule"
     )
     hearing_number = models.IntegerField(blank=True, null=True)
+    hearing_completed_date = models.DateTimeField(blank=True, null=True)
     
     # --- Google Calendar sync
     google_event_id = models.CharField(max_length=255, blank=True, null=True)
