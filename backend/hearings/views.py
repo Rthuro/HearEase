@@ -247,25 +247,6 @@ class UpdateHearingView(APIView):
             return Response({"error": "Hearing not found."}, status=status.HTTP_404_NOT_FOUND)
 
         data = request.data.copy()
-
-        # FIX DATE: Convert "2025-12-24T00:00:00.000Z" -> "2025-12-24"
-        raw_date = data.get("hearing_date")
-        clean_date = None
-        if raw_date:
-            if "T" in raw_date:
-                clean_date = raw_date.split("T")[0]
-            else:
-                clean_date = raw_date
-
-        data['hearing_date'] = clean_date
-        
-        if 'time' in data and data['time'] == "":
-            data['time'] = None
-        
-        if 'lupon_member' in data:
-            data['lupon_member'] = data['lupon_member']
-            print("Lupon Member ID:", data['lupon_member'])
-
         serializer = HearingSerializer(hearing, data=data, partial=True)
 
         if serializer.is_valid():
