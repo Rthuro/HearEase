@@ -10,7 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 from datetime import timedelta
 import random
-from .models import OTP
+from .models import OTP, NotificationPreference
 from .utils import send_otp_email, send_otp_sms
 import os
 from .serializers import RegisterSerializer, LoginSerializer, UserInfoSerializer, NotificationPreferenceSerializer
@@ -21,7 +21,7 @@ User = get_user_model()
 
 class UserNotificationSettingsView(generics.RetrieveUpdateAPIView):
     serializer_class = NotificationPreferenceSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get_object(self):
         return self.request.user.notification_preferences
@@ -42,6 +42,8 @@ class RegisterView(generics.CreateAPIView):
                 "superadmin" if user.is_superadmin else
                 "unknown"
             )
+            NotificationPreference.objects.create(user=user)
+
             return Response(
                 {"message": "User registered successfully", 
                  "user": 
@@ -52,6 +54,8 @@ class RegisterView(generics.CreateAPIView):
                     }},
                 status=status.HTTP_201_CREATED
             )
+
+            
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
