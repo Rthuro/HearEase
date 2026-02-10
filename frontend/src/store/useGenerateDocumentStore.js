@@ -20,10 +20,10 @@ export const useGenerateDocumentStore = create((set) => ({
         }
     },
 
-    generateDocument: async (case_data, template_name, template_id) => {
+    generateDocument: async (case_data,hearing_data, template_name, template_id) => {
 
         let formData = {};
-        const case_hearings = hearings.filter( h => h.case === case_data.id).sort((a, b) => new Date(b.create_at) - new Date(a.create_at) );
+        const case_hearings = hearing_data;
         const recentHearing = case_hearings[0];
 
         switch (template_name) {
@@ -37,7 +37,7 @@ export const useGenerateDocumentStore = create((set) => ({
                     case_number: case_data.id,
                     hearing_date: case_hearings[0]?.hearing_date || 'N/A',
                     time: case_hearings[0]?.time || 'N/A',
-                    lupon_member: members.find(m => m.id === recentHearing.lupon_member)?.first_name +  ' ' + members.find(m => m.id === recentHearing.lupon_member)?.last_name || 'N/A',
+                    lupon_member: members.find(m => m.id === recentHearing[0].lupon_member)?.first_name +  ' ' + members.find(m => m.id === recentHearing[0].lupon_member)?.last_name || 'N/A',
                     punong_barangay: 'Hon. Pedro Lopez',
                 }
                 break;
