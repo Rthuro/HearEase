@@ -41,8 +41,7 @@ export const addCase = async (caseData) => {
     const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
     const data = JSON.parse(stored);
     try {
-        const response = await axios.post(`${API_URL}/cases/`, caseData,
-            { headers: { Authorization: `Token ${data?.userInfo.token}` } }
+        const response = await axios.post(`${API_URL}/cases/`, caseData
         );
         if (response.status === 201) {
             return response.data;
@@ -140,9 +139,9 @@ export const useCaseStore = create((set, get) => ({
             first_name: { value: "", required: true },
             last_name: { value: "", required: true },
             middle_name: { value: "", required: false },
-            birth_date: { value: null, required: true },
+            birth_date: { value: null, required: false },
             sex: { value: "", required: true },
-            contact_number: { value: "", required: true },
+            contact_number: { value: "", required: false },
             barangay: { value: "Tetuan", required: true },
             street: { value: "", required: true },
             relationship: { value: "Neighbor", required: true },
@@ -251,7 +250,7 @@ export const useCaseStore = create((set, get) => ({
         const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
         const data = JSON.parse(stored);
 
-        const { formData, complainantList, respondentList } = get();
+        const { formData, complainantList, respondentList, set_complainants, set_respondents } = get();
 
         const caseData = {
             id: get().case.case_number,
@@ -321,8 +320,10 @@ export const useCaseStore = create((set, get) => ({
             }
 
 
-            toast.success("Case filed successfully!");
+            // toast.success("Case filed successfully!");
             get().resetFormData();
+            set_complainants([]);
+            set_respondents([]);
             fetchHearings();
             get().fetchCases();
 

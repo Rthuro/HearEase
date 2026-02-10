@@ -15,6 +15,8 @@ from django.db.models.functions import TruncMonth
 from django.db.models import Count
 from datetime import datetime
 from django.db.models.functions import Trim 
+from rest_framework.permissions import AllowAny, IsAuthenticated
+
 
 User = get_user_model()
 
@@ -39,6 +41,7 @@ class RelationshipListView(APIView):
     
 
 class CaseView(APIView):
+    permission_classes = [AllowAny] 
     def post(self, request):
         try:
             data = request.data.copy()
@@ -147,14 +150,8 @@ class CaseView(APIView):
                             clean_date = raw_date_str
 
                     h_number = h_data.get("hearing_number")
-                    
-                    if h_number == 1:
-                        current_status = "scheduled"
-                        current_remarks = h_data.get("remarks") or "Initial hearing scheduled."
-                    else:
-                        current_status = "pending_schedule"
-                        current_remarks = h_data.get("remarks") or "Subsequent hearing pending."
-
+                    current_status = "pending_schedule"
+                    current_remarks = h_data.get("remarks") or "Subsequent hearing pending."
                     lupon_id = h_data.get("lupon_member_id")
                     
                     Hearing.objects.create(

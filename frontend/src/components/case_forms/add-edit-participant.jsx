@@ -84,7 +84,7 @@ export function AddEditParticipant({action, type, open, onOpenChange, editUserDa
     }, [open, action, editUserData]);
 
     const handleSubmit = () => {
-        const requiredFields = ['first_name', 'last_name', 'birth_date', 'sex', 'contact_number', 'barangay', 'street'];
+        const requiredFields = ['first_name', 'last_name', 'sex', 'barangay', 'street'];
         const isInvalid = requiredFields.some(field => !userData[field]);
 
         if (isInvalid) {
@@ -185,7 +185,6 @@ export function AddEditParticipant({action, type, open, onOpenChange, editUserDa
                             <div className="grid grid-cols-1 gap-2">
                                 <Label htmlFor="birth_date">
                                     Birthday
-                                    <span className="text-redBase">*</span>
                                 </Label>
                                 <Popover open={openCalendar} onOpenChange={setOpenCalendar} id="birth_date">
                                     <PopoverTrigger asChild>
@@ -242,7 +241,6 @@ export function AddEditParticipant({action, type, open, onOpenChange, editUserDa
                             <div className="grid grid-cols-1 gap-2">
                                 <Label htmlFor="contact">
                                     Contact Number
-                                    <span className="text-redBase">*</span>
                                 </Label>
                                 <Input id="contact" type="tel"
                                 placeholder="09876543210"

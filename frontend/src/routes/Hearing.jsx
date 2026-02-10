@@ -11,7 +11,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { ChevronLeft, Pencil, Loader2, File, Download, Info, MessageSquareText } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import useHearingStore from "@/store/useHearingStore";
+import { updateSingleHearing } from "@/store/useHearingStore";
 import { CaseStatusDisplay } from "@/components/CaseStatusDisplay";
 import {
   Table,
@@ -35,29 +37,29 @@ import { Dialog,
 import toast from "react-hot-toast";
 import { useCaseStore } from "@/store/useCaseStore";
 import { SummonConfirmationDisplay } from "@/components/SummonConfirmationDisplay,";
-import { useRetrieveUsersStore } from "@/store/useRetrieveUsersStore";
 import { HearingProgressDisplay } from "@/components/HearingProgressDisplay";
 
 
 export default function Hearing() {
     const { hearing_id } = useParams();
-    const { hearings, updatedHearings, updateCaseHearings, loading, setUpdatedHearings, fetchHearingAttendance } = useHearingStore();
+    const { hearings, updatedHearings, updateCaseHearings, loading, setUpdatedHearings, fetchHearingAttendance, fetchHearingsByCase } = useHearingStore();
     const { cases } = useCaseStore()
     const { members } = useLuponStore();
     const navigate = useNavigate();
     const [ open, setOpen ] = useState(false);
-
 
     const hearing = hearings.find( hearing => hearing.id == hearing_id);
     const caseInfo = cases.find( c => c.id == hearing.case);
     const caseHearings = hearings.filter( h => h.case == hearing.case).sort((a, b) => a.hearing_number - b.hearing_number);
     // console.log("caseHearings", caseHearings);
 
-    const lupon = members.find( l => l.id == hearing.lupon_member)
+    const lupon = members?.find( l => l.id == hearing?.lupon_member)
 
     const stored = localStorage.getItem("authData");
     const data = JSON.parse(stored);
     const userRole = data.userRole;
+
+    const [remarks, setRemarks] = useState(hearing?.remarks || "");
 
     const handleSaveChanges = async (e) => {
         e.preventDefault();
@@ -74,6 +76,28 @@ export default function Hearing() {
         }
 
     }
+
+    const [remarksLoader, setRemarksLoader] = useState(false);
+    const [remarksOpen, setRemarksOpen] = useState(false);
+
+    const handleUpdateRemarks = async (e) => {
+        e.preventDefault();
+        // setLoading(true); 
+
+        toast.promise(updateSingleHearing(hearing.id, { remarks }), {
+            loading: 'Updating Hearing Remarks...',
+            success: (data) => {
+                setRemarksLoader(false);
+                setRemarksOpen(false);
+                fetchHearingsByCase(hearing.case);
+                return <b>Hearing remarks updated successfully!</b>;
+            },
+            error: (err) => {
+                setRemarksLoader(false);
+                return <b>An error occurred: {err.message}</b>;
+            },
+        });
+    };
 
     const initializedHearings = caseHearings.map((h) => {
         const dateObj = h.hearing_date ? new Date(h.hearing_date) : null;
@@ -92,7 +116,7 @@ export default function Hearing() {
     useEffect(() => {
       setUpdatedHearings(initializedHearings);
       if(!attendanceRecords.length)
-        fetchHearingAttendance(hearing.id).then(data => setAttendanceRecords(data?.data || []));
+        fetchHearingAttendance(hearing?.id).then(data => setAttendanceRecords(data?.data || []));
 
     }, []);
 
@@ -102,11 +126,36 @@ export default function Hearing() {
         return (
             <div className="flex flex-col p-6 gap-6">
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
-                            <ChevronLeft />
-                        </Button>
-                    </div>
+                    <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
+                        <ChevronLeft />
+                    </Button>
+                    <Dialog open={remarksOpen} onOpenChange={setRemarksOpen}>
+                        <DialogTrigger asChild>     
+                            <Button variant="outline">
+                                <Pencil />
+                                Edit Remarks
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className={cn('max-w-[100vw] min-w-fit')}>
+                            <DialogHeader>
+                                <DialogTitle>Edit Hearing #{hearing?.hearing_number} Remarks</DialogTitle>
+                                <DialogDescription>Edit hearing #{hearing?.hearing_number} remarks. These remarks will be reflected in the hearing details and will be visible to all parties involved in the case.</DialogDescription>
+                            </DialogHeader>
+                                <div className=" overflow-y-auto max-h-[70vh] min-w-fit p-3">
+                                    <Textarea id="remarks" className="w-full" rows={3} 
+                                        value={remarks} 
+                                        onChange ={ (e) => {
+                                            setRemarks(e.target.value);
+                                        }}
+                                        />
+                                </div>
+                            <DialogFooter>
+                                <Button variant="outline" onClick={() => setRemarksOpen(false)}>Close</Button>
+                                <Button className="bg-redBase"  onClick={handleUpdateRemarks}
+                                disabled={remarksLoader}>Save Changes</Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
                 </div>
 
                 {hearing?.remarks !== "" && hearing?.remarks !== null && (
@@ -154,6 +203,7 @@ export default function Hearing() {
                     <Table>
                         <TableHeader>
                             <TableRow>
+                            <TableHead className="text-left px-4 py-2">Hearing Number</TableHead>
                             <TableHead className="text-left px-4 py-2">Date</TableHead>
                             <TableHead className="text-left px-4 py-2">Time</TableHead>
                             <TableHead className="text-left px-4 py-2">Assigned Lupon</TableHead>
@@ -164,10 +214,11 @@ export default function Hearing() {
 
                         <TableBody>
                             <TableRow className="border-t">
+                                <TableCell className="px-4 py-2">{hearing?.hearing_number}</TableCell>
                                 <TableCell className="px-4 py-2">{hearing?.hearing_date}</TableCell>
                                 <TableCell className="px-4 py-2">{hearing?.time}</TableCell>
                                 <TableCell className="px-4 py-2">
-                                    {lupon?.first_name + lupon?.last_name || "Unassigned"}
+                                    {lupon?.first_name + ' ' +  lupon?.last_name || "Unassigned"}
                                 </TableCell>
                                 <TableCell className="px-4 py-2"> 
                                     <CaseStatusDisplay caseStatus={hearing?.hearing_status} />
@@ -211,14 +262,6 @@ export default function Hearing() {
                         </TableBody>
                     </Table>
                     </div>
-    
-                     { hearing?.hearing_status !== 'completed' && (
-                        <div className="flex gap-3 self-end">
-                            <Button variant="outline" className={cn("text-redBase")}>
-                                Cancel Hearing
-                            </Button>
-                        </div>
-                    )}
                     
                 </div>
 
@@ -321,20 +364,22 @@ export default function Hearing() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
+                                <TableHead className="text-left px-4 py-2">Hearing Number</TableHead>
                                 <TableHead className="text-left px-4 py-2">Date</TableHead>
                                 <TableHead className="text-left px-4 py-2">Time</TableHead>
-                                <TableHead className="text-left px-4 py-2">Complainant</TableHead>
-                                <TableHead className="text-left px-4 py-2">Respondent</TableHead>
+                                <TableHead className="text-left px-4 py-2">Assigned Lupon</TableHead>
                                 <TableHead className="text-left px-4 py-2">Status</TableHead>
                                 </TableRow>
                             </TableHeader>
 
                             <TableBody>
                                 <TableRow className="border-t">
+                                    <TableCell className="px-4 py-2">{hearing.hearing_number}</TableCell>
                                     <TableCell className="px-4 py-2">{hearing.hearing_date}</TableCell>
                                     <TableCell className="px-4 py-2">{hearing.time}</TableCell>
-                                    <TableCell className="px-4 py-2">hearing attendance</TableCell>
-                                    <TableCell className="px-4 py-2">hearing attendance</TableCell>
+                                    <TableCell className="px-4 py-2">
+                                        {lupon?.first_name + ' ' + lupon?.last_name || "Unassigned"}
+                                    </TableCell>
                                     <TableCell className="px-4 py-2"> <CaseStatusDisplay caseStatus={hearing.hearing_status} /></TableCell>
                                 </TableRow>
                             </TableBody>

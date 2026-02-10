@@ -68,7 +68,7 @@ export function Complainant() {
                 </div>
             )}
 
-            {complainantList.length > 0 && complainantList.map((c) => (
+            {displayList.length > 0 && displayList.map((c) => (
                 <ParticipantCard participant={c} type="complainant" />
             ))}
 

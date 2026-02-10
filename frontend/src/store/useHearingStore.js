@@ -63,6 +63,11 @@ export const getHearingAttendance = async (hearingId) => {
   return response.data;
 };
 
+export const updateSingleHearing = async (hearingId, payload) => {
+  const response = await axios.put(`${API_URL}/update-single-hearing/${hearingId}/`, payload);
+  return response.data;
+}
+
 const useHearingStore = create((set, get) => ({
   hearings: [],
   loading: false,
@@ -178,6 +183,34 @@ const useHearingStore = create((set, get) => ({
     }
   },
 
+  fetchHearingAttendance: async (hearingId) => {
+    try {
+      const response = await getHearingAttendance(hearingId);
+      return { success: true, data: response };
+    } catch (error) {
+      const isNetworkError = !error.response;
+      const errorMessage = isNetworkError
+        ? "Network error. Please check your connection."
+        : "Failed to fetch hearing attendance";
+      toast.error(errorMessage);
+      return { success: false, retry: isNetworkError };
+    }
+  },
+
+  updateCaseHearingProgress: async (hearingId, payload) => {
+    try {
+      const response = await updateHearingProgress(hearingId, payload);
+      return { success: true, data: response };
+      } catch (error) {
+      const isNetworkError = !error.response;
+      const errorMessage = isNetworkError
+        ? "Network error. Please check your connection."
+        : "Failed to update hearing progress";
+      toast.error(errorMessage);
+      return { success: false, retry: isNetworkError };
+    }
+  },
+
   // Non-Working Day Management
   nonWorkingDays: [],
   nonWorkingDaysLoading: false,
@@ -229,20 +262,7 @@ const useHearingStore = create((set, get) => ({
       set({ nonWorkingDaysLoading: false });
     }
   },
-  fetchHearingAttendance: async (hearingId) => {
-    try {
-      const response = await getHearingAttendance(hearingId);
-      return { success: true, data: response };
-    } catch (error) {
-      const isNetworkError = !error.response;
-      const errorMessage = isNetworkError
-        ? "Network error. Please check your connection."
-        : "Failed to fetch hearing attendance";
-      toast.error(errorMessage);
-      return { success: false, retry: isNetworkError };
-    }
-  },
-
+  
   removeNonWorkingDay: async (date) => {
     try {
       const response = await axios.delete(`${API_URL}/non-working-day/${date}/`);
@@ -259,19 +279,7 @@ const useHearingStore = create((set, get) => ({
     }
   },
 
-  updateCaseHearingProgress: async (hearingId, payload) => {
-    try {
-      const response = await updateHearingProgress(hearingId, payload);
-      return { success: true, data: response };
-      } catch (error) {
-      const isNetworkError = !error.response;
-      const errorMessage = isNetworkError
-        ? "Network error. Please check your connection."
-        : "Failed to update hearing progress";
-      toast.error(errorMessage);
-      return { success: false, retry: isNetworkError };
-    }
-  },
+  
 }));
 
 export default useHearingStore;
