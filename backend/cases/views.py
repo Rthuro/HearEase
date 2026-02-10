@@ -427,10 +427,9 @@ class UpdateHearingProgressView(APIView):
                     )
 
             if outcome == "completed":
-                time_completed = request.data.get("time_completed")
                 Hearing.objects.filter(id=hearing_id).update(
-                    hearing_status="completed",
-                    time_completed=time_completed,
+                    hearing_status="completed",                        
+                    hearing_completed_date=datetime.now(),
                     remarks=request.data.get("remarks")
                 )
                 Hearing.objects.filter(case=case, hearing_number=hearing_number+1).update(
@@ -441,7 +440,7 @@ class UpdateHearingProgressView(APIView):
             elif outcome == "new_hearing":
                 Hearing.objects.filter(id=hearing_id).update(
                     hearing_status="completed",
-                    time_completed=request.data.get("time_completed"),
+                    hearing_completed_date=datetime.now(),
                     remarks=request.data.get("remarks")
                 )
                 
@@ -467,24 +466,32 @@ class UpdateHearingProgressView(APIView):
                 )
 
             elif outcome in ["settled", "court"]:
-                # 1. Update the CURRENT and all FUTURE hearings for this case to completed
-                Hearing.objects.filter(
-                    case=case, 
-                    hearing_number__gte=hearing_number
-                ).update(
-                    hearing_status="completed",
-                    remarks="Hearing completed (Case finalized)."
-                )
 
-                # 2. Update Case Status based on outcome
-                if outcome == "settled":
+                if outcome == "settled":                    
                     case.settlement_type_id = request.data.get("settlement_type_id")
                     case.case_status = "resolved"
                     case.remarks = request.data.get("remarks")
+                    case.case_completed_date = datetime.now()
+                    case.actual_hearings = hearing_number
+
+                    Hearing.objects.filter(id=hearing_id).update(
+                        hearing_status="completed",
+                        hearing_completed_date=datetime.now(),
+                        remarks="Hearing completed (Case resolved by settlement)."
+                    )
+
+                    Hearing.objects.filter(case=case, hearing_number__gt=hearing_number).delete()
+
                 else: # court
                     case.case_status = "escalated"
                     case.cfa_destination = request.data.get("cfa_destination")
                     case.remarks = request.data.get("remarks")
+
+                    Hearing.objects.filter(id=hearing_id).update(
+                        hearing_status="completed",
+                        hearing_completed_date=datetime.now(),
+                        remarks="Hearing completed (Case escalated to court)."
+                    )
                 
                 case.save()
 
