@@ -44,10 +44,15 @@ export function CaseSettingsModal({ role, caseData}) {
 
   // Secure Delete Logic
   const handleDelete = () => {
-    if (deleteInput === "DELETE") {
-      deleteCase(caseData.id , 'delete');
-      setOpen(false);
-    }
+    toast.promise(deleteCase(caseData.id , 'delete'), {
+      loading: 'Deleting case...',
+      success: () => {
+        setOpen(false);
+        navigate(-1);
+        return 'Case deleted successfully!';
+      },
+      error: 'Error deleting case.',
+    });
   };
 
   const handleCancelCase = async () => {
