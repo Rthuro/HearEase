@@ -445,7 +445,6 @@ export const useCaseStore = create((set, get) => ({
 
             if (res.status === 204) {
                 get().fetchCases();
-               toast.success("Case " + case_id + `${ type == 'delete' ? 'deleted' : 'withdrawn'} successfully.` );
             }
 
         } catch (error) {
