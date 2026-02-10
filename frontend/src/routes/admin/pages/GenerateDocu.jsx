@@ -22,10 +22,11 @@ import { useCaseStore } from "@/store/useCaseStore"
 import { CaseStatusDisplay } from "@/components/CaseStatusDisplay"
 import { Badge } from "@/components/ui/badge"
 import { useGenerateDocumentStore } from "@/store/useGenerateDocumentStore"
-
+import useHearingStore from "@/store/useHearingStore"
 
 export function GenerateDocument() {
     const { cases } = useCaseStore();
+    const { hearings} = useHearingStore()
     const [searchTerm, setSearchTerm] = useState("");
     const [ noShowUserData, setNoShowUserData ] = useState({});
     const [ noShowModal, setNoShowModal ] = useState(false);
@@ -39,9 +40,12 @@ export function GenerateDocument() {
     const filteredCase = cases.filter( c => c.case_type.case_name.toLowerCase().includes(searchTerm.toLowerCase()));
 
     
+
     const handleTemplateSelect = async (case_data, template_name, template_id) => {
         try {
-            await generateDocument(case_data, template_name, template_id);
+            const findHearingCase = hearings?.filter( hearing => hearing?.case == case_data.id)
+            .sort((a, b) => a.hearing_number - b.hearing_number) || [] ;
+            await generateDocument(case_data,findHearingCase, template_name, template_id);
         } catch (error) {
             console.log(error);
         }
@@ -114,7 +118,7 @@ export function GenerateDocument() {
                                 <div className="overflow-hidden my-2">
                                     <div className="flex flex-col gap-4 overflow-y-scroll h-[300px]">
                                         {filteredCase.map( (c) =>
-                                            <button type="button" key={c.id} className="p-3 flex flex-col border rounded-lg hover:bg-zinc-50 text-left" 
+                                            <button type="button" key={c.id} className="p-3 flex item justify-between border rounded-lg hover:bg-zinc-50 text-left" 
                                             onClick={ () => {
                                                 if (doc.code === 'no-show'){
                                                     setNoShowModal(true);
@@ -124,12 +128,13 @@ export function GenerateDocument() {
                                             
                                                 handleTemplateSelect(c, doc.code, doc.template_id)
                                             }}>
-                                                <div className="flex gap-2">
-                                                    <Badge variant={c.is_active ? "outline" : "destructive"} className="mb-1">{ c.is_active ? "Active" : "Inactive" }</Badge>
-                                                    <p className="text-zinc-800 text-sm font-medium">Case #{c.id}: {c.case_type.case_name}</p>
-                                                </div>
-                                                <div className="flex justify-between">
-                                                    <p className="text-zinc-600 text-sm">Complainant: 
+                                                <div className="flex flex-col">
+                                                    <div className="flex gap-2">
+                                                        <Badge variant={c.is_active ? "outline" : "destructive"} className="mb-1">{ c.is_active ? "Active" : "Inactive" }</Badge>
+                                                        <p className="text-zinc-800 text-sm font-medium">{c.id}: {c.case_type.case_name}</p>
+                                                    </div>
+                                                     <p className="text-zinc-600 text-xs">Complainants:
+                                                         {' '} 
                                                         {c?.complainants.length > 0 && (
                                                             <>
                                                                 {c?.complainants.map( (p, index) => (
@@ -141,8 +146,8 @@ export function GenerateDocument() {
                                                         )}
 
                                                     </p>
-                                                    <CaseStatusDisplay caseStatus={c.case_status} />
                                                 </div>
+                                                <CaseStatusDisplay caseStatus={c.case_status} />
 
                                             </button>
                                         )}
