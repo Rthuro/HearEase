@@ -18,28 +18,12 @@ export function FiledSuccess(){
                         `You have successfully filed a case. Please wait for your case status update. We will keep you informed via email.`
                     }
                 </p>
-                <Link to={`/${userRole === 'admin' ? 'Admin/Dashboard' : userLinkName }`} 
+                <Link to={`/${userRole === 'admin' ? 'Admin/' : userLinkName }`} 
                 className="mt-4 px-4 py-2 bg-redBase text-white rounded-sm">
                     Go back {userRole === 'admin' ? 'to Dashboard' : 'to Home'}
                 </Link>
             </section>
-            {userRole === 'admin' && (
-                <section className="flex flex-col gap-3 border-t border-zinc-200 items-center pt-4 pb-10 w-full">
-                        <p className="text-xl">
-                            Available Documents for Download
-                        </p>
-                        <div className="flex items-center gap-3">
-                            <button className="flex items-center justify-between p-3 rounded-sm bg-redBase/10 text-redBase text-sm w-56">
-                                Summon Letter
-                                <Download  size={16} />
-                            </button>
-                            <button className="flex items-center justify-between p-3 rounded-sm bg-redBase/10 text-redBase text-sm w-56">
-                                Case Monitoring Sheet
-                                <Download  size={16} />
-                            </button>
-                        </div>
-                </section>
-            )}
+            
             
         </div>
     )

@@ -12,14 +12,17 @@ import { useCaseStore } from "@/store/useCaseStore";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "./ui/select";
 import { Textarea } from "@/components/ui/textarea"
 import toast from "react-hot-toast";
+import useHearingStore from "@/store/useHearingStore";
+import { updateSingleHearing } from "@/store/useHearingStore";
 
 export function SummonConfirmationDisplay({ hearing, caseInfo }) {
+    const { fetchHearingsByCase } = useHearingStore();
     const { generateDocument, templates } = useGenerateDocumentStore();
     const [loader, setLoader] = useState(false);
     const { updateCaseInfo} = useCaseStore();
     const [openCalendar, setOpenCalendar] = useState(false);
     const [summonDeliveryInfo, setSummonDeliveryInfo] = useState({
-        date_received: null,
+        date_received: new Date(),
         received_by: null,
         summon_status: caseInfo?.summon_status,
         remarks: null,
@@ -46,7 +49,10 @@ export function SummonConfirmationDisplay({ hearing, caseInfo }) {
         setLoader(true);
         try {
             await updateCaseInfo(summonDeliveryInfo,"update_case", caseInfo.id, false);
+            await updateSingleHearing(hearing.id, { hearing_status: summonDeliveryInfo.summon_status === 'served' ? 'scheduled' : 'pending' });
             setLoader(false);
+            fetchHearingsByCase(hearing.case);
+
         } catch (error) {
                 setLoader(false);
                 console.log(error);
@@ -158,6 +164,7 @@ export function SummonConfirmationDisplay({ hearing, caseInfo }) {
                             <Textarea 
                             placeholder="Provide additional details regarding the summon status..." 
                             className="bg-white"
+                            value={summonDeliveryInfo?.remarks}
                             onChange={(e) => setSummonDeliveryInfo((prev) => ({
                                 ...prev,
                                 remarks: e.target.value,

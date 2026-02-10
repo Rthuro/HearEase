@@ -31,6 +31,7 @@ import { useLuponStore } from "@/store/useLuponStore";
 import { EditCoAttendee } from "@/components/EditCoAttendee";
 import { CaseSettingsModal } from "@/components/CaseSettingsModal";
 import { fetchCase } from "@/store/useCaseStore";
+import toast from "react-hot-toast";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
@@ -610,8 +611,6 @@ export function Case() {
                                 <TableHead className="text-left px-4 py-2">Hearing #</TableHead>
                                 <TableHead className="text-left px-4 py-2">Date</TableHead>
                                 <TableHead className="text-left px-4 py-2">Time</TableHead>
-                                <TableHead className="text-left px-4 py-2">Complainant</TableHead>
-                                <TableHead className="text-left px-4 py-2">Respondent</TableHead>
                                 <TableHead className="text-left px-4 py-2">Status</TableHead>
                                 <TableHead className="px-4 py-2"></TableHead>
                             </TableRow>
@@ -624,8 +623,6 @@ export function Case() {
                                         <TableCell className="px-4 py-2">{hearing?.hearing_number}</TableCell>
                                         <TableCell className="px-4 py-2">{hearing.hearing_date}</TableCell>
                                         <TableCell className="px-4 py-2">{hearing.time}</TableCell>
-                                        <TableCell className="px-4 py-2">hearing attendance</TableCell>
-                                        <TableCell className="px-4 py-2">hearing attendance</TableCell>
                                         <TableCell className="px-4 py-2"> <CaseStatusDisplay caseStatus={hearing.hearing_status} /></TableCell>
                                         <TableCell className={cn("py-4")}>
                                             <Link

@@ -26,7 +26,7 @@ export function CasePerson() {
   const [personData, setPersonData] = useState({});
   const navigate = useNavigate();
   const [refreshLoader, setRefreshLoader] = useState(false);
-  const { respondentList} = useCaseStore();
+  const { respondentList, complainantList } = useCaseStore();
   const [loader, setLoader] = useState(false);
   
     useEffect(() => {
@@ -133,6 +133,21 @@ export function CasePerson() {
         
         <div className="flex gap-2">
             <Button variant="outline">Edit Info</Button>
+            <Button variant="outline"
+            onClick={() => {
+                navigate(`/Admin/File-Case/`);
+                complainantList.push({
+                    first_name: personData.first_name,
+                    middle_name: personData.middle_name,
+                    last_name: personData.last_name,
+                    email: personData.email,
+                    contact_number: personData.contact_number,
+                    birth_date: personData.birth_date,
+                    sex: personData.sex,
+                });
+            }}>
+               File Case
+            </Button>
             <Button className="bg-redBase text-white hover:bg-red-700"
             onClick={() => {
                 navigate(`/Admin/File-Case/`);
@@ -145,7 +160,7 @@ export function CasePerson() {
                     birth_date: personData.birth_date,
                     sex: personData.sex,
                 });
-            }}>File Case</Button>
+            }}>File Case Against</Button>
         </div>
       </div>
 
