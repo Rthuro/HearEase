@@ -38,7 +38,7 @@ const BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 export function Case() {
     const { case_number } = useParams();
     const { cases, updateCaseStatus, setFormData, set_complainants, set_respondents, reSubmitCase } = useCaseStore();
-    const { hearings, fetchHearings } = useHearingStore()
+    const { hearings, fetchHearings } = useHearingStore();
     const [template, setTemplate] = useState({});
     const { case_documents, fetchCaseDocuments } = useCaseDocumentsStore();
     const [viewImg, setViewImg] = useState(null);
@@ -76,8 +76,6 @@ export function Case() {
         hearings.length > 0 ? hearings.filter( hearing => hearing.case == case_number)
         .sort((a, b) => a.hearing_number - b.hearing_number) : []);
 
-    const lupon = members.find(member => member.id === findHearingCase[0]?.lupon_member);
-
     const navigate = useNavigate();
 
     if (!caseInfo) {
@@ -96,10 +94,6 @@ export function Case() {
                 {
                     label:"Status",
                     value: caseInfo?.case_status, 
-                },
-                {
-                    label: "Assigned Lupon",
-                    value: lupon ?  lupon?.first_name + " " + (lupon?.middle_name ? lupon?.middle_name + " " : "") + lupon?.last_name : '-'
                 },
                 {
                     label:"Predicted Hearings",
@@ -168,7 +162,7 @@ export function Case() {
 
     const handleTemplateSelect = async (case_data, template_name, template_id) => {
         try {
-            await generateDocument(case_data, template_name, template_id);
+            await generateDocument(case_data,findHearingCase, template_name, template_id);
         } catch (error) {
             console.log(error);
         }
