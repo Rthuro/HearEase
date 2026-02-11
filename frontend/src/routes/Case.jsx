@@ -96,6 +96,10 @@ export function Case() {
                     value: caseInfo?.case_status, 
                 },
                 {
+                    label:"Actual Hearings",
+                    value: caseInfo?.actual_hearings || "-", 
+                },
+                {
                     label:"Predicted Hearings",
                     value: (caseInfo?.predicted_hearings ? caseInfo?.predicted_hearings + ' hearings' : '-') 
                 },

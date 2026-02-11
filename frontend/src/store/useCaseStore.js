@@ -59,9 +59,9 @@ export const getCases = async () => {
     const data = JSON.parse(stored);
 
     const response = await axios.post(`${API_URL}/case-list/`, {
-        first_name: data.userInfo.first_name,
-        middle_name: data.userInfo.middle_name,
-        last_name: data.userInfo.last_name
+        first_name: data?.userInfo?.first_name,
+        middle_name: data?.userInfo?.middle_name,
+        last_name: data?.userInfo?.last_name
     });
     return response.data;
 };
@@ -394,7 +394,7 @@ export const useCaseStore = create((set, get) => ({
         try {
             const data = await getCases();
             set({ relatedCases: data })
-
+            return data;
         } catch (error) {
             set({ loading: false, error: error.message });
         }

@@ -99,6 +99,10 @@ export function SystemConfiguration() {
   const [s_descrip, setSDescrip] = useState("");
   const [s_name, setSName] = useState("");
 
+  const [editType, setEditType] = useState("case");
+  const [editOpen, setEditOpen] = useState(false);
+  const [editData, setEditData] = useState({});
+
   const handleAddSubmit = async (type) => {
     if (type === "case") {
         toast.promise(
@@ -149,6 +153,45 @@ export function SystemConfiguration() {
       }
     );
   }
+
+  const handleEditSubmit = async (type) => {
+        if (type === "case") {
+            toast.promise(
+            updateCaseType(editData.id, editData),
+            {
+                loading: "Updating case type...",
+                success: () => {
+                    setEditOpen(false);
+                    startTransition(() => {
+                        callCaseTypes();
+                    }
+                    );
+                    setEditData({});
+                    return "Case type updated successfully!";
+                },
+                error: "Failed to update case type.",
+            }
+            );
+        } else if (type === "settlement") {
+            toast.promise(
+            updateSettlementType(editData.id, editData),
+            {
+                loading: "Updating settlement type...",
+                success: () => {
+                    setEditOpen(false);
+                    startTransition(() => {
+                        callSettlementTypes();
+                    }
+                    );
+                    setEditData({});
+                    return "Settlement type updated successfully!";
+                },
+                error: "Failed to update settlement type.",
+            }
+            );
+        }
+    }
+
   return (
     <div className="flex-1 flex flex-col gap-3 mt-3">
       {/* Header Section */}
@@ -237,7 +280,17 @@ export function SystemConfiguration() {
                       {c.description}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm"
+                      onClick={() => {
+                        setEditType("case");
+                        setEditData({
+                            id: c.id,
+                            case_name: c.case_name,
+                            description: c.description,
+                            severity: c.severity
+                        });
+                        setEditOpen(true);
+                      }}>
                         Edit
                       </Button>
                       <Button size="sm" className="ml-2 bg-redBase" onClick={() => handleDelete("caseType", c.id)}>
@@ -367,7 +420,16 @@ export function SystemConfiguration() {
                       {s.description}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm"
+                      onClick={() => {
+                        setEditType("settlement");
+                        setEditData({
+                            id: s.id,
+                            settlement_name: s.settlement_name,
+                            description: s.description
+                        });
+                        setEditOpen(true);
+                      }}>
                         Edit
                       </Button>
                       <Button size="sm" className="ml-2 bg-redBase" onClick={() => handleDelete("settlementType", s.id)}>
@@ -448,6 +510,49 @@ export function SystemConfiguration() {
           </div>
         )}
       </section>
+        <Dialog open={editOpen} onOpenChange={setEditOpen}>  
+            <DialogContent className={cn('max-w-[100vw] min-w-fit')}>
+                <DialogHeader>
+                    <DialogTitle>Edit {editType == "case" ? "Case Type" : "Settlement"}</DialogTitle>
+                    <DialogDescription>Adjust the details of the selected {editType == "case" ? "case type" : "settlement"} below.</DialogDescription>
+                </DialogHeader>
+                    <div className=" overflow-y-auto max-h-[70vh] min-w-fit p-3">
+                        <Input type="text" id="" className="w-full" placeholder={editType == "case" ? "Case Name" : "Settlement Name"}
+                         value={editType == "case" ? editData.case_name : editData.settlement_name} 
+                         onChange={(e) => editType == "case" ? setEditData({ ...editData, case_name: e.target.value }) : setEditData({ ...editData, settlement_name: e.target.value })} />
+                        {editType == "case" && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="w-full justify-between mt-1">
+                                { editData?.severity
+                                    || "Select severity level..."}
+                                <ChevronDown className="ml-2 h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            
+                            <DropdownMenuContent className="w-full min-w-[300px]">
+                                <DropdownMenuRadioGroup
+                                value={editData?.severity?.toString() || ""}
+                                onValueChange={(value) => setEditData({ ...editData, severity: parseInt(value) })}
+                                >
+                                <DropdownMenuRadioItem value="1">Level 1 - Low (minor disputes)</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="2">Level 2 - Moderate (property issues, harassment)</DropdownMenuRadioItem>
+                                <DropdownMenuRadioItem value="3">Level 3 - High (threats, physical harm)</DropdownMenuRadioItem>
+                                </DropdownMenuRadioGroup>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        )}
+                        <Textarea id="description" className="w-full mt-2" rows={4} placeholder="Description" value={editData?.description || ""} onChange={(e) => setEditData({ ...editData, description: e.target.value })} />
+                    </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setEditOpen(false)}>Close</Button>
+                    <Button className="bg-redBase"  onClick={() => 
+                    handleEditSubmit(editType)}
+                    disabled={isPending}>Edit {editType == "case" ? "Case Type" : "Settlement"}</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </div>
+    
   );
 }
