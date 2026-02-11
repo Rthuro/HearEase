@@ -146,6 +146,20 @@ class CasePersonDetailsView(APIView):
             return Response(case_person_data, status=status.HTTP_200_OK)
         except CasePerson.DoesNotExist:
             return Response({"error": "CasePerson not found."}, status=status.HTTP_404_NOT_FOUND)
+    def put(self, request, pk):
+        try:
+            case_person = CasePerson.objects.get(pk=pk)
+        except CasePerson.DoesNotExist:
+            return Response({"error": "CasePerson not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = CasePersonSerializer(case_person, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            case_person = serializer.save()
+            case_person_data = CasePersonSerializer(case_person).data
+            return Response(case_person_data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
 class CustomEmailView(APIView):
     def post(self, request):
