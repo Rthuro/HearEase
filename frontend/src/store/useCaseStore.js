@@ -423,6 +423,7 @@ export const useCaseStore = create((set, get) => ({
         try {
             const caseTypes = await getCaseTypes();
             set({ caseTypes: caseTypes });
+            return caseTypes;
         } catch (error) {
             console.error("Fetch case types error:", error);
         }
@@ -432,6 +433,7 @@ export const useCaseStore = create((set, get) => ({
         try {
             const settlementTypes = await getSettlementTypes();
             set({ settlementTypes: settlementTypes });
+            return settlementTypes;
         } catch (error) {
             console.error("Fetch settlement types error:", error);
         }
