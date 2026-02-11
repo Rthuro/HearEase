@@ -166,7 +166,7 @@ export function CaseForm() {
                             </div>
 
                             <p
-                                className={`text-sm absolute top-10 text-center 
+                                className={`text-xs md:text-sm absolute top-10 text-center 
                                 ${
                                     step.number === stepNumber || step.number < stepNumber
                                     ? "text-redBase"
@@ -180,7 +180,7 @@ export function CaseForm() {
                         {/* Connector Line */}
                         {index !== visibleSteps.length - 1 && (
                         <div
-                            className={`w-[120px] border  
+                            className={`w-[60px] md:w-[120px] border  
                             ${step.number < stepNumber ? "border-redBase" : "border-zinc-400"}`}
                                 ></div>
                             )}
@@ -190,7 +190,7 @@ export function CaseForm() {
                 </div>
             </div>
 
-            <form className="w-full flex flex-col items-center gap-6 max-h-max min-h-64 my-6 ">
+            <form className="w-full flex flex-col items-center gap-6 max-h-max min-h-64 my-6 px-4">
 
                 {stepNumber == 1 && (
                     <Complainant />
