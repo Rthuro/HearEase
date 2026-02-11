@@ -43,7 +43,6 @@ class RegisterView(generics.CreateAPIView):
                 "unknown"
             )
             NotificationPreference.objects.create(user=user)
-
             return Response(
                 {"message": "User registered successfully", 
                  "user": 
@@ -54,8 +53,6 @@ class RegisterView(generics.CreateAPIView):
                     }},
                 status=status.HTTP_201_CREATED
             )
-
-            
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     

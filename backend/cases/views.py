@@ -22,16 +22,105 @@ User = get_user_model()
 
 
 class CaseTypeListView(APIView):
+    def post(self, request):
+        name = request.data.get("case_name")
+        severity = request.data.get("severity")
+        description = request.data.get("description")
+
+        if not name:
+            return Response({"error": "Case type name is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            case_type = CaseType.objects.create(
+                case_name=name,
+                severity=severity,
+                description=description
+            )
+            serializer = CaseTypeSerializer(case_type)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     def get(self, request):
         case_types = CaseType.objects.all().order_by("severity")
         serializer = CaseTypeSerializer(case_types, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+class CaseTypeDetailView(APIView):
+    def put(self, request, pk):
+        try:
+            case_type = CaseType.objects.get(pk=pk)
+        except CaseType.DoesNotExist:
+            return Response({"error": "Case type not found."}, status=status.HTTP_404_NOT_FOUND)
 
+        name = request.data.get("case_name")
+        severity = request.data.get("severity")
+        description = request.data.get("description")
+
+        if name:
+            case_type.case_name = name
+        if severity is not None:
+            case_type.severity = severity
+        if description is not None:
+            case_type.description = description
+
+        case_type.save()
+        serializer = CaseTypeSerializer(case_type)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    def delete(self, request, pk):
+        try:
+            case_type = CaseType.objects.get(pk=pk)
+            case_type.delete()
+            return Response({"message": "Case type deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+        except CaseType.DoesNotExist:
+            return Response({"error": "Case type not found."}, status=status.HTTP_404_NOT_FOUND)
+        
 class SettlementTypeListView(APIView):
+    def post(self, request):
+        name = request.data.get("settlement_name")
+        description = request.data.get("description")
+
+        if not name:
+            return Response({"error": "Settlement name is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            settlement = SettlementType.objects.create(
+                settlement_name=name,
+                description=description
+            )
+            serializer = SettlementTypeSerializer(settlement)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     def get(self, request):
         settlements = SettlementType.objects.all().order_by("id")
         serializer = SettlementTypeSerializer(settlements, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class SettlementTypeDetailView(APIView):
+    def put(self, request, pk):
+        try:
+            settlement = SettlementType.objects.get(pk=pk)
+        except SettlementType.DoesNotExist:
+            return Response({"error": "Settlement type not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        name = request.data.get("settlement_name")
+        description = request.data.get("description")
+
+        if name:
+            settlement.settlement_type = name
+        if description is not None:
+            settlement.description = description
+
+        settlement.save()
+        serializer = SettlementTypeSerializer(settlement)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    def delete(self, request, pk):
+        try:
+            settlement = SettlementType.objects.get(pk=pk)
+            settlement.delete()
+            return Response({"message": "Settlement type deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+        except SettlementType.DoesNotExist:
+            return Response({"error": "Settlement type not found."}, status=status.HTTP_404_NOT_FOUND)
     
 class RelationshipListView(APIView):
     def get(self, request):

@@ -45,14 +45,19 @@ urlpatterns = [
     path('sync-user-cases/', CaseViews.SyncCasesView.as_view(), name='sync-user-cases'),
     path('cases/', CaseViews.CaseView.as_view(), name='create-case'),
     path('case-list/', CaseViews.CaseListView.as_view(), name='case-list'),
+
     path('case-types/', CaseViews.CaseTypeListView.as_view(), name='case-type-list'),
+    path('case-types/<int:pk>/', CaseViews.CaseTypeDetailView.as_view(), name='case-type-detail'),
+
     path('delete-case/', CaseViews.CaseDeleteView.as_view(), name='delete-case'),
     path('update-case/<str:pk>/', CaseViews.UpdateCaseInfoView.as_view(), name='update-case'),
     path('single-case/', CaseViews.SingleCaseView.as_view(), name='single-case'),
     path('case-priority/', CaseViews.CasePriorityView.as_view(), name='case-priority'),
 
     path('relationship-list/', CaseViews.RelationshipListView.as_view(), name='relationship-list'),
+    
     path('settlement-types/', CaseViews.SettlementTypeListView.as_view(), name='settlement-type-list'),
+    path('settlement-types/<int:pk>/', CaseViews.SettlementTypeDetailView.as_view(), name='settlement-type-detail'),
 
     path('hearings/', HearingViews.HearingView.as_view(), name='all-hearing-list'),
     path('hearing-cases/', HearingViews.HearingCaseView.as_view(), name='hearing-case-list'),
