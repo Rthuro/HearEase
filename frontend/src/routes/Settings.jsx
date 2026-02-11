@@ -19,7 +19,7 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog"
 import { useAddressesStore } from "@/store/useAddressStore";
-import { getBarangayName, getStreets, getBarangay } from "@/lib/helpers";
+import { getBarangayName, getStreets, getBarangay, formatedBday } from "@/lib/helpers";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -28,18 +28,22 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import NotificationSettings from "@/components/NotificationSettings";
-import { User2, Bell, LockKeyhole, LogOut, Calendar, RefreshCw, Check, X, Loader2, Brain, Settings2 } from "lucide-react";
+import { User2, Bell, LockKeyhole, LogOut, CalendarIcon, RefreshCw, Check, X, Loader2, Brain, Settings2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { useLuponStore } from "@/store/useLuponStore";
 import { useGoogleCalendarStore } from "@/store/useGoogleCalendarStore";
 import { useAIModelStore } from "@/store/useAIModelStore";
 import { useSearchParams } from "react-router-dom";
 import { Switch } from "@/components/ui/switch";
+import { SystemConfiguration } from "@/components/SystemConfiguration";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 
 export function Settings() {
+    const stored = localStorage.getItem("authData");
+    const data = JSON.parse(stored);
+    const userRole = data.userRole;
+
     const [user, setUser] = useState(null);
-    const [account, switchAccount] = useState(true);
-    const { members } = useLuponStore();
     const { barangays, streets, fetchBarangays, fetchStreets } = useAddressesStore();
     const { updateUser, fetchUser, sendOTP, verifyOTP } = useUserStore();
 
@@ -48,11 +52,10 @@ export function Settings() {
     const [lastName, setLastName] = useState(user?.last_name || "");
     const [contactNumber, setContactNumber] = useState(user?.contact_number || "");
     const [sex, setSex] = useState(user?.sex || "");
-    const [birthDate, setBirthDate] = useState(user?.birth_date || "");
+    const [birthDate, setBirthDate] = useState(user?.birth_date|| "");
     const [openCalendar, setOpenCalendar] = useState(false);
     const minDate = new Date("1900-01-01");
     const maxDate = new Date();
-
     // Address States
     const [selectedBarangay, setSelectedBarangay] = useState(user?.barangay || "");
     const [selectedStreet, setSelectedStreet] = useState(user?.street || "");
@@ -104,8 +107,11 @@ export function Settings() {
             setAdditionalInfo(user.additional_info || "");
             setContactNumber(user.contact_number || "");
             setEmail(user.email || "");
+            setBirthDate(user.birth_date || "")
         }
     }, [user, streets, barangays]);
+
+    console.log(user)
 
     const hasChanges =
         firstName !== (user?.first_name || "") ||
@@ -114,6 +120,7 @@ export function Settings() {
         sex !== (user?.sex || "") ||
         selectedBarangay !== (user?.barangay || "") ||
         selectedStreet !== (user?.street || "") ||
+        birthDate !== (user?.birth_date || "") ||
         additionalInfo !== (user?.additional_info || "");
 
     const emailHasChanges =
@@ -130,6 +137,7 @@ export function Settings() {
                 sex: sex,
                 barangay: selectedBarangay,
                 street: selectedStreet,
+                birth_date: birthDate.toISOString().split("T")[0],
                 additional_info: additionalInfo
             };
         }
@@ -158,8 +166,15 @@ export function Settings() {
             };
         }
 
-        await updateUser(user.id, updatedData);
-        fetchUser().then((data) => setUser(data));
+        toast.promise(updateUser(user.id, updatedData), {
+            loading: "Updating user information...",
+            success: (data) => {
+                setUser(data);
+                return "User information updated successfully!";
+            },
+            error: "Failed to update user information. Please try again.",
+        });
+
     };
 
     const handleReset = (section) => {
@@ -237,10 +252,6 @@ export function Settings() {
         updateSyncSettings
     } = useGoogleCalendarStore();
 
-    const stored = localStorage.getItem("authData");
-    const data = JSON.parse(stored);
-    const userRole = data.userRole;
-
     useEffect(() => {
         // Check Google Calendar status for current user
         checkStatus(data?.email);
@@ -257,8 +268,6 @@ export function Settings() {
 
         if (googleConnected === 'true') {
             toast.success('Google Calendar connected successfully!');
-            switchIntegrations(true);
-            switchAccount(false);
             checkStatus(data?.email);
         }
         if (googleError) {
@@ -266,7 +275,6 @@ export function Settings() {
         }
     }, []);
 
-    const lupon = members.find(member => member.id === data?.id);
 
     return (
         <div className="flex flex-col bg-white h-full p-6 gap-6">
@@ -298,11 +306,13 @@ export function Settings() {
                 <TabsList>
                     <TabsTrigger value="account">Account Information</TabsTrigger>
                     <TabsTrigger value="notif">Notification</TabsTrigger>
+                    <TabsTrigger value="autoSync">Auto-Sync Settings</TabsTrigger>
+
                     {userRole === "admin" && (
                         <>
                         <TabsTrigger value="integrations">Integrations</TabsTrigger>
-                        <TabsTrigger value="autoSync">Auto-Sync Settings</TabsTrigger>
                         <TabsTrigger value="aiModel">AI Model</TabsTrigger>
+                        <TabsTrigger value="systemConfig">System Configuration</TabsTrigger>
                         </>
                     )}
                 </TabsList>
@@ -371,6 +381,35 @@ export function Settings() {
                                             </DropdownMenu>
                                         </div>
                                         <Separator/>
+                                    <div className="grid grid-cols-2 gap-2 px-3">
+                                        <Label htmlFor="birthDate">Birth Date</Label>
+                                        <Popover open={openCalendar}  onOpenChange={setOpenCalendar} id="birth_date">
+                                            <PopoverTrigger asChild>
+                                                <Button
+                                                    variant="outline"
+                                                    id="date"
+                                                    className="justify-between font-normal"
+                                                >
+                                                    {birthDate ? formatedBday(birthDate) : "Select date"}
+                                                    <CalendarIcon />
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className=" overflow-hidden p-0 w-72" align="start">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={birthDate}
+                                                    captionLayout="dropdown"
+                                                    fromYear={1900}
+                                                    toYear={new Date().getFullYear()}
+                                                    disabled={(date) => date > maxDate || date < minDate}
+                                                    onSelect={(date) => {
+                                                        setBirthDate(date);
+                                                        setOpenCalendar(false);
+                                                    }}
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
+                                    </div>
                                     <Separator />
                                     <div className="grid grid-cols-2 gap-2 px-3">
                                         <Label htmlFor="barangay">Barangay</Label>
@@ -600,7 +639,7 @@ export function Settings() {
                             <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                        <Calendar className="size-5 text-blue-600" />
+                                        <CalendarIcon className="size-5 text-blue-600" />
                                     </div>
                                     <div>
                                         <h3 className="font-medium">Google Calendar</h3>
@@ -674,7 +713,7 @@ export function Settings() {
                                         {loading ? (
                                             <Loader2 className="size-4 mr-2 animate-spin" />
                                         ) : (
-                                            <Calendar className="size-4 mr-2" />
+                                            <CalendarIcon className="size-4 mr-2" />
                                         )}
                                         Connect Google Calendar
                                     </Button>
@@ -891,11 +930,12 @@ export function Settings() {
                         </div>
                     </div>
                 </TabsContent>
+
+                <TabsContent value="systemConfig">
+                    <SystemConfiguration/>
+                </TabsContent>
             </Tabs>
-
-
-
-
+            
         </div>
     )
 }
