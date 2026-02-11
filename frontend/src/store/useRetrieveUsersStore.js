@@ -53,6 +53,10 @@ export const getCasePersonById = async (id) => {
     const response = await axios.get(`${API_URL}/case-person-details/${id}/`);
     return response.data;
 }
+export const updateCasePersonById = async (id, data) => {
+    const response = await axios.put(`${API_URL}/case-person-details/${id}/`, data);
+    return response.data;
+}
 
 export const useRetrieveUsersStore = create((set) => ({
     complainants: [],

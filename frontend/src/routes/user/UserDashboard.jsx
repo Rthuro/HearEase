@@ -7,7 +7,7 @@ import { PageSync } from "@/components/PageSync"
 import { Button } from "@/components/ui/button"
 import { useCaseStore } from "@/store/useCaseStore"
 import { RecentCaseRecords } from "@/components/RecentCaseRecords"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useActionState, startTransition } from "react"
 import useHearingStore from "@/store/useHearingStore"
 import { Separator } from "@/components/ui/separator"
 import { useRetrieveUsersStore } from "@/store/useRetrieveUsersStore"
@@ -30,10 +30,15 @@ export function UserDashboard() {
   const [completion, setCompletion] = useState(0);
   const [missingFields, setMissingFields] = useState([]);
   const [refreshLoader, setRefreshLoader] = useState(false);
+  const [res, fetchRelatedCase, loader] = useActionState(fetchUserRelatedCase);
   
   useEffect(() => {
-    fetchUserRelatedCase()
+    startTransition(() => {
+      fetchRelatedCase();
+    });
   }, []);
+
+  console.log("Related Cases:", res);
 
   const filterHearings = Array.isArray(hearings) 
     ? hearings.filter(h => h.hearing_status === "scheduled") 
@@ -138,8 +143,8 @@ export function UserDashboard() {
             )}
         </div>
       </div>
-      {relatedCases?.cases?.length > 0 && (
-        <IdentitySync cases={relatedCases?.cases} match_persons={relatedCases?.match_persons} />
+      {res?.cases?.length > 0 && (
+        <IdentitySync cases={res?.cases} match_persons={res?.match_persons} />
       )}
 
       {/* <Button variant="outline" className="w-fit ml-auto mb-2"

@@ -18,6 +18,7 @@ import { ChevronLeft, RefreshCw } from "lucide-react";
 import { useAddressesStore } from "@/store/useAddressStore";
 import { useCaseStore } from "@/store/useCaseStore";
 import { SendEmailDialog } from "@/components/SendEmailDialog";
+import { EditCasePerson } from "@/components/EditCasePerson";
 
 export function CasePerson() {
   const { id } = useParams();
@@ -67,8 +68,6 @@ export function CasePerson() {
             setRefreshLoader(false);
         }
     }
-
-    console.log(personData)
 
   const getAge = (dateString) => {
     if (!dateString) return "N/A";
@@ -132,7 +131,11 @@ export function CasePerson() {
         </div>
         
         <div className="flex gap-2">
-            <Button variant="outline">Edit Info</Button>
+            { personData?.cases?.length > 0 && (
+              <EditCasePerson 
+              person_info={personData}
+              refresh={handleRefresh} />
+            )}
             <Button variant="outline"
             onClick={() => {
                 navigate(`/Admin/File-Case/`);

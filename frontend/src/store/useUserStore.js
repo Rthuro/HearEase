@@ -30,7 +30,8 @@ export const useUserStore = create((set, get) => ({
         set({ loading: true });
         try {
             const response = await axios.put(`${API_URL}/update-user/${userId}/`, {
-                ...updatedData
+                ...updatedData,
+                birth_date: updatedData.birth_date ? new Date(updatedData.birth_date).toISOString().split('T')[0] : null
             });
 
             set({ loading: false });

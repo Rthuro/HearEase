@@ -107,7 +107,7 @@ class SettlementTypeDetailView(APIView):
         description = request.data.get("description")
 
         if name:
-            settlement.settlement_type = name
+            settlement.settlement_name = name
         if description is not None:
             settlement.description = description
 

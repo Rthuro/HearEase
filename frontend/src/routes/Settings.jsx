@@ -137,7 +137,7 @@ export function Settings() {
                 sex: sex,
                 barangay: selectedBarangay,
                 street: selectedStreet,
-                birth_date: birthDate.toISOString().split("T")[0],
+                birth_date: birthDate,
                 additional_info: additionalInfo
             };
         }
@@ -278,7 +278,7 @@ export function Settings() {
 
     return (
         <div className="flex flex-col bg-white h-full p-6 gap-6">
-            <PageSync page="Profile" />
+            <PageSync page="Settings" />
             { loader ? (
                 <div className="flex-1 flex items-center justify-center">
                     <Loader2 className="animate-spin size-6 text-redBase" />
@@ -485,12 +485,7 @@ export function Settings() {
                                             Cancel
                                         </Button> 
                                         <Button onClick={() => handleUpdate("profile")} className="w-fit">
-                                                { loading ? (
-                                                <>
-                                                    <Loader2 className="animate-spin size-5 " />
-                                                Saving...
-                                                </>
-                                            ) : ("Save")}
+                                            Save Changes
                                         </Button> 
                                     </div>
                                     ) : (
