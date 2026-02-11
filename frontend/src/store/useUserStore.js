@@ -34,11 +34,6 @@ export const useUserStore = create((set, get) => ({
             });
 
             set({ loading: false });
-
-            if (response.status === 200) {
-                toast.success("User updated successfully.");
-            }
-
             return response.data;
         } catch (error) {
             toast.error("Failed to update user. Please try again.");
@@ -72,9 +67,7 @@ export const useUserStore = create((set, get) => ({
     fetchNotificationSettings: async () => {
         try {
 
-            const res = await axios.get(`${API_URL}/user/notifications/`, {
-                headers: { Authorization: `Token ${storedUserInfo()?.token}` }
-            });
+            const res = await axios.get(`${API_URL}/user/notifications/`);
 
             set({ notificationSettings: res.data });
 
@@ -88,10 +81,7 @@ export const useUserStore = create((set, get) => ({
         try {
             const res = await axios.patch(
                 `${API_URL}/user/notifications/`,
-                updatedSettings,
-                {
-                    headers: { Authorization: `Token ${storedUserInfo()?.token}` }
-                }
+                updatedSettings
             );
             set({ notificationSettings: res.data });
             toast.success("Settings saved");

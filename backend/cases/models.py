@@ -31,6 +31,7 @@ class Relationship(models.Model):
 class Case(models.Model):
 
     CASE_STATUS_CHOICES = [
+        ("filed", "Filed"),
         ("pending_approval", "Pending Approval"),
         ("approved", "Approved"),
         ("in_progress", "In Progress"),
@@ -85,6 +86,7 @@ class Case(models.Model):
     is_active = models.BooleanField(default=True)
     date_filed = models.DateTimeField(auto_now_add=True)
     predicted_hearings = models.IntegerField(blank=True, null=True)
+    actual_hearings = models.IntegerField(blank=True, null=True)
     remarks = models.TextField(blank=True, null=True)
     rejection_section = models.CharField(
         max_length=30,
@@ -108,6 +110,7 @@ class Case(models.Model):
         null=True,
     )
 
+    case_completed_date = models.DateTimeField(blank=True, null=True)
 
     def __str__(self):
         return f"Case #{self.id} - {self.case_type.case_name if self.case_type else 'Unknown'} ({self.get_case_status_display()})"

@@ -22,16 +22,105 @@ User = get_user_model()
 
 
 class CaseTypeListView(APIView):
+    def post(self, request):
+        name = request.data.get("case_name")
+        severity = request.data.get("severity")
+        description = request.data.get("description")
+
+        if not name:
+            return Response({"error": "Case type name is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            case_type = CaseType.objects.create(
+                case_name=name,
+                severity=severity,
+                description=description
+            )
+            serializer = CaseTypeSerializer(case_type)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     def get(self, request):
         case_types = CaseType.objects.all().order_by("severity")
         serializer = CaseTypeSerializer(case_types, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+class CaseTypeDetailView(APIView):
+    def put(self, request, pk):
+        try:
+            case_type = CaseType.objects.get(pk=pk)
+        except CaseType.DoesNotExist:
+            return Response({"error": "Case type not found."}, status=status.HTTP_404_NOT_FOUND)
 
+        name = request.data.get("case_name")
+        severity = request.data.get("severity")
+        description = request.data.get("description")
+
+        if name:
+            case_type.case_name = name
+        if severity is not None:
+            case_type.severity = severity
+        if description is not None:
+            case_type.description = description
+
+        case_type.save()
+        serializer = CaseTypeSerializer(case_type)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    def delete(self, request, pk):
+        try:
+            case_type = CaseType.objects.get(pk=pk)
+            case_type.delete()
+            return Response({"message": "Case type deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+        except CaseType.DoesNotExist:
+            return Response({"error": "Case type not found."}, status=status.HTTP_404_NOT_FOUND)
+        
 class SettlementTypeListView(APIView):
+    def post(self, request):
+        name = request.data.get("settlement_name")
+        description = request.data.get("description")
+
+        if not name:
+            return Response({"error": "Settlement name is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            settlement = SettlementType.objects.create(
+                settlement_name=name,
+                description=description
+            )
+            serializer = SettlementTypeSerializer(settlement)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     def get(self, request):
         settlements = SettlementType.objects.all().order_by("id")
         serializer = SettlementTypeSerializer(settlements, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class SettlementTypeDetailView(APIView):
+    def put(self, request, pk):
+        try:
+            settlement = SettlementType.objects.get(pk=pk)
+        except SettlementType.DoesNotExist:
+            return Response({"error": "Settlement type not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        name = request.data.get("settlement_name")
+        description = request.data.get("description")
+
+        if name:
+            settlement.settlement_type = name
+        if description is not None:
+            settlement.description = description
+
+        settlement.save()
+        serializer = SettlementTypeSerializer(settlement)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    def delete(self, request, pk):
+        try:
+            settlement = SettlementType.objects.get(pk=pk)
+            settlement.delete()
+            return Response({"message": "Settlement type deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+        except SettlementType.DoesNotExist:
+            return Response({"error": "Settlement type not found."}, status=status.HTTP_404_NOT_FOUND)
     
 class RelationshipListView(APIView):
     def get(self, request):
@@ -427,10 +516,9 @@ class UpdateHearingProgressView(APIView):
                     )
 
             if outcome == "completed":
-                time_completed = request.data.get("time_completed")
                 Hearing.objects.filter(id=hearing_id).update(
-                    hearing_status="completed",
-                    time_completed=time_completed,
+                    hearing_status="completed",                        
+                    hearing_completed_date=datetime.now(),
                     remarks=request.data.get("remarks")
                 )
                 Hearing.objects.filter(case=case, hearing_number=hearing_number+1).update(
@@ -441,7 +529,7 @@ class UpdateHearingProgressView(APIView):
             elif outcome == "new_hearing":
                 Hearing.objects.filter(id=hearing_id).update(
                     hearing_status="completed",
-                    time_completed=request.data.get("time_completed"),
+                    hearing_completed_date=datetime.now(),
                     remarks=request.data.get("remarks")
                 )
                 
@@ -467,24 +555,32 @@ class UpdateHearingProgressView(APIView):
                 )
 
             elif outcome in ["settled", "court"]:
-                # 1. Update the CURRENT and all FUTURE hearings for this case to completed
-                Hearing.objects.filter(
-                    case=case, 
-                    hearing_number__gte=hearing_number
-                ).update(
-                    hearing_status="completed",
-                    remarks="Hearing completed (Case finalized)."
-                )
 
-                # 2. Update Case Status based on outcome
-                if outcome == "settled":
+                if outcome == "settled":                    
                     case.settlement_type_id = request.data.get("settlement_type_id")
                     case.case_status = "resolved"
                     case.remarks = request.data.get("remarks")
+                    case.case_completed_date = datetime.now()
+                    case.actual_hearings = hearing_number
+
+                    Hearing.objects.filter(id=hearing_id).update(
+                        hearing_status="completed",
+                        hearing_completed_date=datetime.now(),
+                        remarks="Hearing completed (Case resolved by settlement)."
+                    )
+
+                    Hearing.objects.filter(case=case, hearing_number__gt=hearing_number).delete()
+
                 else: # court
                     case.case_status = "escalated"
                     case.cfa_destination = request.data.get("cfa_destination")
                     case.remarks = request.data.get("remarks")
+
+                    Hearing.objects.filter(id=hearing_id).update(
+                        hearing_status="completed",
+                        hearing_completed_date=datetime.now(),
+                        remarks="Hearing completed (Case escalated to court)."
+                    )
                 
                 case.save()
 

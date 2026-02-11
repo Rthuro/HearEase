@@ -193,7 +193,6 @@ export function Lupon(){
                             <TableHead className="text-left px-4 py-2">Status</TableHead>
                             <TableHead className="text-left px-4 py-2">Date</TableHead>
                             <TableHead className="text-left px-4 py-2">Time</TableHead>
-                            <TableHead className="text-left px-4 py-2">Attendance</TableHead>
                             <TableHead className="px-4 py-2"></TableHead>
                             </TableRow>
                         </TableHeader>
@@ -202,12 +201,11 @@ export function Lupon(){
                             {memberDetails?.hearings?.length > 0 ? (
                             memberDetails?.hearings?.map((h) => (
                                 <TableRow key={h.id} className="border-t">
-                                <TableCell className="px-4 py-2">{h.id}</TableCell>
+                                <TableCell className="px-4 py-2">{h.hearing_number}</TableCell>
                                 <TableCell className="px-4 py-2">{h.case}</TableCell>
                                 <TableCell className="px-4 py-2"> <CaseStatusDisplay caseStatus={h.hearing_status} /></TableCell>
                                 <TableCell className="px-4 py-2">{h.hearing_date}</TableCell>
                                 <TableCell className="px-4 py-2">{h.time}</TableCell>
-                                <TableCell className="px-4 py-2">hearing</TableCell>
                                 <TableCell className={cn("py-4")}>
                                     <Link
                                     to = {`/Admin/Hearing/${h.id}`}

@@ -25,7 +25,7 @@ export function CaseStatusDisplay({ caseStatus }) {
     };
 
     return (
-        <Badge variant="outline" className="text-muted-foreground px-1.5">
+        <Badge variant="outline" className="text-muted-foreground px-1.5 h-fit">
             {statusStyles[caseStatus]?.icon}
             <span>{statusStyles[caseStatus]?.text}</span>
         </Badge>

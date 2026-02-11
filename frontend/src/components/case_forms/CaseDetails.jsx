@@ -27,11 +27,13 @@ import {
 import { Textarea } from "../ui/textarea";
 import { useEffect, useState } from "react";
 import { useCaseStore } from "@/store/useCaseStore";
+import useAuthenticationStore from "@/store/useAuthenticationStore";
 
 export function CaseDetails() {
   const { setFormData, formData, caseTypes, relationshipList, fetchRelationshipList, jurisdictionWarning, setJurisdictionWarning } = useCaseStore();
   const [open, setOpen] = useState(false)
   const [uploadedFiles, setUploadedFiles] = useState(formData.caseDetails.documents.value || []);
+  const { userRole } = useAuthenticationStore();
 
   useEffect(() => {
     if (relationshipList.length === 0) {
@@ -154,7 +156,7 @@ export function CaseDetails() {
   return (
     <div className="flex flex-col items-center gap-4">
       <p className=" text-center  text-2xl mb-3">Case Details</p>
-      <div className="grid grid-cols-2 gap-3 max-w-[500px] min-w-[400px]">
+      <div className="grid grid-cols-2 gap-3 w-full md:max-w-[500px] md:min-w-[400px]">
         <div className="grid grid-cols-1 col-span-2 gap-2">
           <Label htmlFor="natureComplaint">Nature of Complaint
             <span className="text-redBase">*</span>
@@ -269,7 +271,7 @@ export function CaseDetails() {
                   </div>
                 )}
               </div>
-              <div>
+              {/* <div>
                 <Label htmlFor="customSeverity">
                   Severity Level<span className="text-redBase">*</span>
                 </Label>
@@ -293,23 +295,40 @@ export function CaseDetails() {
                     </DropdownMenuRadioGroup>
                   </DropdownMenuContent>
                 </DropdownMenu>
-              </div>
+              </div> */}
               <p className="text-xs text-zinc-500">
                 This case type will be added to the system for future use.
               </p>
             </div>
           )}
         </div>
-        {/* <div className="grid grid-cols-1 gap-2">
-                  <Label htmlFor="severity">Severity
+        {userRole === "admin" && (
+          <div className="grid grid-cols-1 col-span-2 gap-2">
+                  <Label htmlFor="customSeverity">
+                    Severity Level<span className="text-redBase">*</span>
                   </Label>
-                  <Input id="severity" type="number"  disabled 
-                  value={
-                    caseTypes.find(
-                        (type) => type.id === formData.caseDetails.nature_of_complaint_code.value
-                      )?.severity || ""
-                  } />
-              </div> */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="w-full justify-between mt-1">
+                        {formData.caseDetails.severity.value
+                          ? `Level ${formData.caseDetails.severity.value} - ${getSeverityLabel(formData.caseDetails.severity.value)}`
+                          : "Select severity level..."}
+                        <ChevronDown className="ml-2 h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-full min-w-[300px]">
+                      <DropdownMenuRadioGroup
+                        value={formData.caseDetails.severity.value?.toString() || ""}
+                        onValueChange={(value) => setFormData("caseDetails", "severity", parseInt(value))}
+                      >
+                        <DropdownMenuRadioItem value="1">Level 1 - Low (minor disputes)</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="2">Level 2 - Moderate (property issues, harassment)</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="3">Level 3 - High (threats, physical harm)</DropdownMenuRadioItem>
+                      </DropdownMenuRadioGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+          </div>
+        )}
         <div className="grid grid-cols-1 col-span-2 gap-2">
           <Label htmlFor="settlement">Relationship
             <span className="text-redBase">*</span>

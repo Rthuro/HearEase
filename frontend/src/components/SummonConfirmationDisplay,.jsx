@@ -33,7 +33,7 @@ export function SummonConfirmationDisplay({ hearing, caseInfo }) {
     const handleTemplateSelect = async () => {
         const template_id = templates.find( t => t.template_type === 'summon')?.id;
         try {
-            await generateDocument(caseInfo, 'summon', template_id);
+            await generateDocument(caseInfo,[], 'summon', template_id);
         } catch (error) {
             console.log(error);
         }
