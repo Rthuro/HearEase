@@ -3,7 +3,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import useHearingStore from "./useHearingStore";
 
-const { fetchHearings } = useHearingStore.getState();
+const { fetchHearings, fetchHearingsByCase } = useHearingStore.getState();
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
 const LOCAL_STORAGE_KEY = "authData";
@@ -628,7 +628,7 @@ export const useCaseStore = create((set, get) => ({
                 set({ loading: false });
                 toast.success("Hearings successfully created.");
                 get().resetFormData();
-                fetchHearings();
+                fetchHearingsByCase(case_id);
                 get().fetchCases();
             }
         } catch (error) {

@@ -3,21 +3,14 @@ import { Link } from "react-router-dom";
 import { CaseStatusDisplay } from "./CaseStatusDisplay";
 import folder_img from '@/assets/folder.png'
 import { FolderOpen, Ellipsis, Check, X } from "lucide-react"
-// import {
-//   DropdownMenu,
-//   DropdownMenuContent,
-//   DropdownMenuItem,
-//   DropdownMenuTrigger,
-// } from "@/components/ui/dropdown-menu"
-// import { useCaseStore } from "@/store/useCaseStore";
 
 export function RecentCaseRecords({cases, user}) {
-    // const { deleteCase } = useCaseStore();
+    const limitCases = cases?.slice(0, 8);
 
     return (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 ">
             {cases?.length > 0 ? (
-                    cases?.map((caseItem) => (
+                    limitCases?.map((caseItem) => (
                         <Link to={`/${user}/Case/${caseItem?.id}`} key={caseItem?.id} className="border border-zinc-200 rounded-lg p-4 
                          hover:shadow-md transition-shadow">
                             <div className="flex justify-between">
@@ -31,7 +24,7 @@ export function RecentCaseRecords({cases, user}) {
                     )
                 )
                 ) : (
-                    <div className="flex flex-col gap-2 items-center mx-auto text-zinc-600 my-6">
+                    <div className="flex flex-col gap-2 items-center justify-center mx-auto text-zinc-600 my-6">
                         <FolderOpen />
                         <p>No cases made.</p>
                     </div>

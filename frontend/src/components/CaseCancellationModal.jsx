@@ -23,14 +23,14 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Label } from "./ui/label";
 
-export function CaseCancellationModal({caseInfo}){
+export function CaseCancellationModal({caseInfo, refresh}){
     const { updateCaseStatus } = useCaseStore();
     const [ cancellationModal, setCancellationModal ] = useState(false);
     const [ caseRemarks, setCaseRemarks ] = useState("");
     const [rejectionType, setRejectionType] = useState("");
-
+    const [xLoader, setXLoader] = useState(false);
     
-    const handleCaseCancellation = (e) => {
+    const handleCaseCancellation = async (e) => {
         e.preventDefault();
         if(caseRemarks.trim() === ""){
             toast.error("Please provide a reason for rejection.");
@@ -41,22 +41,34 @@ export function CaseCancellationModal({caseInfo}){
             return;
         }
         
-        updateCaseStatus({
-            id: caseInfo.id,
-            case_status: "rejected",
-            remarks: caseRemarks,
-            rejection_section: rejectionType
-        },"rejected");
+        setXLoader(true);
+
+        try {
+            await toast.promise( updateCaseStatus({
+                id: caseInfo.id,
+                case_status: "rejected",
+                remarks: caseRemarks,
+                rejection_section: rejectionType
+            },"rejected"), {
+                loading: "Rejecting case...",
+                success: () => {
+                    refresh();
+                },
+                error: "Failed to reject case. Please try again."
+            });
+        } catch (error) {
+            console.error("Error rejecting case:", error);
+        } finally {
+            setXLoader(false);
+            setCancellationModal(false);
+            setCaseRemarks("");
+            setRejectionType("");
+        }
     }
 
-    return <Dialog open={cancellationModal} onOpenChange={(isOpen) => {
-            setCancellationModal(isOpen);
-            if (!isOpen) {
-                setCaseRemarks("");
-            }
-        }}>
+    return <Dialog open={cancellationModal} onOpenChange={setCancellationModal}>
             <DialogTrigger asChild>     
-                <Button variant="outline">
+                <Button variant="outline" disabled={xLoader}>
                     <X/>
                     Reject
                 </Button>
