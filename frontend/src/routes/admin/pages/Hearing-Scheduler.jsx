@@ -9,13 +9,15 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 import { CalendarCheck } from "lucide-react";
+import toast from "react-hot-toast";
 
 export function HearingScheduler() {
     const { case_id} = useParams();
-    const { setFormData, formData, predictions, predictionsLoading, fetchPredictions, caseTypes, fetchCaseTypes,  updateHearings, loading } = useCaseStore();
+    const { setFormData, formData, predictions, predictionsLoading, fetchPredictions, caseTypes, fetchCaseTypes,  updateHearings } = useCaseStore();
     const { members, fetchMembers } = useLuponStore();
     const [prediction, setPrediction] = useState(null);
     const navigate = useNavigate();
+    const [loadingState, setLoadingState] = useState(false);
 
 
         useEffect(() => {
@@ -53,6 +55,22 @@ export function HearingScheduler() {
                 setPrediction(defaultPrediction);
             }
         }, [predictions]);
+
+    const handleSchedConfirmation = async () => {
+        setLoadingState(true);
+
+        try {
+            await toast.promise(updateHearings(case_id, formData.hearingInfo, prediction), {
+                loading: "Confirming schedule...",
+                error: "Failed to confirm schedule. Please try again."
+            });
+        } catch (error) {
+            console.log(error);
+        } finally {
+            setLoadingState(false);
+        }
+        navigate(-1);
+    }
     
   return (
     <div className="p-6  min-h-screen flex flex-col gap-4  ">
@@ -60,12 +78,9 @@ export function HearingScheduler() {
                 <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
                     <ChevronLeft />
                 </Button>
-                <Button className="bg-redBase" onClick={() => updateHearings(case_id, formData.hearingInfo, prediction)} disabled={loading}>
-                    {loading ? "Updating..." : 
-                    <>
-                        <CalendarCheck className="size-5" />
-                        Confirm Schedule
-                    </>}
+                <Button className="bg-redBase" onClick={() => handleSchedConfirmation()} disabled={loadingState}>
+                    <CalendarCheck className="size-5" />
+                    Confirm Schedule
                 </Button>
         </div>
         <div className="flex gap-3 bg-white p-4 rounded-md shadow-2xs border">

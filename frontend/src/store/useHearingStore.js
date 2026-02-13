@@ -96,12 +96,13 @@ const useHearingStore = create((set, get) => ({
     }
   },
 
+  caseHearings: [],
   fetchHearingsByCase: async (case_id) => {
     set({ loading: true, error: null });
     try {
       const response = await withRetry(() => getHearingsByCase(case_id));
-      set({ hearings: response, error: null });
-      return { success: true };
+      set({ caseHearings: response, error: null });
+      return response;
     } catch (error) {
       const isNetworkError = !error.response;
       const errorMessage = isNetworkError

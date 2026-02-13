@@ -16,15 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination"
+import { AppPagination } from "@/components/Pagination";
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { PageSync } from "@/components/PageSync";
@@ -33,8 +25,7 @@ import useAuthenticationStore from "@/store/useAuthenticationStore";
 import { CaseStatusDisplay } from "@/components/CaseStatusDisplay";
 import { Link } from "react-router-dom";
 import folder_img from '@/assets/folder.png'
-import { useEffect } from "react";
-// import { cases } from "@/test/data";
+import { useEffect, useMemo } from "react";
 import { useCaseStore } from "@/store/useCaseStore";
 
 
@@ -42,36 +33,32 @@ export function CaseRecords(){
     const { cases, fetchCases, caseTypes, fetchCaseTypes } = useCaseStore();
     const { userInfo, userLinkName } = useAuthenticationStore();
     const [status, setStatus] = useState("all");
+    const [ct, setct] = useState("all");
     const [searchQuery, setSearchQuery] = useState("");
+
+    const [displayedCases, setDisplayedCases] = useState([]);
 
     // Table view: 1 - row, 2 - box
     const [view, setView] = useState(1);
 
     useEffect( ()=>{
-        fetchCaseTypes()
+        fetchCaseTypes();
         fetchCases()
     },[fetchCases, fetchCaseTypes])
-    
-    // Update filteredCases when status changes
-    // useEffect(() => {
-    //     setFilteredCases(
-    //         status === "all" ? cases : cases.filter(c => c.case_status === status)
-    //     );
-    // }, [status, cases]);
 
-    const filteredCases = cases.filter((c) => {
+     const filteredCases = useMemo(() => {
+        return cases.filter((c) => {
         const query = searchQuery.toLowerCase().trim();
-
-        const id = String(c.id).toLowerCase(); 
-        const caseName = (c.case_type?.case_name || "").toLowerCase();
-
-        const matchesSearch = id.includes(query) || caseName.includes(query);
-
+        const id = String(c.id).toLowerCase();
+        
+        const matchesCaseType = ct === "all" || c.case_type?.case_name === ct;
+        const caseNameStr = (c.case_type?.case_name || "").toLowerCase();
+        const matchesSearch = id.includes(query) || caseNameStr.includes(query);
         const matchesStatus = status === "all" || c.case_status === status;
 
-        return matchesSearch && matchesStatus;
-    });
-
+        return matchesCaseType && matchesSearch && matchesStatus;
+        });
+    }, [cases, searchQuery, status, ct]);
 
     const navigateTo = userInfo?.role === 'user' ? userLinkName : 'Admin';
 
@@ -128,8 +115,13 @@ export function CaseRecords(){
                 <div className="flex items-center justify-between flex-wrap-reverse md:flex-nowrap gap-3">
                     <div className="flex items-center w-full">
                         <Search className="text-zinc-400 ml-3" size={16} />
-                        <Input type="text" placeholder="Search for case..." className="w-full md:w-72 -ml-6 pl-8" 
-                        value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                        <Input 
+                            className="w-full md:w-72 -ml-6 pl-8" 
+                            value={searchQuery} 
+                            onChange={(e) => setSearchQuery(e.target.value)} 
+                            placeholder="Search..." 
+                        />
+
                     </div>
                     <div className="flex items-center gap-2">
                         <div className="flex items-center">
@@ -164,11 +156,30 @@ export function CaseRecords(){
                                 </DropdownMenuRadioGroup>
                             </DropdownMenuContent>
                         </DropdownMenu>
+
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline">
+                                    Case Type
+                                    <ChevronDown className="ml-2 h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="w-52" align="end">
+                                <DropdownMenuRadioGroup value={ct} onValueChange={ (c) => {
+                                    setct(c);
+                                }}>
+                                    <DropdownMenuRadioItem value="all">All</DropdownMenuRadioItem>
+                                    {caseTypes?.map((ct) => (
+                                        <DropdownMenuRadioItem key={ct.id} value={ct.case_name}>{ct.case_name}</DropdownMenuRadioItem>
+                                    ))}
+                                </DropdownMenuRadioGroup>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>  
                 </div>
                 <section className="flex flex-col gap-6">
                     {view == 1 && (
-                        <div className="border rounded-lg overflow-hidden">
+                        <div className="border rounded-lg overflow-hiddens">
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
@@ -181,14 +192,14 @@ export function CaseRecords(){
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {filteredCases.length === 0 ? (
+                                        {displayedCases.length === 0 ? (
                                             <TableRow>
-                                                <TableCell colSpan={5}>
+                                                <TableCell colSpan={6}>
                                                     <p className="text-center">No cases made.</p>
                                                 </TableCell>
                                             </TableRow>
                                         ) : (
-                                            filteredCases.map((c) => (
+                                            displayedCases.map((c) => (
                                                 <TableRow key={c.id} className={cn("text-zinc-700")}>
                                                     <TableCell>{c.id}</TableCell>
                                                     <TableCell>{c.case_type.case_name}</TableCell>
@@ -211,14 +222,14 @@ export function CaseRecords(){
                     )}
 
                     {view == 2 && (
-                        <div className="flex items-center flex-wrap gap-3 ">
-                            {filteredCases.length > 0 ? (
-                                    filteredCases.map((c) => (
-                                        <Link to={`/${navigateTo}/Case/${c.id}`} key={c.id} className="border border-zinc-200 rounded-lg p-4 w-60 hover:shadow-md transition-shadow">
+                        <div className="grid grid-cols-5 gap-3 ">
+                            {displayedCases.length > 0 ? (
+                                    displayedCases.map((c) => (
+                                        <Link to={`/${navigateTo}/Case/${c.id}`} key={c.id} className="border border-zinc-200 rounded-lg p-4 hover:bg-gray-50 transition-shadow">
                                             <CaseStatusDisplay caseStatus={c.case_status} />
                                             <img src={folder_img} alt="folder" className="mx-auto mb-2"/>
                                             <p className="font-medium text-sm mb-1 text-center">{c.id}</p>
-                                            <p className="text-sm text-zinc-600 mb-1 text-center">
+                                            <p className="text-xs text-zinc-600 mb-1 text-center">
                                                 {c.case_type.case_name}
                                             </p>
                                         </Link>
@@ -233,24 +244,11 @@ export function CaseRecords(){
                         </div>
                     )}
 
-                    {cases.length > 0 && (
-                        <Pagination>
-                            <PaginationContent>
-                                <PaginationItem>
-                                <PaginationPrevious href="#" />
-                                </PaginationItem>
-                                <PaginationItem>
-                                <PaginationLink href="#">1</PaginationLink>
-                                </PaginationItem>
-                                <PaginationItem>
-                                <PaginationEllipsis />
-                                </PaginationItem>
-                                <PaginationItem>
-                                <PaginationNext href="#" />
-                                </PaginationItem>
-                            </PaginationContent>
-                        </Pagination>
-                    )}
+                    <AppPagination 
+                        items={filteredCases} 
+                        searchQuery={searchQuery} 
+                        setPagedItems={setDisplayedCases} 
+                    />
                 </section>
             </section>
             

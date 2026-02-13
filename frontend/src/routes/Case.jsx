@@ -38,29 +38,32 @@ const BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 export function Case() {
     const { case_number } = useParams();
     const { cases, updateCaseStatus, setFormData, set_complainants, set_respondents, reSubmitCase } = useCaseStore();
-    const { hearings, fetchHearings } = useHearingStore();
+    const { caseHearings, fetchHearingsByCase } = useHearingStore();
     const [template, setTemplate] = useState({});
     const { case_documents, fetchCaseDocuments } = useCaseDocumentsStore();
     const [viewImg, setViewImg] = useState(null);
     const { templates, fetchTemplates, generateDocument } = useGenerateDocumentStore();
     const { members } = useLuponStore();
 
-     const [ noShowModal, setNoShowModal ] = useState(false);
+    const [ noShowModal, setNoShowModal ] = useState(false);
     const [ noShowUserData, setNoShowUserData ] = useState({});
     const [refreshLoader, setRefreshLoader] = useState(false);
 
     const [resubmitLoader, setResubmitLoader] = useState(false);
+    const [approveLoader, setApproveLoader] = useState(false);
 
     const stored = localStorage.getItem("authData");
     const data = JSON.parse(stored);
     const userRole = data.userRole;
+
 
     useEffect(() => {
         fetchTemplates();
         fetchCaseDocuments(case_number);
     }, [case_number])
 
-    const [caseInfo, setCaseInfo] = useState(cases.find( c => c.id == case_number));
+    const [caseInfo, setCaseInfo] = useState(cases?.find(c => c.id == case_number));
+    const [findHearingCase, setFindHearingCase] = useState(caseHearings);
 
     useEffect(() => {
         if (caseInfo) {
@@ -69,12 +72,9 @@ export function Case() {
             setFormData('caseDetails', 'relationship', caseInfo.relationship);
             set_complainants(caseInfo.complainants);
             set_respondents(caseInfo.respondents);
+            fetchHearingsByCase(case_number).then((data) => setFindHearingCase(data));
         }
     }, [caseInfo]);
-
-   const [findHearingCase, setFindHearingCase] = useState(
-        hearings.length > 0 ? hearings.filter( hearing => hearing.case == case_number)
-        .sort((a, b) => a.hearing_number - b.hearing_number) : []);
 
     const navigate = useNavigate();
 
@@ -105,7 +105,7 @@ export function Case() {
                 },
                 {
                     label:"Nature of Complaint",
-                    value: caseInfo.case_type.case_name || '-'
+                    value: caseInfo?.case_type.case_name || '-'
                 },{
                     label:"Settlement",
                     value: caseInfo?.settlement_type?.settlement_name || '-'
@@ -173,15 +173,51 @@ export function Case() {
     }
 
     const reSubmission = async () => {
+        setResubmitLoader(true);
         try {
-            setResubmitLoader(true);
-            await reSubmitCase(caseInfo.id);
-            const updatedCase = await fetchCase(caseInfo?.id);
-            setCaseInfo(updatedCase);
-            setResubmitLoader(false);
+            await toast.promise( reSubmitCase(caseInfo.id), {
+                loading: "Resubmitting case...",
+                success: async () => {
+                    const updatedCase = await fetchCase(caseInfo?.id);
+                    setCaseInfo(updatedCase);
+                    return "Case resubmitted successfully!"
+                },
+                error: "Failed to resubmit case. Please try again."
+            });
         } catch (error) {
-            setResubmitLoader(false);
             console.error("Error resubmitting case:", error);
+        } finally {
+            setResubmitLoader(false);
+        }
+    };
+
+    const approveCase = async () => {
+        setApproveLoader(true);
+
+        try {
+            await toast.promise(
+                updateCaseStatus({ id: caseInfo.id, case_status: "approved" }, "approved"),
+                {
+                    loading: "Approving case...",
+                    success: async () => {
+                        const updatedCase = await fetchCase(caseInfo?.id);
+                        setCaseInfo(updatedCase);
+
+                        await fetchHearingsByCase(caseInfo?.id); 
+                        
+                        setFindHearingCase(caseHearings);
+                        
+                        return "Case approved successfully!";
+                    },
+                    error: (err) => {
+                        return err?.response?.data?.message || "Failed to approve case.";
+                    },
+                }
+            );
+        } catch (error) {
+            console.error("Error approving case:", error);
+        } finally {
+            setApproveLoader(false);
         }
     };
 
@@ -212,22 +248,6 @@ export function Case() {
                     </>
                 );
             }
-            case "rejecteded":
-                return (
-                    <>
-                        <p className="font-medium text-lg text-redBase">
-                            Your case appointment has been rejected.
-                        </p>
-                        <p className="text-redBase">
-                            Rejected section: {caseInfo.rejection_section == "case_details" ? "Case Details" : caseInfo.rejection_section == "complainant_info" ? "Complainant Information" : "Respondent Information"}
-                        </p>
-                        <p className="text-redBase">
-                            Reason: {caseInfo.remarks}
-                        </p>
-                        <EditCaseInfo section={caseInfo.rejection_section == "case_details" ? "case" : caseInfo.rejection_section == "complainant_info" ? "complainant" : "respondent"}
-                            caseInfo={caseInfo} forResubmission={true} />
-                    </>
-                );
 
             default:
                 return <p>Unknown Status</p>;
@@ -239,8 +259,8 @@ export function Case() {
             setRefreshLoader(true);
             const updatedCase = await fetchCase(caseInfo?.id);
             setCaseInfo(updatedCase);
-            fetchHearings();
-            setFindHearingCase(hearings?.filter( hearing => hearing.case == case_number).sort((a, b) => a.hearing_number - b.hearing_number));
+            fetchHearingsByCase(case_number);
+            setFindHearingCase(caseHearings);   
             setRefreshLoader(false);
         }
         catch(error){
@@ -263,14 +283,9 @@ export function Case() {
                 <div className="flex gap-3">
                     {userRole == 'admin' && caseInfo.case_status == 'pending_approval' && (
                         <div className="flex gap-2">
-                            <CaseCancellationModal caseInfo={caseInfo} />
+                            <CaseCancellationModal caseInfo={caseInfo} refresh={refreshCaseData} />
                             <Button variant="default" className={cn("bg-redBase")}
-                                onClick={() => {
-                                    updateCaseStatus({
-                                        id: caseInfo.id,
-                                        case_status: "approved",
-                                    }, "approved");
-                                }}>
+                                onClick={approveCase} disabled={approveLoader}>
                                 <Check />
                                 Approve Case
                             </Button>
@@ -374,11 +389,6 @@ export function Case() {
                             disabled={resubmitLoader}
                             className="bg-red-600 hover:bg-red-700 text-white shadow-sm gap-2"
                         >
-                            {resubmitLoader ? (
-                                <Loader2 className="animate-spin" size={18} />
-                            ) : (
-                                <RotateCw size={18} />
-                            )}
                             Resubmit Case
                         </Button>
                     </div>

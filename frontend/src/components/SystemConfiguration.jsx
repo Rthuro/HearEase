@@ -44,7 +44,7 @@ export function SystemConfiguration() {
   const [settlementTypes, callSettlementTypes, isPendingSettlement] = useActionState(fetchSettlementTypes, []);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 7; // Adjust this number as needed
+  const ITEMS_PER_PAGE = 10; // Adjust this number as needed
 
   // 4. Initial Data Fetch
   useEffect(() => {

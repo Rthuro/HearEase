@@ -92,8 +92,6 @@ export function LuponManagement() {
         Sunday: members.filter(member => (member.sched || []).includes("Sunday")),
     };
 
-    console.log(admin_list)
-
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     return (
         <div className="p-6 flex flex-col gap-2">
