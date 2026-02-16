@@ -28,9 +28,6 @@ export function Header({userInfo}){
         <header className="flex items-center justify-between p-3 gap-2 w-full border-b border-zinc-200 bg-white">
           <SidebarTrigger className="!bg-transparent focus-visible:!border-none  focus-visible:!outline-none  hover:!border-none hover:!outline-none !outline-0 !border-0"/>
           <div className="flex items-center gap-1">
-            <Button variant="outline" >
-              <Bell size="16" />
-            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger>
                 <div className="flex items-center gap-2 cursor-pointer  py-1 px-2 ">

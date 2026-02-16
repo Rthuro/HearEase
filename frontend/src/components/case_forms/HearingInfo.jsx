@@ -77,9 +77,10 @@ export function HearingInfo() {
                     <Input
                         id="predictedNumber"
                         type="text"
-                        className="w-72"
+                        className="w-72 disabled:opacity-50/10"
                         value={predictionsLoading ? "Calculating..." : predictedHearings}
                         readOnly
+                        disabled
                     />
                     {predictionsLoading && (
                         <Loader2 className="absolute right-3 top-2.5 h-4 w-4 animate-spin text-redBase" />
@@ -95,9 +96,10 @@ export function HearingInfo() {
                     <Input
                         id="resolutionTime"
                         type="text"
-                        className="w-72"
+                        className="w-72 disabled:opacity-50/10"
                         value={predictedDays ? `Approximately ${predictedWeeks} weeks (${predictedDays} days)` : "Calculating..."}
                         readOnly
+                        disabled
                     />
                     {predictionsLoading && (
                         <Loader2 className="absolute right-3 top-2.5 h-4 w-4 animate-spin text-redBase" />

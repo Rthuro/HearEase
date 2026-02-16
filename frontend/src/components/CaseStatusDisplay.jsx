@@ -7,12 +7,20 @@ export function CaseStatusDisplay({ caseStatus }) {
         // Case Status
         draft: { text: "Draft", icon: <FileText className="text-blue-500" /> },
         archived: { text: "Archived", icon: <FileArchive className="text-gray-500" /> },
-        pending_approval: { text: "Pending Approval", icon: <ClockFadingIcon className="text-yellow-500" /> },
+        pending_approval: { text: "Pending Approval", icon: <ClockFadingIcon className="text-zinc-400" /> },
         approved: { text: "Approved", icon: <CheckCircle className="text-green-500" /> },
-        in_progress: { text: "In Progress", icon: <Loader className="text-zinc-400" /> },
-        resolved: { text: "Resolved", icon: <BadgeCheck className="text-green-500" /> },
-        escalated: { text: "Escalated", icon: <Gavel className="text-red-500" /> },
-        rejected: { text: "Rejected", icon: <FileX className="text-red-500" /> },
+        in_progress: { text: "In Progress", icon: <Loader className=" text-yellow-700" />,
+            custom: "bg-yellow-50 border border-yellow-200 text-yellow-700"
+         },
+        resolved: { text: "Resolved", icon: <BadgeCheck className="text-green-600" />,
+            custom: "bg-green-50 border border-green-200 text-green-600"
+         },
+        escalated: { text: "Escalated", icon: <Gavel className="text-red-500" />,
+            custom: "bg-red-50 border border-red-200 text-red-600"
+         },
+        rejected: { text: "Rejected", icon: <FileX className="text-red-700" />,
+            custom: "bg-red-50  text-red-700"
+         },
         cancelled: { text: "Cancelled", icon: <FileArchive className="text-gray-500" /> },
 
         // Hearing Status
@@ -25,7 +33,7 @@ export function CaseStatusDisplay({ caseStatus }) {
     };
 
     return (
-        <Badge variant="outline" className="text-muted-foreground px-1.5 h-fit">
+        <Badge variant="outline" className={`text-muted-foreground px-1.5 h-fit ${statusStyles[caseStatus]?.custom ? statusStyles[caseStatus]?.custom : null}`}>
             {statusStyles[caseStatus]?.icon}
             <span>{statusStyles[caseStatus]?.text}</span>
         </Badge>

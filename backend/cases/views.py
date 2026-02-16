@@ -8,6 +8,8 @@ from django.db import transaction
 from case_persons.serializers import CasePersonSerializer
 from case_persons.models import CasePerson
 from .models import Case, SettlementType, CaseType, Relationship
+from users.models import NotificationPreference
+from users.utils import EmailNotification, PhoneNotification
 from .serializers import CaseSerializer, CaseTypeSerializer, SettlementTypeSerializer, RelationshipSerializer
 from hearings.models import Hearing, HearingAttendance
 from django.contrib.auth import get_user_model
@@ -16,6 +18,7 @@ from django.db.models import Count
 from datetime import datetime
 from django.db.models.functions import Trim 
 from rest_framework.permissions import AllowAny, IsAuthenticated
+
 
 
 User = get_user_model()
@@ -253,6 +256,8 @@ class CaseView(APIView):
                         hearing_status=current_status,
                     )
 
+            send_notification(ids=[p.id for p in new_case.complainants.all()], case_id=new_case.id, case_status=new_case.case_status, remarks=request.data.get("remarks"), type=1)
+
             # Serialize and return
             serializer = CaseSerializer(new_case)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -473,7 +478,8 @@ class UpdateCaseInfoView(APIView):
                     print(f"[Case] Case #{pk} resolved - auto-retrain counter incremented")
                 except Exception as e:
                     print(f"[Case] Auto-retrain check failed: {e}")
-            
+
+            send_notification(ids=[p.id for p in case.complainants.all()], case_id=case.id, case_status=new_status, remarks=request.data.get("remarks", ""), type=2)
             response_data = CaseSerializer(case).data
             return Response(response_data, status=status.HTTP_200_OK)
 
@@ -571,6 +577,8 @@ class UpdateHearingProgressView(APIView):
 
                     Hearing.objects.filter(case=case, hearing_number__gt=hearing_number).delete()
 
+                    send_notification(ids=[p.id for p in case.complainants.all()], case_id=case.id, case_status="resolved", remarks=request.data.get("remarks"), type=2)
+
                 else: # court
                     case.case_status = "escalated"
                     case.cfa_destination = request.data.get("cfa_destination")
@@ -581,6 +589,8 @@ class UpdateHearingProgressView(APIView):
                         hearing_completed_date=datetime.now(),
                         remarks="Hearing completed (Case escalated to court)."
                     )
+
+                    send_notification(ids=[p.id for p in case.complainants.all()], case_id=case.id, case_status="escalated", remarks=request.data.get("remarks"), type=2)
                 
                 case.save()
 
@@ -758,4 +768,70 @@ class CasePriorityView(APIView):
         
         return Response(prioritized_cases[:limit], status=status.HTTP_200_OK)
 
+def send_notification(ids, case_id, case_status, remarks="", type=1): 
+    all_involved_complainants = ids
+    involved_complainants = CasePerson.objects.filter(
+        id__in=all_involved_complainants,
+        email__isnull=False
+    ).exclude(email__exact="")
 
+    involved_complainant_emails = [p.email for p in involved_complainants]
+    users_to_notify = User.objects.filter(
+        email__in=involved_complainant_emails
+    ).select_related('notification_preferences')
+
+    for user in users_to_notify:
+        try:
+            prefs = user.notification_preferences
+        except NotificationPreference.DoesNotExist:
+            print(f"Skipping {user.email}: No notification preferences found.")
+            continue
+
+        # --- EMAIL NOTIFICATION ---
+        # Check if Account is Verified AND User allows Emails
+        if user.is_email_verified and prefs.allow_email:
+            if type == 1:  # Case Created
+                EmailNotification.created_case_notification(
+                    user_email=user.email,
+                    name=f"{user.first_name} {user.middle_name or ''} {user.last_name}",
+                    case_number=case_id,
+                    case_status=case_status
+                )
+            elif type == 2:  # Case Updated
+                EmailNotification.case_status_update_notification(
+                    user_email=user.email,
+                    name=f"{user.first_name} {user.middle_name or ''} {user.last_name}",
+                    case_number=case_id,
+                    case_status=case_status,
+                    remarks=remarks
+                )
+
+        # --- PHONE/SMS NOTIFICATION ---
+        # Check if Phone is Verified AND User allows SMS
+        if user.is_phone_verified and prefs.allow_sms: 
+            if user.contact_number:
+
+                if  user.contact_number.startswith("0"):
+                    formatted_phone = f"+63{user.contact_number[1:]}"
+                elif not user.contact_number.startswith("+"):
+                    formatted_phone = f"+{user.contact_number}"
+                else:
+                    formatted_phone = user.contact_number
+
+                if type == 1:  # Case Created
+                    PhoneNotification.created_case_notification(
+                        user_email=user.email,
+                        contact_number=formatted_phone,
+                        name=f"{user.first_name} {user.middle_name or ''} {user.last_name}",
+                        case_number=case_id,
+                        case_status=case_status
+                    )
+                elif type == 2:  # Case Updated
+                    PhoneNotification.case_status_update_notification(
+                        user_email=user.email,
+                        contact_number=formatted_phone,
+                        name=f"{user.first_name} {user.middle_name or ''} {user.last_name}",
+                        case_number=case_id,
+                        case_status=case_status,
+                        remarks=remarks
+                    )
