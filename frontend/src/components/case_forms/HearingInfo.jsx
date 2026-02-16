@@ -80,6 +80,7 @@ export function HearingInfo() {
                         className="w-72"
                         value={predictionsLoading ? "Calculating..." : predictedHearings}
                         readOnly
+                        disable
                     />
                     {predictionsLoading && (
                         <Loader2 className="absolute right-3 top-2.5 h-4 w-4 animate-spin text-redBase" />
@@ -98,6 +99,7 @@ export function HearingInfo() {
                         className="w-72"
                         value={predictedDays ? `Approximately ${predictedWeeks} weeks (${predictedDays} days)` : "Calculating..."}
                         readOnly
+                        disable
                     />
                     {predictionsLoading && (
                         <Loader2 className="absolute right-3 top-2.5 h-4 w-4 animate-spin text-redBase" />
