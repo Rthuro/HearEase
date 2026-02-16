@@ -55,6 +55,9 @@ export function HearingSched({ predicted, luponMembers }) {
   const [expediteInterval, setExpediteInterval] = useState(null);
   const [loadingTimeSlot, setLoadingTimeSlot] = useState(null);
 
+  // Track occupied time slots per date (key = "YYYY-MM-DD", value = Set of occupied times)
+  const [occupiedSlots, setOccupiedSlots] = useState({});
+
   // Workload state for smart Lupon assignment
   const [luponWorkloads, setLuponWorkloads] = useState({});
   const [suggestedLuponId, setSuggestedLuponId] = useState(null);
@@ -354,7 +357,7 @@ export function HearingSched({ predicted, luponMembers }) {
     }
   }, [mode, expediteInterval, luponMembers, Object.keys(luponWorkloads).length]);
 
-  // Fetch optimal time slot for a given date
+  // Fetch optimal time slot for a given date and store occupied slots
   const fetchOptimalTime = async (date, index) => {
     if (!date) return "09:00"; // Default to 9 AM
 
@@ -364,6 +367,16 @@ export function HearingSched({ predicted, luponMembers }) {
       const response = await axios.get(`${API_URL}/optimal-slot/`, {
         params: { date: dateStr }
       });
+
+      // Store occupied slots for this date
+      if (response.data?.all_slots) {
+        const occupied = new Set(
+          response.data.all_slots
+            .filter(s => s.occupied)
+            .map(s => s.time)
+        );
+        setOccupiedSlots(prev => ({ ...prev, [dateStr]: occupied }));
+      }
 
       // API returns { optimal_time: "09:00", all_slots: [...], load_status: "light" }
       if (response.data?.optimal_time) {
@@ -625,17 +638,46 @@ export function HearingSched({ predicted, luponMembers }) {
               {/* Time */}
               <div className="grid grid-cols-1 gap-2">
                 <Label htmlFor={`time-${i}`}>Time</Label>
-                <Input
-                  id={`time-${i}`}
-                  type="time"
-                  value={hearingInfo[i]?.time || ""}
-                  onChange={(e) => {
-                    const newHearingInfo = [...hearingInfo];
-                    newHearingInfo[i].time = e.target.value;
-                    setHearingInfo(newHearingInfo);
-                    setHearings(newHearingInfo);
-                  }}
-                />
+                {(() => {
+                  const dateStr = hearingInfo[i]?.hearing_date
+                    ? new Date(hearingInfo[i].hearing_date).toISOString().split('T')[0]
+                    : null;
+                  const occupied = dateStr ? (occupiedSlots[dateStr] || new Set()) : new Set();
+
+                  return (
+                    <Select
+                      value={hearingInfo[i]?.time || ""}
+                      onValueChange={(val) => {
+                        const newHearingInfo = [...hearingInfo];
+                        newHearingInfo[i].time = val;
+                        setHearingInfo(newHearingInfo);
+                        setHearings(newHearingInfo);
+                      }}
+                    >
+                      <SelectTrigger id={`time-${i}`} className="w-full">
+                        <SelectValue placeholder="Select time" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>Available Slots</SelectLabel>
+                          {TIME_SLOTS.map((time) => {
+                            const isBusy = occupied.has(time);
+                            return (
+                              <SelectItem
+                                key={time}
+                                value={time}
+                                disabled={isBusy}
+                                className={isBusy ? "text-zinc-400 opacity-50" : ""}
+                              >
+                                {time} {isBusy ? "(Occupied)" : ""}
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  );
+                })()}
               </div>
 
               {/* Lupon Selector */}
