@@ -31,15 +31,20 @@ export function GenerateDocument() {
     const [ noShowUserData, setNoShowUserData ] = useState({});
     const [ noShowModal, setNoShowModal ] = useState(false);
     const { templates, fetchTemplates, generateDocument} = useGenerateDocumentStore();
-    
+    const [loader, setLoader] = useState(false);
 
     useEffect(() => {
-        fetchTemplates();
+        if(templates.length === 0){
+            setLoader(true);
+            try {
+                fetchTemplates();
+            } catch (error) {
+                console.log(error);
+            } finally {
+                setLoader(false);
+            }
+        }
     }, []);
-
-    const filteredCase = cases?.filter( c => c?.case_type?.case_name.toLowerCase().includes(searchTerm.toLowerCase()));
-
-    
 
     const handleTemplateSelect = async (case_data, template_name, template_id) => {
         try {
@@ -67,7 +72,7 @@ export function GenerateDocument() {
             img: cancellation_notice,
             template_id: templates.find( t => t.template_type === 'cancellation')?.id,
         },{
-            code: 'file_court',
+            code: 'court',
             title: "File Court Certification",
             img: file_court,
             template_id: templates.find( t => t.template_type === 'court')?.id,
@@ -78,15 +83,44 @@ export function GenerateDocument() {
             template_id: templates.find( t => t.template_type === 'no-show')?.id,
         }
     ]
+    console.log(generate)
+
+    const [term, setTerm] = useState("all");
+
+    const filterCases = (term) => {
+        switch(term) {
+            case 'summon':
+                return cases.filter( c => c.summon_status === "pending" && c.case_status !== "filed" && c.case_status !== "rejected" && c.case_status !== "archived" );
+            case 'monitoring':
+                return cases.filter( c => c.case_status !== "filed" && c.case_status !== "pending_approval" && c.case_status !== "rejected" );
+            case 'cancellation':
+                return cases.filter( c => c.case_status === "in_progress" );
+            case 'court':
+                return cases.filter( c => c.case_status === "escalated");
+            case 'no-show':
+                return cases.filter( c => c.case_status === "in_progress" );
+            default:
+                return cases;
+        }
+    }
+
+    const filteredCase = filterCases(term)?.filter( c => c?.id.toLowerCase().includes(searchTerm.toLowerCase()));
+
 
     return(
         <div className="flex flex-col gap-2 p-4 relative">
             <PageSync page="Generate Documents" />
            <h1 className="text-2xl font-medium">Generate Documents</h1>
            <p className="text-zinc-700">Quickly produce official documents for any case.</p>
+           
+           { loader && (<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-redBase">
+                    
+                </div>
+            </div>)}
+
             <div className="flex flex-wrap gap-4 mt-2 ">
                 {generate.map( (doc) =>
-                   
                     <Dialog key={doc.code}>
                         <form>
                             {doc.code === 'appointment' ? (
@@ -96,7 +130,7 @@ export function GenerateDocument() {
                                 </button>
                             ) : (
                             <DialogTrigger asChild>
-                                <button type="button" key={doc.title} className="shadow-sm bg-white rounded-xl flex flex-col gap-6 items-center justify-center p-6 w-[250px] ">
+                                <button type="button" key={doc.title} className="shadow-sm bg-white rounded-xl flex flex-col gap-6 items-center justify-center p-6 w-[250px] " onClick={ () => setTerm(doc.code)}>
                                     <img src={doc.img} className="h-[150px]" />
                                     <p className="text-redBase">{doc.title}</p>
                                 </button>
@@ -116,7 +150,7 @@ export function GenerateDocument() {
 
                                 </div>
                                 <div className="overflow-hidden my-2">
-                                    <div className="flex flex-col gap-4 overflow-y-scroll h-[300px]">
+                                    <div className="flex flex-col gap-4 overflow-y-scroll max-h-[300px]">
                                         {filteredCase.map( (c) =>
                                             <button type="button" key={c.id} className="p-3 flex item justify-between border rounded-lg hover:bg-zinc-50 text-left" 
                                             onClick={ () => {
