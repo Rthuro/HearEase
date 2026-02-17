@@ -12,8 +12,15 @@ export const useGoogleCalendarStore = create((set, get) => ({
     syncing: false,
     lastUpdated: null,
 
-    // Sync settings state
+    // Sync settings state (global admin settings)
     syncSettings: null,
+
+    // Per-user sync preferences
+    syncPreferences: null,
+
+    // User's available hearings (for "selected" picker)
+    myHearings: [],
+    myHearingsLoading: false,
 
     // Holidays state
     holidays: [],
@@ -81,20 +88,22 @@ export const useGoogleCalendarStore = create((set, get) => ({
         }
     },
 
-    // Sync all hearings
-    syncAll: async () => {
+    // Sync hearings (passes user email so backend applies per-user filter)
+    syncAll: async (userEmail = null) => {
         set({ syncing: true });
         try {
-            const response = await axios.post(`${API_URL}/google-calendar/sync-all/`);
+            const payload = userEmail ? { email: userEmail } : {};
+            const response = await axios.post(`${API_URL}/google-calendar/sync-all/`, payload);
             const { synced, total, errors } = response.data;
 
             if (errors && errors.length > 0) {
                 console.error("Sync errors:", errors);
-                // Show first 3 errors max
                 const errorPreview = errors.slice(0, 3).join(", ");
                 toast.error(`Synced ${synced}/${total} hearings with some errors: ${errorPreview}`);
             } else if (synced === 0 && total > 0) {
                 toast.error(`Failed to sync any hearings (0/${total})`);
+            } else if (synced === 0 && total === 0) {
+                toast("No hearings to sync based on your filter settings.", { icon: "ℹ️" });
             } else {
                 toast.success(`Successfully synced ${synced} hearings to Google Calendar!`);
             }
@@ -109,7 +118,7 @@ export const useGoogleCalendarStore = create((set, get) => ({
         }
     },
 
-    // Fetch sync settings
+    // Fetch global sync settings (admin)
     fetchSyncSettings: async () => {
         try {
             const response = await axios.get(`${API_URL}/google-calendar/sync-settings/`);
@@ -117,7 +126,6 @@ export const useGoogleCalendarStore = create((set, get) => ({
             return response.data;
         } catch (error) {
             console.error("Error fetching sync settings:", error);
-            // If no settings exist, use defaults
             set({
                 syncSettings: {
                     auto_sync_enabled: false,
@@ -130,7 +138,7 @@ export const useGoogleCalendarStore = create((set, get) => ({
         }
     },
 
-    // Update sync settings
+    // Update global sync settings (admin)
     updateSyncSettings: async (updates) => {
         try {
             const currentSettings = get().syncSettings || {};
@@ -144,6 +152,59 @@ export const useGoogleCalendarStore = create((set, get) => ({
             console.error("Error updating sync settings:", error);
             toast.error("Failed to update sync settings");
             return null;
+        }
+    },
+
+    // Fetch per-user sync preferences
+    fetchSyncPreferences: async (userEmail) => {
+        if (!userEmail) return null;
+        try {
+            const response = await axios.get(`${API_URL}/google-calendar/sync-preferences/`, {
+                params: { email: userEmail }
+            });
+            set({ syncPreferences: response.data });
+            return response.data;
+        } catch (error) {
+            console.error("Error fetching sync preferences:", error);
+            return null;
+        }
+    },
+
+    // Update per-user sync preferences
+    updateSyncPreferences: async (userEmail, syncFilter, selectedHearingIds = []) => {
+        try {
+            const response = await axios.put(`${API_URL}/google-calendar/sync-preferences/`, {
+                email: userEmail,
+                sync_filter: syncFilter,
+                selected_hearing_ids: selectedHearingIds,
+            });
+            set({ syncPreferences: response.data });
+            toast.success("Sync preferences updated");
+            return response.data;
+        } catch (error) {
+            console.error("Error updating sync preferences:", error);
+            toast.error("Failed to update sync preferences");
+            return null;
+        }
+    },
+
+    // Fetch hearings associated with a user (for "selected" picker)
+    fetchMyHearings: async (userEmail) => {
+        if (!userEmail) return [];
+        set({ myHearingsLoading: true });
+        try {
+            const response = await axios.get(`${API_URL}/google-calendar/my-hearings/`, {
+                params: { email: userEmail }
+            });
+            set({
+                myHearings: response.data.hearings || [],
+                myHearingsLoading: false,
+            });
+            return response.data.hearings;
+        } catch (error) {
+            console.error("Error fetching my hearings:", error);
+            set({ myHearingsLoading: false });
+            return [];
         }
     },
 

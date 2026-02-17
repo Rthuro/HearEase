@@ -89,3 +89,37 @@ class CalendarSyncSettings(models.Model):
         status = "Enabled" if self.auto_sync_enabled else "Disabled"
         return f"Calendar Sync Settings ({status})"
 
+
+class UserCalendarSyncPreference(models.Model):
+    """
+    Per-user sync filter preferences for Google Calendar.
+    Controls which hearings get synced to a user's calendar.
+    """
+    SYNC_FILTER_CHOICES = [
+        ("all", "All Hearings"),
+        ("my_hearings", "Only My Hearings"),
+        ("selected", "Selected Hearings Only"),
+    ]
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="calendar_sync_preference"
+    )
+    sync_filter = models.CharField(
+        max_length=20,
+        choices=SYNC_FILTER_CHOICES,
+        default="my_hearings",
+        help_text="Which hearings to sync to this user's Google Calendar"
+    )
+    selected_hearing_ids = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="List of hearing IDs to sync (only used when sync_filter='selected')"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Sync Preference for {self.user.email}: {self.get_sync_filter_display()}"

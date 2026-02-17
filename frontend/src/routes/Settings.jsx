@@ -28,7 +28,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import NotificationSettings from "@/components/NotificationSettings";
-import { User2, Bell, LockKeyhole, LogOut, CalendarIcon, RefreshCw, Check, X, Loader2, Brain, Settings2 } from "lucide-react";
+import { User2, Bell, LockKeyhole, LogOut, CalendarIcon, RefreshCw, Check, X, Loader2, Brain, Settings2, Filter, ListChecks } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useGoogleCalendarStore } from "@/store/useGoogleCalendarStore";
 import { useAIModelStore } from "@/store/useAIModelStore";
@@ -251,8 +251,16 @@ export function Settings() {
         syncAll,
         syncSettings,
         fetchSyncSettings,
-        updateSyncSettings
+        updateSyncSettings,
+        syncPreferences,
+        fetchSyncPreferences,
+        updateSyncPreferences,
+        myHearings,
+        myHearingsLoading,
+        fetchMyHearings,
     } = useGoogleCalendarStore();
+
+    const [selectedHearingIds, setSelectedHearingIds] = useState([]);
 
     useEffect(() => {
         // Check Google Calendar status for current user
@@ -260,6 +268,9 @@ export function Settings() {
 
         // Fetch sync settings
         fetchSyncSettings();
+
+        // Fetch per-user sync preferences
+        fetchSyncPreferences(data?.email);
 
         // Fetch AI model status
         fetchAIStatus();
@@ -276,6 +287,20 @@ export function Settings() {
             toast.error(`Google Calendar error: ${googleError}`);
         }
     }, []);
+
+    // Load sync preferences and my hearings when preferences change
+    useEffect(() => {
+        if (syncPreferences) {
+            setSelectedHearingIds(syncPreferences.selected_hearing_ids || []);
+        }
+    }, [syncPreferences]);
+
+    // Fetch hearings when sync filter is "selected"
+    useEffect(() => {
+        if (syncPreferences?.sync_filter === 'selected' || connected) {
+            fetchMyHearings(data?.email);
+        }
+    }, [syncPreferences?.sync_filter, connected]);
 
 
     return (
@@ -310,10 +335,10 @@ export function Settings() {
                     <TabsTrigger value="notif">Notification</TabsTrigger>
                     <TabsTrigger value="autoSync">Auto-Sync Settings</TabsTrigger>
                     <TabsTrigger value="support">Support</TabsTrigger>
+                    <TabsTrigger value="integrations">Integrations</TabsTrigger>
 
                     {userRole === "admin" && (
                         <>
-                            <TabsTrigger value="integrations">Integrations</TabsTrigger>
                             <TabsTrigger value="aiModel">AI Model</TabsTrigger>
                             <TabsTrigger value="systemConfig">System Configuration</TabsTrigger>
                             <TabsTrigger value="adminTickets">Support Tickets</TabsTrigger>
@@ -633,7 +658,7 @@ export function Settings() {
                 <TabsContent value="integrations">
                     <div className="flex-1 flex flex-col gap-4">
                         <h2 className="text-lg font-medium">Integrations</h2>
-                        {/* Google Calendar Section */}
+                        {/* Google Calendar Connection Section */}
                         <div className="border rounded-lg p-4">
                             <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center gap-3">
@@ -643,7 +668,7 @@ export function Settings() {
                                     <div>
                                         <h3 className="font-medium">Google Calendar</h3>
                                         <p className="text-sm text-gray-500">
-                                            Sync hearings to Google Calendar
+                                            Sync hearings to your Google Calendar
                                         </p>
                                     </div>
                                 </div>
@@ -678,7 +703,7 @@ export function Settings() {
                                 {connected ? (
                                     <>
                                         <Button
-                                            onClick={syncAll}
+                                            onClick={() => syncAll(data?.email)}
                                             disabled={syncing}
                                             className="bg-blue-600 hover:bg-blue-700"
                                         >
@@ -690,7 +715,7 @@ export function Settings() {
                                             ) : (
                                                 <>
                                                     <RefreshCw className="size-4 mr-2" />
-                                                    Sync All Hearings
+                                                    Sync Hearings
                                                 </>
                                             )}
                                         </Button>
@@ -719,6 +744,118 @@ export function Settings() {
                                 )}
                             </div>
                         </div>
+
+                        {/* Sync Filter Preferences — shown when connected */}
+                        {connected && (
+                            <div className="border rounded-lg p-4">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                                        <Filter className="size-5 text-purple-600" />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-medium">Sync Filter</h3>
+                                        <p className="text-sm text-gray-500">
+                                            Choose which hearings to sync to your calendar
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-3">
+                                    {/* Filter options */}
+                                    <div className="space-y-2">
+                                        {[
+                                            { value: "all", label: "All Hearings", desc: "Sync all future hearings" },
+                                            { value: "my_hearings", label: "Only My Hearings", desc: "Sync only hearings related to you" },
+                                            { value: "selected", label: "Selected Hearings", desc: "Choose specific hearings to sync" },
+                                        ].map((option) => (
+                                            <label
+                                                key={option.value}
+                                                className={`flex items-center gap-3 p-3 rounded-md border cursor-pointer transition-colors ${(syncPreferences?.sync_filter || (userRole === 'admin' ? 'all' : 'my_hearings')) === option.value
+                                                        ? 'border-blue-300 bg-blue-50'
+                                                        : 'border-gray-200 hover:bg-gray-50'
+                                                    }`}
+                                            >
+                                                <input
+                                                    type="radio"
+                                                    name="syncFilter"
+                                                    value={option.value}
+                                                    checked={(syncPreferences?.sync_filter || (userRole === 'admin' ? 'all' : 'my_hearings')) === option.value}
+                                                    onChange={() => updateSyncPreferences(data?.email, option.value, selectedHearingIds)}
+                                                    className="accent-blue-600"
+                                                />
+                                                <div>
+                                                    <p className="font-medium text-sm">{option.label}</p>
+                                                    <p className="text-xs text-gray-500">{option.desc}</p>
+                                                </div>
+                                            </label>
+                                        ))}
+                                    </div>
+
+                                    {/* Selected hearings picker */}
+                                    {(syncPreferences?.sync_filter === 'selected') && (
+                                        <div className="border-t pt-3">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <ListChecks className="size-4 text-gray-500" />
+                                                <p className="font-medium text-sm">Select Hearings to Sync</p>
+                                            </div>
+                                            {myHearingsLoading ? (
+                                                <div className="flex items-center gap-2 text-gray-400 text-sm py-2">
+                                                    <Loader2 className="size-4 animate-spin" />
+                                                    Loading hearings...
+                                                </div>
+                                            ) : myHearings.length === 0 ? (
+                                                <p className="text-sm text-gray-400 py-2">No upcoming hearings found.</p>
+                                            ) : (
+                                                <>
+                                                    <div className="max-h-60 overflow-y-auto space-y-1">
+                                                        {myHearings.map((h) => (
+                                                            <label
+                                                                key={h.id}
+                                                                className={`flex items-center gap-2 p-2 rounded text-sm cursor-pointer transition-colors ${selectedHearingIds.includes(h.id)
+                                                                        ? 'bg-blue-50 border border-blue-200'
+                                                                        : 'hover:bg-gray-50 border border-transparent'
+                                                                    }`}
+                                                            >
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={selectedHearingIds.includes(h.id)}
+                                                                    onChange={(e) => {
+                                                                        const newIds = e.target.checked
+                                                                            ? [...selectedHearingIds, h.id]
+                                                                            : selectedHearingIds.filter(id => id !== h.id);
+                                                                        setSelectedHearingIds(newIds);
+                                                                    }}
+                                                                    className="accent-blue-600"
+                                                                />
+                                                                <div className="flex-1">
+                                                                    <span className="font-medium">Case #{h.case_id}</span>
+                                                                    <span className="text-gray-400 ml-2">{h.case_type}</span>
+                                                                    <span className="text-gray-400 ml-2">
+                                                                        {h.hearing_date} {h.time ? `at ${h.time}` : ''}
+                                                                    </span>
+                                                                </div>
+                                                            </label>
+                                                        ))}
+                                                    </div>
+                                                    <div className="flex justify-between items-center mt-2">
+                                                        <p className="text-xs text-gray-400">
+                                                            {selectedHearingIds.length} of {myHearings.length} selected
+                                                        </p>
+                                                        <Button
+                                                            size="sm"
+                                                            onClick={() => updateSyncPreferences(data?.email, 'selected', selectedHearingIds)}
+                                                            className="bg-blue-600 hover:bg-blue-700"
+                                                        >
+                                                            Save Selection
+                                                        </Button>
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </TabsContent>
 

@@ -7,9 +7,10 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import redirect
 from django.contrib.auth import get_user_model
-from datetime import datetime
+from django.db.models import Q
+from datetime import datetime, date
 
-from .models import GoogleCalendarToken, CalendarSyncLog
+from .models import GoogleCalendarToken, CalendarSyncLog, UserCalendarSyncPreference
 from .service import (
     get_authorization_url,
     exchange_code_for_tokens,
@@ -20,6 +21,7 @@ from .service import (
     delete_hearing_event
 )
 from hearings.models import Hearing
+from lupon_members.models import LuponMember
 
 User = get_user_model()
 
@@ -204,12 +206,26 @@ class GoogleDisconnectView(APIView):
 
 class SyncAllHearingsView(APIView):
     """
-    Sync all future hearings to Google Calendar.
+    Sync hearings to Google Calendar for a specific user.
+    Applies the user's sync filter preference.
     
     POST /api/google-calendar/sync-all/
+    { "email": "user@email.com" }  (optional, falls back to first token)
     """
     def post(self, request):
-        token = GoogleCalendarToken.objects.first()
+        user_email = request.data.get('email', '')
+        
+        # Find the user's token
+        if user_email:
+            user = User.objects.filter(email=user_email).first()
+            if user:
+                token = GoogleCalendarToken.objects.filter(user=user).first()
+            else:
+                token = None
+        else:
+            # Fallback for backward compatibility
+            token = GoogleCalendarToken.objects.first()
+            user = token.user if token else None
         
         if not token:
             return Response(
@@ -230,13 +246,10 @@ class SyncAllHearingsView(APIView):
                     token.token_expiry = credentials.expiry
                 token.save()
             
-            # Get all future hearings
-            from datetime import date
-            hearings = Hearing.objects.filter(
-                hearing_date__gte=date.today()
-            ).select_related('case', 'case__case_type', 'lupon_member')
+            # Get hearings filtered by user's preference
+            hearings = get_hearings_for_user(user)
             
-            print(f"[Sync] Found {hearings.count()} hearings to sync")
+            print(f"[Sync] Found {hearings.count()} hearings to sync for {user.email}")
             
             synced = 0
             errors = []
@@ -253,20 +266,17 @@ class SyncAllHearingsView(APIView):
                     
                     if hearing.google_event_id:
                         # Update existing
-                        print(f"[Sync] Updating existing event: {hearing.google_event_id}")
                         update_hearing_event(
                             service, token.calendar_id, 
                             hearing.google_event_id, hearing
                         )
                     else:
                         # Create new
-                        print(f"[Sync] Creating new event for hearing #{hearing.id}")
                         event_id = create_hearing_event(
                             service, token.calendar_id, hearing
                         )
                         hearing.google_event_id = event_id
                         hearing.save(update_fields=['google_event_id'])
-                        print(f"[Sync] Created event: {event_id}")
                     
                     synced += 1
                     
@@ -274,7 +284,7 @@ class SyncAllHearingsView(APIView):
                         hearing=hearing,
                         action="update" if had_event_id else "create",
                         google_event_id=hearing.google_event_id,
-                        message="Synced successfully"
+                        message=f"Synced for {user.email}"
                     )
                     
                 except Exception as e:
@@ -314,11 +324,96 @@ class SyncAllHearingsView(APIView):
             )
 
 
+def get_hearings_for_user(user):
+    """
+    Get hearings filtered by user's sync preference.
+    
+    - Admin with "all" filter: all future hearings
+    - Regular user with "my_hearings": hearings for cases where user is complainant/respondent
+    - Lupon with "my_hearings": hearings assigned to their lupon member record
+    - "selected" filter: only specific hearing IDs
+    """
+    base_qs = Hearing.objects.filter(
+        hearing_date__gte=date.today()
+    ).select_related('case', 'case__case_type', 'lupon_member')
+    
+    # Get sync preference (default to "my_hearings" for users, "all" for admins)
+    try:
+        pref = UserCalendarSyncPreference.objects.get(user=user)
+        sync_filter = pref.sync_filter
+    except UserCalendarSyncPreference.DoesNotExist:
+        # Default: admin gets all, others get my_hearings
+        sync_filter = "all" if (user.is_admin or user.is_superadmin) else "my_hearings"
+    
+    if sync_filter == "all":
+        return base_qs
+    
+    elif sync_filter == "selected":
+        try:
+            pref = UserCalendarSyncPreference.objects.get(user=user)
+            selected_ids = pref.selected_hearing_ids or []
+            return base_qs.filter(id__in=selected_ids)
+        except UserCalendarSyncPreference.DoesNotExist:
+            return base_qs.none()
+    
+    elif sync_filter == "my_hearings":
+        # Check if user is a lupon member
+        lupon = LuponMember.objects.filter(email=user.email).first()
+        if lupon:
+            return base_qs.filter(lupon_member=lupon)
+        
+        # Regular user: match via case complainants/respondents email
+        return base_qs.filter(
+            Q(case__complainants__email=user.email) |
+            Q(case__respondents__email=user.email)
+        ).distinct()
+    
+    return base_qs.none()
+
+
+def _should_sync_hearing_for_user(hearing, user):
+    """
+    Check if a specific hearing matches a user's sync preference.
+    Returns True if the hearing should be synced for this user.
+    """
+    try:
+        pref = UserCalendarSyncPreference.objects.get(user=user)
+        sync_filter = pref.sync_filter
+    except UserCalendarSyncPreference.DoesNotExist:
+        sync_filter = "all" if (user.is_admin or user.is_superadmin) else "my_hearings"
+    
+    if sync_filter == "all":
+        return True
+    
+    elif sync_filter == "selected":
+        try:
+            pref = UserCalendarSyncPreference.objects.get(user=user)
+            return hearing.id in (pref.selected_hearing_ids or [])
+        except UserCalendarSyncPreference.DoesNotExist:
+            return False
+    
+    elif sync_filter == "my_hearings":
+        # Check lupon
+        lupon = LuponMember.objects.filter(email=user.email).first()
+        if lupon and hearing.lupon_member_id == lupon.id:
+            return True
+        
+        # Check complainant/respondent
+        case = hearing.case
+        if case:
+            is_complainant = case.complainants.filter(email=user.email).exists()
+            is_respondent = case.respondents.filter(email=user.email).exists()
+            return is_complainant or is_respondent
+    
+    return False
+
+
 def sync_hearing_to_google(hearing, action="create"):
     """
-    Helper function to sync a single hearing.
+    Helper function to sync a single hearing to ALL connected users' calendars.
     Called from hearing views on create/update/delete.
-    Respects CalendarSyncSettings for auto-sync behavior.
+    Respects CalendarSyncSettings for auto-sync behavior and
+    per-user sync preferences for filtering.
     """
     from .models import CalendarSyncSettings
     
@@ -338,51 +433,63 @@ def sync_hearing_to_google(hearing, action="create"):
     except Exception:
         return None  # Settings not available
     
-    token = GoogleCalendarToken.objects.first()
+    # Get ALL connected users' tokens
+    tokens = GoogleCalendarToken.objects.all().select_related('user')
     
-    if not token:
-        return None  # Silent fail if not connected
+    if not tokens.exists():
+        return None  # No one is connected
     
-    try:
-        service, credentials = get_calendar_service({
-            "access_token": token.access_token,
-            "refresh_token": token.refresh_token
-        }, token_obj=token)
+    results = []
+    
+    for token in tokens:
+        user = token.user
         
-        # Update token if refreshed
-        if credentials.token != token.access_token:
-            token.access_token = credentials.token
-            if credentials.expiry:
-                token.token_expiry = credentials.expiry
-            token.save()
+        # Check if this hearing matches the user's sync preference
+        if not _should_sync_hearing_for_user(hearing, user):
+            continue
         
-        if action == "create":
-            event_id = create_hearing_event(service, token.calendar_id, hearing)
-            hearing.google_event_id = event_id
-            hearing.save(update_fields=['google_event_id'])
+        try:
+            service, credentials = get_calendar_service({
+                "access_token": token.access_token,
+                "refresh_token": token.refresh_token
+            }, token_obj=token)
             
-        elif action == "update" and hearing.google_event_id:
-            update_hearing_event(service, token.calendar_id, hearing.google_event_id, hearing)
+            # Update token if refreshed
+            if credentials.token != token.access_token:
+                token.access_token = credentials.token
+                if credentials.expiry:
+                    token.token_expiry = credentials.expiry
+                token.save()
             
-        elif action == "delete" and hearing.google_event_id:
-            delete_hearing_event(service, token.calendar_id, hearing.google_event_id)
-        
-        CalendarSyncLog.objects.create(
-            hearing=hearing,
-            action=action,
-            google_event_id=hearing.google_event_id,
-            message="Success"
-        )
-        
-        return True
-        
-    except Exception as e:
-        CalendarSyncLog.objects.create(
-            hearing=hearing,
-            action="error",
-            message=str(e)
-        )
-        return False
+            if action == "create":
+                event_id = create_hearing_event(service, token.calendar_id, hearing)
+                hearing.google_event_id = event_id
+                hearing.save(update_fields=['google_event_id'])
+                
+            elif action == "update" and hearing.google_event_id:
+                update_hearing_event(service, token.calendar_id, hearing.google_event_id, hearing)
+                
+            elif action == "delete" and hearing.google_event_id:
+                delete_hearing_event(service, token.calendar_id, hearing.google_event_id)
+            
+            CalendarSyncLog.objects.create(
+                hearing=hearing,
+                action=action,
+                google_event_id=hearing.google_event_id,
+                message=f"Success (user: {user.email})"
+            )
+            
+            results.append(True)
+            
+        except Exception as e:
+            CalendarSyncLog.objects.create(
+                hearing=hearing,
+                action="error",
+                message=f"User {user.email}: {str(e)}"
+            )
+            results.append(False)
+    
+    return any(results) if results else None
 
 
 class HolidaysView(APIView):
@@ -501,3 +608,142 @@ def should_auto_sync():
         return settings_obj and settings_obj.auto_sync_enabled
     except:
         return False
+
+
+class UserSyncPreferencesView(APIView):
+    """
+    Get/Update per-user sync preferences.
+    
+    GET /api/google-calendar/sync-preferences/?email=user@email.com
+    PUT /api/google-calendar/sync-preferences/
+    """
+    def get(self, request):
+        user_email = request.query_params.get('email', '')
+        
+        if not user_email:
+            return Response(
+                {"error": "Email parameter is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        user = User.objects.filter(email=user_email).first()
+        if not user:
+            return Response(
+                {"error": "User not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Get or return defaults
+        try:
+            pref = UserCalendarSyncPreference.objects.get(user=user)
+            return Response({
+                "sync_filter": pref.sync_filter,
+                "selected_hearing_ids": pref.selected_hearing_ids,
+            }, status=status.HTTP_200_OK)
+        except UserCalendarSyncPreference.DoesNotExist:
+            default_filter = "all" if (user.is_admin or user.is_superadmin) else "my_hearings"
+            return Response({
+                "sync_filter": default_filter,
+                "selected_hearing_ids": [],
+            }, status=status.HTTP_200_OK)
+    
+    def put(self, request):
+        user_email = request.data.get('email', '')
+        sync_filter = request.data.get('sync_filter', '')
+        selected_hearing_ids = request.data.get('selected_hearing_ids', [])
+        
+        if not user_email:
+            return Response(
+                {"error": "Email is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        user = User.objects.filter(email=user_email).first()
+        if not user:
+            return Response(
+                {"error": "User not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        valid_filters = ["all", "my_hearings", "selected"]
+        if sync_filter not in valid_filters:
+            return Response(
+                {"error": f"sync_filter must be one of: {valid_filters}"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        pref, created = UserCalendarSyncPreference.objects.update_or_create(
+            user=user,
+            defaults={
+                "sync_filter": sync_filter,
+                "selected_hearing_ids": selected_hearing_ids if sync_filter == "selected" else [],
+            }
+        )
+        
+        return Response({
+            "sync_filter": pref.sync_filter,
+            "selected_hearing_ids": pref.selected_hearing_ids,
+            "message": "Sync preferences updated successfully"
+        }, status=status.HTTP_200_OK)
+
+
+class UserHearingsListView(APIView):
+    """
+    Get hearings associated with a user (for the 'selected' hearing picker).
+    
+    GET /api/google-calendar/my-hearings/?email=user@email.com
+    """
+    def get(self, request):
+        user_email = request.query_params.get('email', '')
+        
+        if not user_email:
+            return Response(
+                {"error": "Email parameter is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        user = User.objects.filter(email=user_email).first()
+        if not user:
+            return Response(
+                {"error": "User not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Get future hearings
+        base_qs = Hearing.objects.filter(
+            hearing_date__gte=date.today()
+        ).select_related('case', 'case__case_type', 'lupon_member')
+        
+        # If admin/superadmin, return all hearings
+        if user.is_admin or user.is_superadmin:
+            hearings = base_qs
+        else:
+            # Check if user is a lupon member
+            lupon = LuponMember.objects.filter(email=user.email).first()
+            if lupon:
+                hearings = base_qs.filter(lupon_member=lupon)
+            else:
+                # Regular user: match via case complainants/respondents
+                hearings = base_qs.filter(
+                    Q(case__complainants__email=user.email) |
+                    Q(case__respondents__email=user.email)
+                ).distinct()
+        
+        # Return simplified hearing data for the picker
+        hearings_data = []
+        for h in hearings:
+            hearings_data.append({
+                "id": h.id,
+                "case_id": h.case_id,
+                "case_type": h.case.case_type.case_name if h.case and h.case.case_type else "Unknown",
+                "hearing_date": str(h.hearing_date) if h.hearing_date else None,
+                "time": str(h.time) if h.time else None,
+                "hearing_number": h.hearing_number,
+                "hearing_status": h.hearing_status,
+                "lupon_member": str(h.lupon_member) if h.lupon_member else None,
+            })
+        
+        return Response({
+            "hearings": hearings_data,
+            "total": len(hearings_data),
+        }, status=status.HTTP_200_OK)
