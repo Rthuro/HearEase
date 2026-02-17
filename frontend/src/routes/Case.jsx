@@ -10,7 +10,7 @@ import cancellation_notice from "@/assets/imgs/cancellation_notice.png"
 import { cn } from "@/lib/utils";
 import { PageSync } from "@/components/PageSync";
 import { CaseStatusDisplay } from "@/components/CaseStatusDisplay";
-import { ChevronLeft, X,Check, Edit, ArrowRight, ArrowUpRight, Loader2, FileText, CheckCircle2, PartyPopper, Loader2Icon, AlertCircle, RotateCw  } from "lucide-react";
+import { ChevronLeft, X,Check, Scale, ArrowRight, ArrowUpRight, Loader2, FileText, CheckCircle2, PartyPopper, Loader2Icon, AlertCircle, RotateCw, CalendarIcon  } from "lucide-react";
 import { useEffect, useState } from "react";
 import useHearingStore from "@/store/useHearingStore";
 import {
@@ -22,6 +22,7 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import useCaseDocumentsStore from "@/store/useCaseDocumentStore";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useGenerateDocumentStore } from "@/store/useGenerateDocumentStore";
 import { EditCaseInfo } from "@/components/EditCaseInfo";
 import { CaseCancellationModal } from "@/components/CaseCancellationModal";
@@ -95,7 +96,7 @@ export function Case() {
                 },
                 {
                     label:"Actual Hearings",
-                    value: caseInfo?.actual_hearings || "-", 
+                    value: caseInfo?.actual_hearings || "Case not yet settled", 
                 },
                 {
                     label:"Predicted Hearings",
@@ -106,7 +107,7 @@ export function Case() {
                     value: caseInfo?.case_type.case_name || '-'
                 },{
                     label:"Settlement",
-                    value: caseInfo?.settlement_type?.settlement_name || '-'
+                    value: caseInfo?.settlement_type?.settlement_name || 'Case not yet settled'
                 },
                 {
                     label:"Severity",
@@ -118,7 +119,7 @@ export function Case() {
                 },
                 {
                     label:"Documents",
-                    value: case_documents
+                    value: case_documents || 'No documents submitted'
                 }
             ]
         }
@@ -281,6 +282,7 @@ export function Case() {
             setCaseInfo(updatedCase);
             fetchHearingsByCase(case_number);
             setFindHearingCase(caseHearings);   
+            fetchCaseDocuments(case_number);
             setRefreshLoader(false);
         }
         catch(error){
@@ -313,7 +315,7 @@ export function Case() {
                             </Button>
                         </div>
                     )}
-                    <CaseSettingsModal role={userRole} caseData={caseInfo} />
+                    <CaseSettingsModal role={userRole} caseData={caseInfo} hearings={findHearingCase} />
                     <Button
                     variant="outline"
                     onClick={refreshCaseData}>
@@ -490,29 +492,99 @@ export function Case() {
                 </div>
             )}
 
-            <div className="flex flex-col gap-4 bg-white p-4 rounded-md border shadow-2xs">
-                <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-medium">{caseDetails.section}</h2>
-                    <EditCaseInfo section="case"
-                        caseInfo={caseInfo} refresh={refreshCaseData} />
-                </div>
+            <Card className="shadow-sm border-zinc-200 py-2">
+                <CardHeader className="flex flex-row items-center justify-between gap-2 border-b bg-zinc-50/50 py-2">
+                        <div className="space-y-1">
+                            <CardTitle className="text-sm font-medium text-zinc-500 uppercase tracking-wider">
+                                Case Information
+                            </CardTitle>
+                            <div className="flex items-center gap-3">
+                                <h2 className="text-2xl font-bold text-zinc-900">{caseInfo?.id}</h2>
+                                <CaseStatusDisplay caseStatus={caseInfo?.case_status} />
+                            </div>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-xs text-zinc-400">Nature of Complaint</p>
+                            <p className="font-semibold text-zinc-700">{caseInfo?.case_type?.case_name || '-'}</p>
+                        </div>
+                        <EditCaseInfo section="case"
+                        caseInfo={{
+                            ...caseInfo,
+                            case_documents: case_documents
+                        }} refresh={refreshCaseData} />
+                </CardHeader>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {caseDetails.details.map((detail) => (
-                        <div key={detail.label}
-                            className={`flex flex-col gap-1 
-                            ${detail.label === 'Description' ? 'col-span-2' : ''}
-                            ${detail.label === 'Documents' ? 'col-span-4' : ''}
-                            `}
-                        >
-                            <Label className={cn("text-zinc-600 font-normal text-xs")}>
-                                {detail.label}
-                            </Label>
-                            {detail.label === 'Status' ? <CaseStatusDisplay caseStatus={detail.value} /> :
-                                detail.label === 'Documents' ?
-                                    <div className="flex gap-2">
-                                        {detail.value && detail.value.length > 0 ? (
-                                            detail.value.map((doc, index) => {
+                <CardContent className="px-4 py-2">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    
+                    {/* Column 1: Hearing Progress */}
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-2 text-zinc-500">
+                            <CalendarIcon className="w-4 h-4" />
+                            <span className="text-sm font-medium">Hearing Timeline</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-zinc-50 p-3 rounded-lg border">
+                                <p className="text-[10px] uppercase text-zinc-400 font-bold">Actual</p>
+                                <p className="text-lg font-semibold">{caseInfo?.actual_hearings || "0"}</p>
+                            </div>
+                            <div className="bg-zinc-50 p-3 rounded-lg border">
+                                <p className="text-[10px] uppercase text-zinc-400 font-bold">Predicted</p>
+                                <p className="text-lg font-semibold">{caseInfo?.predicted_hearings || "-"}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Column 2: Settlement Details */}
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-2 text-zinc-500">
+                            <Scale className="w-4 h-4" />
+                            <span className="text-sm font-medium">Resolution Status</span>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-xs text-zinc-400">Settlement Type</p>
+                            <p className="font-medium text-zinc-800">
+                                {caseInfo?.settlement_type?.settlement_name || (
+                                    <span className="text-zinc-400 italic text-sm font-normal">Case not yet settled</span>
+                                )}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Column 3: Priority/Severity */}
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-2 text-zinc-500">
+                            <AlertCircle className="w-4 h-4" />
+                            <span className="text-sm font-medium">Severity Level</span>
+                        </div>
+                        <div>
+                            <p className={cn("text-lg uppercase tracking-tight")}>
+                                {caseInfo?.case_type?.severity || '-'}
+                            </p>
+                            <p className="text-[10px] text-zinc-400">Priority based on nature of complaint</p>
+                        </div>
+                    </div>
+                    </div>
+
+                    {/* Full Width Sections */}
+                    <div className="mt-8 pt-6 border-t space-y-6">
+                    
+                        {/* Description */}
+                        <div className="space-y-2">
+                            <h4 className="text-sm font-semibold text-zinc-900">Brief Description</h4>
+                            <p className="text-sm text-zinc-600 leading-relaxed bg-zinc-50 p-4 rounded-md italic border-l-4 border-zinc-300">
+                            "{caseInfo?.description || 'No description provided.'}"
+                            </p>
+                        </div>
+
+                        {/* Documents Section */}
+                        <div className="space-y-3">
+                            <h4 className="text-sm font-semibold text-zinc-900 flex items-center gap-2">
+                            <FileText className="w-4 h-4" /> Supporting Documents
+                            </h4>
+                            <div className="flex flex-wrap gap-2">
+                                {case_documents && case_documents.length > 0 ? (
+                                    case_documents.map((doc, idx) => {
 
                                                 const file = doc?.file
                                                     ? doc.file.startsWith("http")
@@ -521,17 +593,17 @@ export function Case() {
                                                     : "";
 
                                                 if (!file) {
-                                                    return <p key={index}>No documents submitted</p>;
+                                                    return <p key={idx}>No documents submitted</p>;
                                                 }
 
                                                 return file.match(/\.(jpg|jpeg|png|gif)$/i) ? (
-                                                    <Button variant="outline" key={index} onClick={(e) => {
+                                                    <Button variant="outline" key={idx} onClick={(e) => {
                                                         e.preventDefault();
                                                         setViewImg(file);
                                                     }}>
                                                         <img
                                                             src={file}
-                                                            alt={`Document ${index + 1}`}
+                                                            alt={`Document ${idx + 1}`}
                                                             className="h-full object-contain"
                                                         />
                                                     </Button>
@@ -539,7 +611,7 @@ export function Case() {
                                                 ) : (
                                                     <Button
                                                         type="link"
-                                                        key={index}
+                                                        key={idx}
                                                         onClick={(e) => {
                                                             e.preventDefault();
                                                             window.open(file, '_blank');
@@ -548,31 +620,19 @@ export function Case() {
                                                         className="border  py-2 px-4 rounded-lg flex items-center gap-2"
                                                     >
                                                         <FileText />
-                                                        {doc.title || `Document ${index + 1}`}
+                                                        {doc.title || `Document ${idx + 1}`}
                                                     </Button>
                                                 );
                                             })
-                                        ) : (
-                                            <p>-</p>
-                                        )}
-                                    </div>
-                                    :
-                                    <p>{detail.value}</p>
-                            }
+                                ) : (
+                                    <span className="text-sm text-zinc-400 italic">No documents submitted</span>
+                                )}
+                            </div>
                         </div>
-                    ))}
-                </div>
-
-                {viewImg && (
-                    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
-                        onClick={() => setViewImg(null)}
-                    >
-                        <X className="text-white absolute top-4 right-4 cursor-pointer" onClick={() => setViewImg(null)} />
-                        <img src={viewImg} alt="Document View" className=" h-1/2 rounded-md shadow-lg" />
                     </div>
-                )}
+                </CardContent>
+            </Card>
 
-            </div>
 
             <div className="flex flex-col gap-4 bg-white p-4 rounded-md border shadow-2xs">
                 <div className="flex flex-col">

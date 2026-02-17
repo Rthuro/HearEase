@@ -15,11 +15,12 @@ from hearings.models import Hearing, HearingAttendance
 from django.contrib.auth import get_user_model
 from django.db.models.functions import TruncMonth
 from django.db.models import Count
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.db.models.functions import Trim 
 from rest_framework.permissions import AllowAny, IsAuthenticated
-
-
+from django.utils.dateparse import parse_date
+from django.db.models import Count, Avg, F, Q
+from django.utils import timezone
 
 User = get_user_model()
 
@@ -130,8 +131,7 @@ class RelationshipListView(APIView):
         relationships = Relationship.objects.all().order_by("id")
         serializer = RelationshipSerializer(relationships, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
-
+ 
 class CaseView(APIView):
     permission_classes = [AllowAny] 
     def post(self, request):
@@ -618,53 +618,111 @@ class SingleCaseView(APIView):
 
 class ReportView(APIView):
     def get(self, request):
-        start = request.GET.get('start_date')
-        end = request.GET.get('end_date')
+        start_str = request.query_params.get('start_date')
+        end_str = request.query_params.get('end_date')
 
-        # Default: last 6 months
-        if not start or not end:
-            start = datetime.now().replace(month=datetime.now().month-5, day=1)
-            end = datetime.now()
+        # 1. Handle Timezone-Aware Dates
+        # Using timezone.now() fixes the "naive datetime" warning
+        if start_str and end_str:
+            start_date = parse_date(start_str)
+            end_date = parse_date(end_str)
+        else:
+            today = timezone.now().date()
+            end_date = today
+            start_date = today - timedelta(days=180)
 
-        pending = (
-            Case.objects.filter(case_status="pending_approval", date_filed__range=[start, end])
-            .annotate(month=TruncMonth('date_filed'))
-            .values('month')
-            .annotate(total=Count('id'))
+        # Base queryset for the specific range
+        # Use date_filed__date to compare dates safely with aware datetimes
+        cases_in_range = Case.objects.filter(
+            date_filed__date__range=[start_date, end_date]
         )
 
-        approved = (
-            Case.objects.filter(case_status="approved", date_filed__range=[start, end])
-            .annotate(month=TruncMonth('date_filed'))
-            .values('month')
-            .annotate(total=Count('id'))
+        # 2. Key Metrics Calculation
+        total_cases = cases_in_range.count()
+        
+        # Calculate multiple counts in one query using filter=Q(...)
+        stats = cases_in_range.aggregate(
+            active=Count('id', filter=Q(case_status__in=['pending_approval', 'in_progress'])),
+            settled=Count('id', filter=Q(case_status='resolved')),
+            closed=Count('id', filter=Q(case_status__in=['resolved', 'escalated', 'cancelled']))
         )
 
-        resolved = (
-            Case.objects.filter(case_status="resolved", date_filed__range=[start, end])
+        settlement_rate = 0
+        if stats['closed'] > 0:
+            settlement_rate = round((stats['settled'] / stats['closed']) * 100, 1)
+
+        # 3. Resolution Time Logic
+        avg_days = 0
+        resolved_cases = cases_in_range.filter(case_status='resolved')
+        if resolved_cases.exists():
+            duration_data = resolved_cases.aggregate(
+                avg_duration=Avg(F('case_completed_date') - F('date_filed'))
+            )
+            if duration_data['avg_duration']:
+                # duration_data['avg_duration'] is a timedelta object
+                avg_days = round(duration_data['avg_duration'].total_seconds() / 86400, 1)
+
+        # 4. Optimized Monthly Summary (ONE QUERY instead of 5)
+        monthly_stats = (
+            cases_in_range
             .annotate(month=TruncMonth('date_filed'))
             .values('month')
-            .annotate(total=Count('id'))
+            .annotate(
+                pending_count=Count('id', filter=Q(case_status="pending_approval")),
+                approved_count=Count('id', filter=Q(case_status="approved")),
+                progress_count=Count('id', filter=Q(case_status="in_progress")),
+                resolved_count=Count('id', filter=Q(case_status="resolved")),
+                escalated_count=Count('id', filter=Q(case_status="escalated")),
+            )
+            .order_by('month')
         )
 
-        # Combine results
-        result = []
-        months = sorted(set([f['month'] for f in pending] + [a['month'] for a in approved] + [r['month'] for r in resolved]))
+        # Format monthly results for the frontend
+        monthly_sum_result = []
+        for entry in monthly_stats:
+            # month might be None if date_filed is null
+            if entry['month']:
+                monthly_sum_result.append({
+                    "month": entry['month'].strftime("%b"),
+                    "pending": entry['pending_count'],
+                    "approved": entry['approved_count'],
+                    "in_progress": entry['progress_count'],
+                    "resolved": entry['resolved_count'],
+                    "escalated": entry['escalated_count']
+                })
 
-        for m in months:
-            f = next((x['total'] for x in pending if x['month'] == m), 0)
-            a = next((x['total'] for x in approved if x['month'] == m), 0)
-            r = next((x['total'] for x in resolved if x['month'] == m), 0)
-            result.append({
-                "month": m.strftime("%b"),
-                "pending": f,
-                "approved": a,
-                "resolved": r,
-            })
+        by_type_data = cases_in_range.values(
+            name=F('case_type__case_name') # Rename field to 'name' for frontend
+        ).annotate(
+            value=Count('id')              # Rename count to 'value'
+        ).order_by('-value')
 
-        return Response(result)
+        # --- DATA SET 2: Cases by Purok/Street (Bar Chart) ---
+        # Group by Complainant's Street
+        by_location_data = cases_in_range.exclude(
+            complainants__street__isnull=True
+        ).exclude(
+            complainants__street__exact=''
+        ).values(
+            name=F('complainants__street') # Group by Street/Purok
+        ).annotate(
+            value=Count('id')
+        ).order_by('-value')[:10]
 
-
+        return Response({
+            "monthly_sum_result": monthly_sum_result,
+            "total_cases": total_cases,
+            "active_cases": stats['active'],
+            "settlement_rate": f"{settlement_rate}%",
+            "avg_resolution_time": f"{avg_days} Days",
+            "by_type_data": list(by_type_data),
+            "by_location_data": list(by_location_data),
+            "date_range": {
+                "start": start_date,
+                "end": end_date
+            }
+        })
+    
 class CasePriorityView(APIView):
     """
     Calculate and return cases sorted by priority score.

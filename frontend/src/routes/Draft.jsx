@@ -9,7 +9,6 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-import { formatedDateTimeToString } from "@/lib/helpers";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import useAuthenticationStore from "@/store/useAuthenticationStore";
@@ -52,24 +51,21 @@ export function Draft(){
     }
     
     return (
-        <div className="p-6 flex flex-col gap-2 w-full">
+        <div className="p-6 flex flex-col gap-2">
             <PageSync page="Drafts" />
             <div className="flex flex-col gap-2">
                 <h1 className="text-2xl font-bold">Your Drafts</h1>
                 <p>You have <span className="font-medium text-redBase">{filedCases?.length || 0}</span> case drafts created.</p>
             </div>
-            <section className="flex flex-col gap-3 mt-3 bg-white border border-zinc-200 rounded-lg p-6">
-                <div className="border rounded-lg overflow-hidden">
+            <div className="border rounded-lg overflow-hidden max-w-5xl bg-white">
                         <Table>
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Case #</TableHead>
                                     <TableHead>Nature of Complaint</TableHead>
                                     <TableHead>Relationship</TableHead>
-                                    <TableHead>Description</TableHead>
                                     <TableHead>Complainants</TableHead>
                                     <TableHead>Respondents</TableHead>
-                                    <TableHead>Date Filed</TableHead>
                                     <TableHead>Action</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -86,10 +82,16 @@ export function Draft(){
                                             <TableCell>{c.id}</TableCell>
                                             <TableCell>{c.case_type.case_name}</TableCell>
                                             <TableCell>{c.relationship.relationship}</TableCell>
-                                            <TableCell>{c.description}</TableCell>
-                                            <TableCell>{c.complainants?.map(comp => comp.first_name + " " + comp.last_name).join(", ")}</TableCell>
-                                            <TableCell>{c.respondents?.map(res => res.first_name + " " + res.last_name).join(", ")}</TableCell>
-                                            <TableCell>{formatedDateTimeToString(c.date_filed)}</TableCell>
+                                            <TableCell>
+                                                {c.complainants.length > 1 ? `${c.complainants[0].first_name} ${c.complainants[0].last_name} and ${c.complainants.length - 1} others` 
+                                                : 
+                                                `${c.complainants[0].first_name} ${c.complainants[0].last_name}`}
+                                            </TableCell>
+                                            <TableCell>
+                                                {c.respondents.length > 1 ? `${c.respondents[0].first_name} ${c.respondents[0].last_name} and ${c.respondents.length - 1} others` 
+                                                : 
+                                                `${c.respondents[0].first_name} ${c.respondents[0].last_name}`}
+                                            </TableCell>
                                             <TableCell>
                                                 <Button variant="outline" size="sm" onClick={() => handleEdit(c)}>
                                                     Edit
@@ -101,7 +103,6 @@ export function Draft(){
                             </TableBody>
                         </Table>
                 </div>
-            </section>
         </div>
     )
 }
