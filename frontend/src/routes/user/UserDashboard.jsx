@@ -18,7 +18,7 @@ import {
   DialogContent,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import IdentitySync from "@/components/ui/IdentitySync"
+import IdentitySync from "@/components/IdentitySync"
 import { RefreshCw } from "lucide-react"
 
 export function UserDashboard() {
@@ -37,8 +37,6 @@ export function UserDashboard() {
       fetchRelatedCase();
     });
   }, []);
-
-  console.log("Related Cases:", res);
 
   const filterHearings = Array.isArray(hearings) 
     ? hearings.filter(h => h.hearing_status === "scheduled") 
@@ -143,24 +141,10 @@ export function UserDashboard() {
             )}
         </div>
       </div>
-      {res?.cases?.length > 0 && (
+      {res?.match_persons?.length > 0 && (
         <IdentitySync cases={res?.cases} match_persons={res?.match_persons} />
       )}
 
-      {/* <Button variant="outline" className="w-fit ml-auto mb-2"
-        onClick={ async () => {
-          try {
-            setRefreshLoader(true);
-            await fetchCases();
-            setRefreshLoader(false);
-
-          } catch (error) {
-             setRefreshLoader(false);
-          }
-        }}>
-          <RefreshCw className={refreshLoader ? "mr-2 h-4 w-4 animate-spin" : "mr-2 h-4 w-4"} />
-          Refresh Data
-        </Button> */}
       <div className="flex flex-col gap-4 bg-white border border-zinc-200 rounded-lg p-6">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-medium">Upcoming Hearings</h2>
