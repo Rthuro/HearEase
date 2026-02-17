@@ -37,6 +37,7 @@ import { Switch } from "@/components/ui/switch";
 import { SystemConfiguration } from "@/components/SystemConfiguration";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { AdminTickets } from "@/components/AdminTickets";
 
 export function Settings() {
     const stored = localStorage.getItem("authData");
@@ -332,7 +333,6 @@ export function Settings() {
                     <TabsTrigger value="account">Account Information</TabsTrigger>
                     <TabsTrigger value="notif">Notification</TabsTrigger>
                     <TabsTrigger value="autoSync">Auto-Sync Settings</TabsTrigger>
-                    <TabsTrigger value="support">Support</TabsTrigger>
 
                     {userRole === "admin" && (
                         <>
@@ -1067,6 +1067,10 @@ export function Settings() {
 
                 <TabsContent value="systemConfig">
                     <SystemConfiguration/>
+                </TabsContent>
+
+                <TabsContent value="adminTickets">
+                    <AdminTickets/>
                 </TabsContent>
             </Tabs>
             
