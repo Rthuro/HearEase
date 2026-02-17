@@ -15,6 +15,7 @@ urlpatterns = [
     
     path("register/", UserViews.RegisterView.as_view(), name="register"),
     path('auth/google/', UserViews.GoogleLoginView.as_view(), name='google-login'),
+    path('auth/google-admin/', UserViews.AdminGoogle.as_view(), name='google-admin'),
 
     path('auth/send-otp/', UserViews.SendOTPView.as_view()),
     path('auth/verify-otp/', UserViews.VerifyOTPView.as_view()),

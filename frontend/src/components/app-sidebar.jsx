@@ -1,4 +1,4 @@
-import { Calendar, House, ChartNoAxesColumnDecreasing, UserRound, FilePen, File, FolderOpen, Settings,  FolderSearch, CalendarDays, UsersRound, LucideUserSquare2 } from "lucide-react"
+import { Calendar, House, ChartNoAxesColumnDecreasing, UserRound, FilePen, File, FolderOpen, Settings,  FolderSearch, CalendarDays, LucideUserSquare2 } from "lucide-react"
  
 import {
   Sidebar,
@@ -33,6 +33,10 @@ const second_row = [
     title: "Dashboard",
     url: "#",
     icon: House,
+  },{
+    title: "Drafts",
+    url: "Drafts",
+    icon: File,
   },
     {
     title: "Hearings",
@@ -98,45 +102,15 @@ export function AppSidebar() {
                         <p className="text-redBase text-xl ">HearEase</p>
                     </div>
                      
-                    {first_row.map((item) =>
-                        item.title === "File New Case" ? (
-                        <Link
-                            key={item.title}
-                            to={`/Admin/${item.url}`}
-                            className="bg-redBase text-white py-2 rounded-md flex items-center justify-center"
-                        >
-                            <span className="flex items-center gap-2">
-                                <item.icon size="16" />
-                                <span>{item.title}</span>
-                            </span>
-                        </Link>
-                        ) : item.title === "Search Case" ? (
-                        <Link
-                            key={item.title}
-                            to={`/Admin/${item.url}`}
-                            className="border border-redBase/10 text-redBase bg-red-50 py-2 rounded-md flex items-center justify-center "
-                        >
-                            <span className="flex items-center gap-2">
-                                <item.icon size="16" />
-                                <span>{item.title}</span>
-                            </span>
-                        </Link>
-                        ) : (
-                        <Link
-                            key={item.title}
-                            to={`/Admin/${item.url}`}
-                        >
-                            <SidebarMenuItem className={currentPage === item.title ? " text-black" : " text-zinc-700"}>
-                            <SidebarMenuButton asChild>
-                                <span className="flex items-center gap-2">
-                                <item.icon />
-                                <span>{item.title}</span>
-                                </span>
-                            </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        </Link>
-                        )
-                    )}
+                    <Link
+                        to={`/Admin/File-Case`}
+                        className="bg-redBase text-white py-2 rounded-md flex items-center justify-center"
+                    >
+                        <span className="flex items-center gap-2">
+                            <File size="16" />
+                            <span>File New Case</span>
+                        </span>
+                    </Link>
                     </SidebarMenu>
                 </SidebarGroupContent>
         </SidebarGroup>

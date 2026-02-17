@@ -27,6 +27,20 @@ export const formatedBday = (dateString) => {
     return date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 };
 
+export const formatedDateTimeToString = (dateString) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    
+    return date.toLocaleString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,      // Set to false for 24-hour format (14:38)
+    });
+};
+
 export const maskString = (str) => {
     if (!str) return "";
     if (str.length <= 1) return str;

@@ -19,6 +19,7 @@ import { useAddressesStore } from "@/store/useAddressStore";
 import { useCaseStore } from "@/store/useCaseStore";
 import { SendEmailDialog } from "@/components/SendEmailDialog";
 import { EditCasePerson } from "@/components/EditCasePerson";
+import { nanoid } from 'nanoid'
 
 export function CasePerson() {
   const { id } = useParams();
@@ -29,6 +30,7 @@ export function CasePerson() {
   const [refreshLoader, setRefreshLoader] = useState(false);
   const { respondentList, complainantList } = useCaseStore();
   const [loader, setLoader] = useState(false);
+  const [caseNumber] = useState(() => 'CASE-' + nanoid(10));
   
     useEffect(() => {
         setLoader(true);
@@ -50,6 +52,10 @@ export function CasePerson() {
 
         loadInitialData();
     }, [id]);
+
+    const casesOrder = [...(personData?.cases || [])].sort((a, b) => {
+      return new Date(b.date_filed) - new Date(a.date_filed);
+    });
 
 
     const handleRefresh = () => {
@@ -138,7 +144,7 @@ export function CasePerson() {
             )}
             <Button variant="outline"
             onClick={() => {
-                navigate(`/Admin/File-Case/`);
+                navigate(`/Admin/File-Case/${caseNumber}`);
                 complainantList.push({
                     first_name: personData.first_name,
                     middle_name: personData.middle_name,
@@ -153,7 +159,7 @@ export function CasePerson() {
             </Button>
             <Button className="bg-redBase text-white hover:bg-red-700"
             onClick={() => {
-                navigate(`/Admin/File-Case/`);
+                navigate(`/Admin/File-Case/${caseNumber}`);
                 respondentList.push({
                     first_name: personData.first_name,
                     middle_name: personData.middle_name,
@@ -259,7 +265,7 @@ export function CasePerson() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {personData?.cases?.map((c) => (
+                      {casesOrder?.map((c) => (
                         <TableRow key={c?.id}>
                           <TableCell className="font-medium">
                             <Link to={`/Admin/Case/${c?.id}`} className="text-blue-600 hover:underline">

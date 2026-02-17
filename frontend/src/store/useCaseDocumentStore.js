@@ -11,6 +11,7 @@ const useCaseDocumentsStore = create((set) => ({
         `${API_URL}/case-documents/?case_number=${caseId}`
       );
       set({ case_documents: res.data });
+      return res.data; // Return the fetched documents
     } catch (error) {
       console.error("Error fetching documents:", error);
     }

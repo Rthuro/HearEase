@@ -78,7 +78,7 @@ export function Authentication(){
                 toast.success(`Welcome back, ${response.first_name}!`);
                 
                 if (response.role === 'admin') {
-                    navigate('/Admin/dashboard');
+                    navigate('/Admin');
                 } else {
                     navigate(`/u/@${response.email.split("@")[0]}`);
                 }

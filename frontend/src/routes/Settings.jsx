@@ -35,8 +35,6 @@ import { useAIModelStore } from "@/store/useAIModelStore";
 import { useSearchParams } from "react-router-dom";
 import { Switch } from "@/components/ui/switch";
 import { SystemConfiguration } from "@/components/SystemConfiguration";
-import { SupportTickets } from "@/components/SupportTickets";
-import { AdminTickets } from "@/components/AdminTickets";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 
@@ -54,7 +52,7 @@ export function Settings() {
     const [lastName, setLastName] = useState(user?.last_name || "");
     const [contactNumber, setContactNumber] = useState(user?.contact_number || "");
     const [sex, setSex] = useState(user?.sex || "");
-    const [birthDate, setBirthDate] = useState(user?.birth_date || "");
+    const [birthDate, setBirthDate] = useState(user?.birth_date|| "");
     const [openCalendar, setOpenCalendar] = useState(false);
     const minDate = new Date("1900-01-01");
     const maxDate = new Date();
@@ -306,13 +304,13 @@ export function Settings() {
     return (
         <div className="flex flex-col bg-white h-full p-6 gap-6">
             <PageSync page="Settings" />
-            {loader ? (
+            { loader ? (
                 <div className="flex-1 flex items-center justify-center">
                     <Loader2 className="animate-spin size-6 text-redBase" />
                 </div>
             ) : null}
 
-            {userRole !== "admin" && !user?.is_account_verified && (
+            {userRole !== "admin" && !user?.is_account_verified  && (
                 <div className="flex items-center justify-between bg-white p-4 border rounded-lg">
                     <div className="flex flex-col gap-1">
                         <p className="text-lg font-medium">Verify your account</p>
@@ -323,7 +321,7 @@ export function Settings() {
                             <Button className="bg-redBase">Verify Now</Button>
                         </DialogTrigger>
                         <DialogContent className="sw-fit">
-                            <AccountVerification />
+                            <AccountVerification />     
                         </DialogContent>
                     </Dialog>
                 </div>
@@ -335,10 +333,10 @@ export function Settings() {
                     <TabsTrigger value="notif">Notification</TabsTrigger>
                     <TabsTrigger value="autoSync">Auto-Sync Settings</TabsTrigger>
                     <TabsTrigger value="support">Support</TabsTrigger>
-                    <TabsTrigger value="integrations">Integrations</TabsTrigger>
 
                     {userRole === "admin" && (
                         <>
+                            <TabsTrigger value="integrations">Integrations</TabsTrigger>
                             <TabsTrigger value="aiModel">AI Model</TabsTrigger>
                             <TabsTrigger value="systemConfig">System Configuration</TabsTrigger>
                             <TabsTrigger value="adminTickets">Support Tickets</TabsTrigger>
@@ -354,65 +352,65 @@ export function Settings() {
                         <p className="text-lg font-medium">Profile</p>
                         <Card className="py-3 rounded-sm gap-2 mb-3">
                             <CardContent className="px-0">
-                                <div className="flex flex-col gap-3">
-                                    <div className="grid grid-cols-2 gap-2 px-3">
-                                        <Label htmlFor="firstName">First Name</Label>
-                                        <Input
-                                            id="firstName"
-                                            type="text"
-                                            placeholder="First Name"
-                                            value={firstName}
-                                            onChange={(e) => setFirstName(e.target.value)}
-                                        />
-                                    </div>
-                                    <Separator />
-                                    <div className="grid grid-cols-2 gap-2 px-3">
-                                        <Label htmlFor="middleName">Middle Name</Label>
-                                        <Input
-                                            id="middleName"
-                                            type="text"
-                                            placeholder="Middle Name"
-                                            value={middleName}
-                                            onChange={(e) => setMiddleName(e.target.value)}
-                                        />
-                                    </div>
-                                    <Separator />
-                                    <div className="grid grid-cols-2 gap-2 px-3">
-                                        <Label htmlFor="lastName">Last Name</Label>
-                                        <Input
-                                            id="lastName"
-                                            type="text"
-                                            placeholder="Last Name"
-                                            value={lastName}
-                                            onChange={(e) => setLastName(e.target.value)}
-                                        />
-                                    </div>
-                                    <Separator />
-                                    <div className="grid grid-cols-2 gap-2 px-3">
-                                        <Label htmlFor="lastName">Sex</Label>
-                                        <DropdownMenu id="sex">
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="outline">
-                                                    {sex || "Select"}
-                                                </Button>
-                                            </DropdownMenuTrigger>
+                                    <div className="flex flex-col gap-3">
+                                        <div className="grid grid-cols-2 gap-2 px-3">
+                                            <Label htmlFor="firstName">First Name</Label>
+                                            <Input
+                                                id="firstName"
+                                                type="text"
+                                                placeholder="First Name"
+                                                value={firstName}
+                                                onChange={(e) => setFirstName(e.target.value)}
+                                            />
+                                        </div>
+                                        <Separator />
+                                        <div className="grid grid-cols-2 gap-2 px-3">
+                                            <Label htmlFor="middleName">Middle Name</Label>
+                                            <Input
+                                                id="middleName"
+                                                type="text"
+                                                placeholder="Middle Name"
+                                                value={middleName}
+                                                onChange={(e) => setMiddleName(e.target.value)}
+                                            />
+                                        </div>
+                                        <Separator />
+                                        <div className="grid grid-cols-2 gap-2 px-3">
+                                            <Label htmlFor="lastName">Last Name</Label>
+                                            <Input
+                                                id="lastName"
+                                                type="text"
+                                                placeholder="Last Name"
+                                                value={lastName}
+                                                onChange={(e) => setLastName(e.target.value)}
+                                            />
+                                        </div>
+                                        <Separator />
+                                        <div className="grid grid-cols-2 gap-2 px-3">
+                                            <Label htmlFor="lastName">Sex</Label>
+                                            <DropdownMenu id="sex">
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="outline">
+                                                    {sex || "Select"} 
+                                                    </Button>
+                                                </DropdownMenuTrigger>
 
-                                            <DropdownMenuContent className="w-56">
-                                                <DropdownMenuRadioGroup
+                                                <DropdownMenuContent className="w-56">
+                                                    <DropdownMenuRadioGroup
                                                     value={sex}
-                                                    onValueChange={(value) =>
+                                                    onValueChange={(value) => 
                                                         setSex(value)}
-                                                >
+                                                    >
                                                     <DropdownMenuRadioItem value="Male">Male</DropdownMenuRadioItem>
                                                     <DropdownMenuRadioItem value="Female">Female</DropdownMenuRadioItem>
-                                                </DropdownMenuRadioGroup>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </div>
-                                    <Separator />
+                                                    </DropdownMenuRadioGroup>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+                                        <Separator/>
                                     <div className="grid grid-cols-2 gap-2 px-3">
                                         <Label htmlFor="birthDate">Birth Date</Label>
-                                        <Popover open={openCalendar} onOpenChange={setOpenCalendar} id="birth_date">
+                                        <Popover open={openCalendar}  onOpenChange={setOpenCalendar} id="birth_date">
                                             <PopoverTrigger asChild>
                                                 <Button
                                                     variant="outline"
@@ -443,54 +441,54 @@ export function Settings() {
                                     <div className="grid grid-cols-2 gap-2 px-3">
                                         <Label htmlFor="barangay">Barangay</Label>
                                         <DropdownMenu id="barangay">
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="outline">
-                                                    {getBarangayName(barangays, selectedBarangay) || 'Select'}
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent className="w-72">
-                                                <DropdownMenuRadioGroup
-                                                    value={selectedBarangay}
-                                                    onValueChange={(value) => {
-                                                        const streetsForBarangay = getStreets(streets, value);
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="outline">
+                                                {selectedBarangay || 'Select'}
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent className="w-72">
+                                            <DropdownMenuRadioGroup 
+                                            value={selectedBarangay} 
+                                            onValueChange={(value) => {
+                                                const streetsForBarangay = getStreets(streets, value);
 
-                                                        setSelectedBarangay(value);
-                                                        setSelectedStreet(streetsForBarangay[0] || "");
-                                                    }}>
+                                                setSelectedBarangay(value);
+                                                setSelectedStreet(streetsForBarangay[0] || "");
+                                            }}>
 
-                                                    {barangays.map(b => (
-                                                        <DropdownMenuRadioItem key={b.name} value={b.id}>{b.name}
-                                                        </DropdownMenuRadioItem>
-                                                    ))}
+                                            {barangays.map(b => (
+                                                <DropdownMenuRadioItem key={b.name} value={b.name}>{b.name}
+                                                </DropdownMenuRadioItem>
+                                            ))}
 
-                                                </DropdownMenuRadioGroup>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
+                                            </DropdownMenuRadioGroup>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                     </div>
                                     <Separator />
                                     <div className="grid grid-cols-2 gap-2 px-3">
                                         <Label htmlFor="street">Street</Label>
                                         <DropdownMenu id="street">
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="outline">
-                                                    {selectedStreet || 'Select'
-                                                    }
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent className="w-72">
-                                                <DropdownMenuRadioGroup
-                                                    value={selectedStreet} onValueChange={(value) =>
-                                                        setSelectedStreet(value)}>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="outline">
+                                                {selectedStreet  || 'Select'
+                                                }
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent className="w-72">
+                                            <DropdownMenuRadioGroup 
+                                            value={selectedStreet} onValueChange={(value) => 
+                                            setSelectedStreet(value)}>
 
-                                                    {getStreets(streets, getBarangay(barangays, selectedBarangay)?.id).map(street => (
-                                                        <DropdownMenuRadioItem key={street}
-                                                            value={street}>{street}
-                                                        </DropdownMenuRadioItem>
-                                                    ))
-                                                    }
-                                                </DropdownMenuRadioGroup>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
+                                            { getStreets(streets,  getBarangay(barangays, selectedBarangay)?.id).map(street => (
+                                                    <DropdownMenuRadioItem key={street} 
+                                                    value={street}>{street}
+                                                    </DropdownMenuRadioItem>
+                                                ))
+                                            }
+                                            </DropdownMenuRadioGroup>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                     </div>
                                     <Separator />
                                     <div className="grid grid-cols-2 gap-2 px-3">
@@ -506,22 +504,22 @@ export function Settings() {
                                 </div>
 
                             </CardContent>
-
+                            
                             <CardFooter className="flex-col gap-2 items-end">
-                                {hasChanges ? (
+                                { hasChanges ? (
                                     <div className="flex gap-2">
                                         <Button onClick={() => handleReset("profile")} variant="outline" className="w-fit">
                                             Cancel
-                                        </Button>
+                                        </Button> 
                                         <Button onClick={() => handleUpdate("profile")} className="w-fit">
                                             Save Changes
-                                        </Button>
+                                        </Button> 
                                     </div>
-                                ) : (
-                                    <Button variant="secondary" className="w-fit" disabled>
+                                    ) : (
+                                        <Button variant="secondary" className="w-fit" disabled>
                                         Save
                                     </Button>
-                                )}
+                                    )}
                             </CardFooter>
                         </Card>
 
@@ -533,124 +531,124 @@ export function Settings() {
                         </div>
 
                         <PhoneVerification user={user} setUser={setUser} handleUpdate={handleUpdate} handleReset={handleReset} formatTime={formatTime} contactNumber={contactNumber} setContactNumber={setContactNumber} />
-
+                
                         <Card className="py-3 rounded-sm gap-2 mb-3">
                             <CardContent className="px-0">
-                                <div id="contact" className="flex flex-col gap-3">
-                                    <div className="grid grid-cols-2 gap-2 px-3">
-                                        <Label htmlFor="email" className="flex items-center gap-2">
-                                            Email
-                                            {user?.email && (
-                                                user?.is_email_verified ? (
-                                                    <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full font-medium">
-                                                        Verified
-                                                    </span>
-                                                ) : (
-                                                    <span className="bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded-full font-medium">
-                                                        Unverified
-                                                    </span>
-                                                )
-                                            )}
-                                        </Label>
-
-                                        <Input
-                                            id="email"
-                                            type="email"
-                                            placeholder="Email"
-                                            value={email}
-                                            onChange={(e) => setEmail(e.target.value)}
-                                        />
-                                    </div>
-                                    <Separator />
-                                    <div className="flex gap-2 items-end justify-end px-3">
-                                        {!user?.is_email_verified && user?.email ? (
-                                            <Button size="sm" className="bg-redBase hover:bg-red-700 text-white"
+                                    <div id="contact" className="flex flex-col gap-3">
+                                        <div className="grid grid-cols-2 gap-2 px-3">
+                                            <Label htmlFor="email" className="flex items-center gap-2">
+                                                Email
+                                                {user?.email && (
+                                                    user?.is_email_verified ? (
+                                                        <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full font-medium">
+                                                            Verified
+                                                        </span>
+                                                    ) : (
+                                                        <span className="bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded-full font-medium">
+                                                            Unverified
+                                                        </span>
+                                                    )
+                                                )}
+                                            </Label>
+                                                
+                                            <Input
+                                                id="email"
+                                                type="email"
+                                                placeholder="Email"
+                                                value={email}
+                                                onChange={(e) => setEmail(e.target.value)}
+                                            />
+                                        </div>
+                                        <Separator />
+                                        <div className="flex gap-2 items-end justify-end px-3">
+                                            {!user?.is_email_verified && user?.email ? (
+                                                <Button size="sm" className="bg-redBase hover:bg-red-700 text-white"
                                                 onClick={handleSendEmailOTP}
                                                 disabled={loading}>
-                                                {loading ? "Sending..." : "Verify Now"}
-                                            </Button>
-                                        ) : null}
-
-                                        {emailHasChanges ? (
-                                            <>
-                                                <Button size="sm"
-                                                    onClick={() => handleUpdate("email")}>
-                                                    Save
+                                                    {loading ? "Sending..." : "Verify Now"}
                                                 </Button>
-                                                <Button variant="outline" size="sm"
-                                                    onClick={() => handleReset("email")}>
-                                                    Cancel
-                                                </Button>
-
-                                            </>
-                                        ) : <Button variant="secondary" size="sm" disabled>
-                                            Save
-                                        </Button>}
+                                                ) :  null}
+                                            
+                                            {emailHasChanges ? (
+                                                    <>
+                                                        <Button size="sm"
+                                                        onClick={() => handleUpdate("email")}>
+                                                            Save
+                                                        </Button> 
+                                                        <Button variant="outline" size="sm" 
+                                                        onClick={() => handleReset("email")}>
+                                                            Cancel
+                                                        </Button> 
+                                                            
+                                                    </>
+                                                ) : <Button variant="secondary" size="sm" disabled>
+                                                            Save
+                                                </Button> }
+                                        </div>
                                     </div>
-                                </div>
                             </CardContent>
                         </Card>
 
                         {emailStep === "input" && (
-                            <div className="flex flex-col gap-2">
-                                <div className="w-fit flex flex-col gap-1">
-                                    <p className="font-medium text-lg">Verification Code</p>
-                                    <p className="text-sm text-zinc-600">Verification code has been sent to {user?.email}. Please enter the code below to verify your email. </p>
-                                </div>
-                                <Card className="py-3 rounded-sm gap-2 mb-3">
-                                    <CardContent className="px-0">
-                                        <div id="contact" className="flex flex-col gap-3 ">
-                                            <div className="grid grid-cols-2 gap-2 px-3">
-                                                <Label htmlFor="emailCode" className="flex items-center gap-2">
-                                                    Email Verification Code
-                                                </Label>
-
-                                                <Input
-                                                    id="emailCode"
-                                                    type="text"
-                                                    placeholder="XXXXXX"
-                                                    value={emailCode}
-                                                    maxLength={6}
-                                                    onChange={(e) => setEmailCode(e.target.value)}
-                                                />
-                                            </div>
-                                            <Separator />
-                                            <div className="flex items-center justify-between px-3">
-                                                <p className="text-zinc-600 text-sm mt-4 text-center">
-                                                    Didn't receive a code?{" "}
-
-                                                    {timeLeft > 0 ? (
-                                                        <span className="text-zinc-400 cursor-not-allowed font-medium">
-                                                            Resend in {formatTime(timeLeft)}
-                                                        </span>
-                                                    ) : (
-                                                        <button
-                                                            className="text-redBase underline font-medium hover:text-red-700 transition-colors"
-                                                            onClick={handleSendEmailOTP}
-                                                            disabled={loading}
-                                                        >
-                                                            {loading ? "Sending..." : "Resend Code"}
-                                                        </button>
-                                                    )}
-                                                </p>
-                                                <div className="flex gap-3">
-                                                    <Button size="sm" className="bg-redBase hover:bg-red-700 text-white self-end"
-                                                        onClick={() => handleVerifyEmailOTP(emailCode)} disabled={emailLoading || emailCode.length < 6}>
-                                                        {emailLoading ? "Verifying..." : "Confirm"}
-                                                    </Button>
-                                                    <Button variant="outline" size="sm" onClick={() => { setEmailStep("start"); setEmailCode(""); setEmailLoading(false); }}>
-                                                        Cancel
-                                                    </Button>
-                                                </div>
-
-                                            </div>
+                    <div className="flex flex-col gap-2">
+                        <div className="w-fit flex flex-col gap-1">
+                            <p className="font-medium text-lg">Verification Code</p>
+                            <p className="text-sm text-zinc-600">Verification code has been sent to {user?.email}. Please enter the code below to verify your email. </p>
+                        </div>
+                            <Card className="py-3 rounded-sm gap-2 mb-3">
+                                <CardContent className="px-0">
+                                    <div id="contact" className="flex flex-col gap-3 ">
+                                        <div className="grid grid-cols-2 gap-2 px-3">
+                                            <Label htmlFor="emailCode" className="flex items-center gap-2">
+                                                Email Verification Code
+                                            </Label>
+                                                
+                                            <Input
+                                                id="emailCode"
+                                                type="text"
+                                                placeholder="XXXXXX"
+                                                value={emailCode}
+                                                maxLength={6}
+                                                onChange={(e) => setEmailCode(e.target.value)}
+                                            />
                                         </div>
-                                    </CardContent>
-                                </Card>
-                            </div>)}
+                                        <Separator />
+                                        <div className="flex items-center justify-between px-3">
+                                            <p className="text-zinc-600 text-sm mt-4 text-center">
+                                                Didn't receive a code?{" "}
+                                                
+                                                {timeLeft > 0 ? (
+                                                    <span className="text-zinc-400 cursor-not-allowed font-medium">
+                                                        Resend in {formatTime(timeLeft)}
+                                                    </span>
+                                                ) : (
+                                                    <button 
+                                                        className="text-redBase underline font-medium hover:text-red-700 transition-colors" 
+                                                        onClick={handleSendEmailOTP}
+                                                        disabled={loading}
+                                                    >
+                                                        {loading ? "Sending..." : "Resend Code"}
+                                                    </button>
+                                                )}
+                                            </p>
+                                            <div className="flex gap-3">
+                                                <Button size="sm" className="bg-redBase hover:bg-red-700 text-white self-end"
+                                                onClick={() => handleVerifyEmailOTP(emailCode)} disabled={emailLoading || emailCode.length < 6}>
+                                                    {emailLoading ? "Verifying..." : "Confirm"}
+                                                </Button>
+                                                <Button variant="outline" size="sm" onClick={() => {setEmailStep("start"); setEmailCode(""); setEmailLoading(false); } }>
+                                                    Cancel
+                                                </Button>
+                                            </div>
+                                            
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>)}
                     </div>
                 </TabsContent>
-
+                
                 <TabsContent value="notif">
                     <NotificationSettings />
                 </TabsContent>
@@ -1068,20 +1066,10 @@ export function Settings() {
                 </TabsContent>
 
                 <TabsContent value="systemConfig">
-                    <SystemConfiguration />
+                    <SystemConfiguration/>
                 </TabsContent>
-
-                <TabsContent value="support">
-                    <SupportTickets />
-                </TabsContent>
-
-                {userRole === "admin" && (
-                    <TabsContent value="adminTickets">
-                        <AdminTickets />
-                    </TabsContent>
-                )}
             </Tabs>
-
+            
         </div>
     )
 }

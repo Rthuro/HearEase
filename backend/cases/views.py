@@ -177,90 +177,95 @@ class CaseView(APIView):
                     respondents_ids.append(check_respondent.id)
                 else:
                     respondent_obj = CasePerson.objects.create(**respondent)
-                    respondents_ids.append(respondent_obj.id)        
+                    respondents_ids.append(respondent_obj.id)   
+                         
+            with transaction.atomic():
+                rel_instance = Relationship.objects.get(relationship=data.get("relationship"))
+                case_data = {
+                    "id": data.get("id"),
+                    "description": data.get("description"),
+                    "remarks": data.get("remarks"),
+                    "predicted_hearings": data.get("predicted_hearings"),
+                    "case_status": data.get("case_status"),
+                    "relationship_id": rel_instance.id,
+                    "create_by": data.get("create_by"),
+                }
 
-            case_data = {
-                "id": data.get("id"),
-                "description": data.get("description"),
-                "remarks": data.get("remarks"),
-                "predicted_hearings": data.get("predicted_hearings"),
-                "case_status": data.get("case_status"),
-            }
-
-            # Handle case_type - check if it's "other" (custom case type)
-            case_type_value = data.get("case_type")
-            custom_case_type_name = data.get("custom_case_type_name", "").strip()
-            custom_severity = data.get("custom_severity")
-            
-            if case_type_value == "other" and custom_case_type_name:
-                # Validate and set severity (default to 2 if not provided or invalid)
-                try:
-                    severity = int(custom_severity) if custom_severity else 2
-                    severity = max(1, min(3, severity))  # Clamp between 1-3
-                except (ValueError, TypeError):
-                    severity = 2
+                # Handle case_type - check if it's "other" (custom case type)
+                case_type_value = data.get("case_type")
+                custom_case_type_name = data.get("custom_case_type_name", "").strip()
+                custom_severity = data.get("custom_severity")
                 
-                # Create a new custom case type with user-specified severity
-                custom_case_type, created = CaseType.objects.get_or_create(
-                    case_name__iexact=custom_case_type_name,
-                    defaults={
-                        "case_name": custom_case_type_name,
-                        "severity": severity,
-                        "description": "User-created custom case type",
-                        "is_custom": True
-                    }
-                )
-                # If case type already exists, update severity if different
-                if not created and custom_case_type.severity != severity:
-                    custom_case_type.severity = severity
-                    custom_case_type.save()
-                
-                case_data["case_type_id"] = custom_case_type.id
-            else:
-                case_data["case_type_id"] = case_type_value
-            
-            case_data["settlement_type_id"] = data.get("settlement_type")
-
-            new_case = Case.objects.create(**case_data)
-
-            new_case.complainants.add(*complainants_ids)
-            new_case.respondents.add(*respondents_ids)
-
-            # If hearing info is provided, create initial hearing
-            hearing_info = data.get("hearing_info")
-            if hearing_info:
-                for h_data in hearing_info:
-
-                    raw_date = h_data.get("hearing_date")
-                    clean_date = None
-                    if raw_date:
-                        # Handle both string ISO dates and Date objects serialized as strings
-                        raw_date_str = str(raw_date)
-                        if "T" in raw_date_str:
-                            clean_date = raw_date_str.split("T")[0]
-                        else:
-                            clean_date = raw_date_str
-
-                    h_number = h_data.get("hearing_number")
-                    current_status = "pending_schedule"
-                    current_remarks = h_data.get("remarks") or "Subsequent hearing pending."
-                    lupon_id = h_data.get("lupon_member_id")
+                if case_type_value == "other" and custom_case_type_name:
+                    # Validate and set severity (default to 2 if not provided or invalid)
+                    try:
+                        severity = int(custom_severity) if custom_severity else 2
+                        severity = max(1, min(3, severity))  # Clamp between 1-3
+                    except (ValueError, TypeError):
+                        severity = 2
                     
-                    Hearing.objects.create(
-                        case=new_case,  
-                        hearing_number=h_number,
-                        hearing_date=clean_date, 
-                        time=h_data.get("time"),
-                        lupon_member_id=lupon_id,
-                        remarks=current_remarks,
-                        hearing_status=current_status,
+                    # Create a new custom case type with user-specified severity
+                    custom_case_type, created = CaseType.objects.get_or_create(
+                        case_name__iexact=custom_case_type_name,
+                        defaults={
+                            "case_name": custom_case_type_name,
+                            "severity": severity,
+                            "description": "User-created custom case type",
+                            "is_custom": True
+                        }
                     )
+                    # If case type already exists, update severity if different
+                    if not created and custom_case_type.severity != severity:
+                        custom_case_type.severity = severity
+                        custom_case_type.save()
+                    
+                    case_data["case_type_id"] = custom_case_type.id
+                else:
+                    case_data["case_type_id"] = case_type_value
+                
+                case_data["settlement_type_id"] = data.get("settlement_type")
 
-            send_notification(ids=[p.id for p in new_case.complainants.all()], case_id=new_case.id, case_status=new_case.case_status, remarks=request.data.get("remarks"), type=1)
+                new_case = Case.objects.create(**case_data)
 
-            # Serialize and return
-            serializer = CaseSerializer(new_case)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+                new_case.complainants.add(*complainants_ids)
+                new_case.respondents.add(*respondents_ids)
+
+                # If hearing info is provided, create initial hearing
+                hearing_info = data.get("hearing_info")
+                if hearing_info:
+                    for h_data in hearing_info:
+
+                        raw_date = h_data.get("hearing_date")
+                        clean_date = None
+                        if raw_date:
+                            # Handle both string ISO dates and Date objects serialized as strings
+                            raw_date_str = str(raw_date)
+                            if "T" in raw_date_str:
+                                clean_date = raw_date_str.split("T")[0]
+                            else:
+                                clean_date = raw_date_str
+
+                        h_number = h_data.get("hearing_number")
+                        current_status = "pending_schedule"
+                        current_remarks = h_data.get("remarks") or "Subsequent hearing pending."
+                        lupon_id = h_data.get("lupon_member_id")
+                        
+                        Hearing.objects.create(
+                            case=new_case,  
+                            hearing_number=h_number,
+                            hearing_date=clean_date, 
+                            time=h_data.get("time"),
+                            lupon_member_id=lupon_id,
+                            remarks=current_remarks,
+                            hearing_status=current_status,
+                        )
+
+                if new_case.case_status != "filed":
+                    send_notification(ids=[p.id for p in new_case.complainants.all()], case_id=new_case.id, case_status=new_case.case_status, remarks=request.data.get("remarks"), type=1)
+
+                # Serialize and return
+                serializer = CaseSerializer(new_case)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
         
         except Exception as e:
             import traceback

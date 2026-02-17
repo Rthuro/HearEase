@@ -119,6 +119,19 @@ const useAuthenticationStore = create((set) => ({
       return false;
     }
   },
+  addAdminGoogleAccount: async (token) => {
+    try {
+      const res = await axios.post(`${API_URL}/auth/google-admin/`,  {
+        token: token
+      });
+      const user = res.data.user;
+      return user;
+    }
+    catch (err) {
+      console.error("Google sign-up failed:", err);
+      return false;
+    }
+  },
 
 }));
 

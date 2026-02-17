@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useCaseStore } from "@/store/useCaseStore";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -13,7 +13,6 @@ import { CaseStatusDisplay } from "@/components/CaseStatusDisplay";
 import { ChevronLeft, X,Check, Edit, ArrowRight, ArrowUpRight, Loader2, FileText, CheckCircle2, PartyPopper, Loader2Icon, AlertCircle, RotateCw  } from "lucide-react";
 import { useEffect, useState } from "react";
 import useHearingStore from "@/store/useHearingStore";
-import { useRetrieveUsersStore } from "@/store/useRetrieveUsersStore";
 import {
     Table,
     TableBody,
@@ -22,7 +21,6 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-import { Link } from "react-router-dom";
 import useCaseDocumentsStore from "@/store/useCaseDocumentStore";
 import { useGenerateDocumentStore } from "@/store/useGenerateDocumentStore";
 import { EditCaseInfo } from "@/components/EditCaseInfo";
@@ -223,14 +221,36 @@ export function Case() {
 
     const userStatusDisplay = (status) => {
         switch (status) {
-            case "approved":
+            case "approved": {
+                const getTargetDate = () => {
+                    if (caseInfo?.summon_status === 'pending') {
+                        return findHearingCase?.find(h => h.hearing_number === 1)?.hearing_date || '-';
+                    }
+                    if (caseInfo?.summon_status === 'served') {
+                        return findHearingCase?.find(h => h.hearing_status === 'scheduled' || h.hearing_status === 'rescheduled')?.hearing_date || '-';
+                    }
+                    return null;
+                };
+
+                const targetDate = getTargetDate();
+
                 return (
                     <>
                         <p className="font-medium">Case Approved</p>
-                        <p className="text-zinc-700 text-sm">Your case is approved. A summon letter will be delivered to the respondent before: <strong>{findHearingCase?.find( h => h.hearing_number == 1)?.hearing_date || '-'}</strong>.</p>
+                        <p className="text-zinc-700 text-sm">
+                            Your case is approved.{" "}
+                            {targetDate ? (
+                                <>
+                                    A summon letter will be delivered to the respondent before:{" "}
+                                    <strong>{targetDate}</strong>.
+                                </>
+                            ) : (
+                                "Lupon Secretary will soon generate your case schedule."
+                            )}
+                        </p>
                     </>
                 );
-
+            }
             case "pending_approval":
                 return (
                     <>
@@ -268,6 +288,8 @@ export function Case() {
             toast.error("Failed to refresh case data. Please try again.");
         }
     }
+
+    // console.log(caseInfo)
     return (
         <div className="relative flex flex-col gap-4 p-6 ">
             <PageSync page="" />
@@ -302,6 +324,7 @@ export function Case() {
 
             </div>
 
+            {caseInfo.case_status !== 'filed' && (
             <div className="flex flex-col gap-6 bg-white p-4 rounded-md shadow-2xs">
                 <div className={`grid grid-cols-2 md:grid-cols-4 items-center gap-3`}>
                     <div className="flex flex-col gap-2 items-center">
@@ -346,6 +369,7 @@ export function Case() {
                     </div>
                 )}
             </div>
+            )}
 
             {userRole == 'user' && caseInfo?.case_status == 'rejected' && (
                 <div className="bg-red-50 border border-red-200 rounded-xl p-6 flex items-start gap-4 shadow-sm">
@@ -394,6 +418,24 @@ export function Case() {
                     </div>
                 </div>
             </div> )}
+
+            {caseInfo.case_status === 'filed' && (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 flex items-start gap-4 shadow-sm">
+                    <div className="bg-blue-100 p-3 rounded-full">
+                        <FileText className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                            <h3 className="text-lg font-bold text-blue-900 leading-none">
+                                Draft Case
+                            </h3>
+                        </div>
+                        <p className="text-blue-700 text-sm mt-1">
+                            This case has been saved to draft.
+                        </p>
+                    </div>
+                </div>
+            )}
 
             {caseInfo.case_status === 'resolved' && (
                 <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-6 flex items-start gap-4 shadow-sm">
@@ -452,7 +494,7 @@ export function Case() {
                 <div className="flex items-center justify-between">
                     <h2 className="text-lg font-medium">{caseDetails.section}</h2>
                     <EditCaseInfo section="case"
-                        caseInfo={caseInfo} forResubmission={false} />
+                        caseInfo={caseInfo} refresh={refreshCaseData} />
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -549,7 +591,13 @@ export function Case() {
                             {caseInfo?.complainants?.map( c => (
                                 
                                 <TableRow key={c.id} className="border-t">
-                                    <TableCell className="px-4 py-2">{c.first_name} {c.middle_name ? c.middle_name + ' ' : ''}{c.last_name}
+                                    <TableCell className="px-4 py-2">
+                                        {userRole == 'admin' ? (
+                                            <Link className="underline text-redBase" to={`/Admin/Case-Person/${c.id}`}>
+                                                {c.first_name} {c.middle_name ? c.middle_name + ' ' : ''}{c.last_name}
+                                            </Link>
+                                        ) : `${c.first_name} ${c.middle_name ? c.middle_name + ' ' : ''}
+                                        ${c.last_name}`}
                                     </TableCell>
                                     <TableCell className="px-4 py-2">{c.contact_number || "-"}</TableCell>
                                     <TableCell>
@@ -588,7 +636,14 @@ export function Case() {
                             {caseInfo?.respondents?.map( c => (
                                 
                                 <TableRow key={c.id} className="border-t">
-                                    <TableCell className="px-4 py-2">{c.first_name} {c.middle_name ? c.middle_name + ' ' : ''}{c.last_name}</TableCell>
+                                    <TableCell className="px-4 py-2">
+                                        {userRole == 'admin' ? (
+                                            <Link className="underline text-redBase" to={`/Admin/Case-Person/${c.id}`}>
+                                                {c.first_name} {c.middle_name ? c.middle_name + ' ' : ''}{c.last_name}
+                                            </Link>
+                                        ) : `${c.first_name} ${c.middle_name ? c.middle_name + ' ' : ''}
+                                        ${c.last_name}`}
+                                    </TableCell>
                                     <TableCell className="px-4 py-2">{c.contact_number || "-"}</TableCell>
                                     <TableCell>
                                         <EditCoAttendee co_attendees={caseInfo.respondents} type="respondent"
@@ -611,7 +666,7 @@ export function Case() {
             </div>
 
             <div className="flex flex-col gap-4 bg-white p-4 rounded-md shadow-2xs border">
-                <h2 className="text-xl font-semibold">Hearing Attendance</h2>
+                <h2 className="text-xl font-semibold">Hearings</h2>
                 <div className="border rounded-lg overflow-hidden">
                     <Table>
                         <TableHeader>

@@ -4,7 +4,7 @@ import { Button } from './ui/button'
 import { ChevronRight, Loader2} from 'lucide-react'
 import { nanoid } from 'nanoid'
 import { dateFormatter } from '@/lib/helpers'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import useAuthenticationStore from '@/store/useAuthenticationStore'
 import { PageSync } from './PageSync'
 import { useCaseStore } from '@/store/useCaseStore'
@@ -12,8 +12,9 @@ import { useEffect, useState } from 'react'
 import { useRetrieveUsersStore } from '@/store/useRetrieveUsersStore'
 
 export function FileCase(){
+    const { caseNum } = useParams();
     const { userRole, userLinkName } = useAuthenticationStore();
-    const { setCaseInfo,fetchCaseTypes, fetchSettlementTypes, complainantList, setComplainantInfo, set_complainants, initialUserComplainantInfo, settlementTypes, caseTypes } = useCaseStore();
+    const { setCaseInfo, case_info, fetchCaseTypes, fetchSettlementTypes, complainantList, setComplainantInfo, set_complainants, initialUserComplainantInfo, settlementTypes, caseTypes, resetFormData, set_respondents } = useCaseStore();
     const { fetchComplainants, fetchRespondents, complainants, respondents} = useRetrieveUsersStore();
     const [loader, setLoader] =  useState(false);
 
@@ -22,15 +23,23 @@ export function FileCase(){
 
     const navigate = useNavigate();
 
+     useEffect(() => {
+        if (caseNum) {
+            setCaseInfo({
+                case_number: caseNum ,
+            });
+        } else {
+            setCaseInfo({
+                case_number: caseNumber,
+            });
+            resetFormData();
+            set_complainants([]);
+            set_respondents([]);
+        }
+    }, [caseNum]); 
+
     const handleStartCreating = () => {
         
-        setCaseInfo({
-            case_number: caseNumber,
-            date: today,
-            case_status: "pending_approval",
-            hearing_status: "pending_schedule",
-        });
-
         navigate(userRole === 'admin' ? '/Admin/File-Case/Case-Form' : '/' + userLinkName + '/File-Case/Case-Form');
     }
 
@@ -82,7 +91,7 @@ export function FileCase(){
                 <div className="flex items-center relative">
                     <p className='absolute top-0 left-2 bottom-0 self-center text-zinc-500 '>Case Number:</p>
                     <Input type="text" className='bg-white w-72 text-end pl-4' 
-                    value={caseNumber} readOnly/>
+                    value={case_info.case_number || caseNumber} readOnly/>
                 </div>
                 <div className="flex items-center relative">
                     <p className='absolute top-0 left-2 bottom-0 self-center text-zinc-500 '>Date Filling:</p>

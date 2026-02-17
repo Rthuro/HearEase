@@ -130,6 +130,7 @@ export const useRetrieveUsersStore = create((set) => ({
         try {
             const data = await getAdmins();
             set({ admin_list: data })
+            return data
         } catch (error) {
             toast.error(error.message || "Failed to fetch admins");
         }
