@@ -8,6 +8,10 @@ from cases.serializers import CaseSerializer
 class HearingSerializer(serializers.ModelSerializer):
     # lupon_member = LuponMemberSerializer(read_only=True)
     # case = CaseSerializer(read_only=True)
+    case_number = serializers.SerializerMethodField()
+    case_type_label = serializers.SerializerMethodField()
+    lupon_member_name = serializers.SerializerMethodField()
+
     class Meta:
         model = Hearing
         fields = '__all__'

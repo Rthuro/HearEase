@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -6,7 +6,7 @@ import interactionPlugin from "@fullcalendar/interaction";
 import { PageSync } from "@/components/PageSync";
 import useHearingStore from "@/store/useHearingStore";
 import { useGoogleCalendarStore } from "@/store/useGoogleCalendarStore";
-import { AlertTriangle, RefreshCw, Loader2, CalendarOff } from "lucide-react";
+import { AlertTriangle, RefreshCw, Loader2, CalendarOff, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -55,9 +55,68 @@ function CalendarLoading() {
   );
 }
 
+// Event Color Legend Component
+function EventLegend() {
+  const items = [
+    { color: "#3B82F6", label: "Scheduled" },
+    { color: "#10B981", label: "Completed" },
+    { color: "#F59E0B", label: "Pending Schedule" },
+    { color: "#8B5CF6", label: "Rescheduled" },
+    { color: "#EF4444", label: "Pending Decision" },
+    { color: "#6B7280", label: "Other" },
+    { color: "#DC2626", label: "Holiday" },
+    { color: "#7C3AED", label: "Non-Working Day" },
+  ];
+  return (
+    <div className="flex flex-wrap gap-3 mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+      <span className="text-xs font-medium text-gray-500 mr-1 self-center">Legend:</span>
+      {items.map((item) => (
+        <div key={item.label} className="flex items-center gap-1.5">
+          <span
+            className="w-3 h-3 rounded-sm inline-block"
+            style={{ backgroundColor: item.color }}
+          />
+          <span className="text-xs text-gray-600">{item.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+
+
+// Heatmap Legend
+function HeatmapLegend() {
+  const items = [
+    { color: "#E5E7EB", label: "No hearings" },
+    { color: "#10B981", label: "1–3 (light)" },
+    { color: "#F59E0B", label: "4–6 (moderate)" },
+    { color: "#EF4444", label: "7+ (heavy)" },
+  ];
+  return (
+    <div className="flex flex-wrap gap-3 mt-1 px-3 py-2 bg-white rounded-lg border border-gray-100">
+      <span className="text-xs font-medium text-gray-500 mr-1 self-center">Day Load:</span>
+      {items.map((item) => (
+        <div key={item.label} className="flex items-center gap-1.5">
+          <span
+            className="w-3 h-3 rounded-sm inline-block border border-gray-300"
+            style={{ backgroundColor: item.color }}
+          />
+          <span className="text-xs text-gray-600">{item.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+
 export function Calendar() {
-  const { hearings, fetchHearings, loading, nonWorkingDays, fetchNonWorkingDays, markNonWorkingDay, nonWorkingDaysLoading } = useHearingStore();
-  const { holidays, fetchHolidays } = useGoogleCalendarStore();
+  const {
+    hearings, fetchHearings, loading,
+    nonWorkingDays, fetchNonWorkingDays, markNonWorkingDay, removeNonWorkingDay, nonWorkingDaysLoading,
+    heatMap, fetchHeatMap,
+  } = useHearingStore();
+  const { holidays, fetchHolidays, holidaysLoading } = useGoogleCalendarStore();
   const [error, setError] = useState(null);
   const [selectedHearing, setSelectedHearing] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -90,11 +149,15 @@ export function Calendar() {
     loadHearings();
   }, [fetchHearings]);
 
-  // Fetch holidays and non-working days when month/year changes
+
+
+  // Fetch holidays, non-working days, and heatmap when month/year changes
   useEffect(() => {
+    const monthStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
     fetchHolidays(currentMonth, currentYear);
-    fetchNonWorkingDays(`${currentYear}-${String(currentMonth).padStart(2, '0')}`);
-  }, [currentMonth, currentYear, fetchHolidays, fetchNonWorkingDays]);
+    fetchNonWorkingDays(monthStr);
+    fetchHeatMap(monthStr);
+  }, [currentMonth, currentYear, fetchHolidays, fetchNonWorkingDays, fetchHeatMap]);
 
   // Handle calendar navigation (month change)
   const handleDatesSet = (dateInfo) => {
@@ -207,19 +270,31 @@ export function Calendar() {
     return [...calendarEvents, ...holidayEvents, ...nonWorkingDayEvents];
   }, [calendarEvents, holidayEvents, nonWorkingDayEvents]);
 
-  // Count this month's hearings
-  const thisMonthCount = useMemo(() => {
+  // Count hearings for the currently viewed month
+  const viewedMonthCount = useMemo(() => {
     if (!hearings || !Array.isArray(hearings)) return 0;
-    const now = new Date();
-    const thisMonth = now.getMonth();
-    const thisYear = now.getFullYear();
 
     return hearings.filter(h => {
       if (!h.hearing_date) return false;
       const date = new Date(h.hearing_date);
-      return date.getMonth() === thisMonth && date.getFullYear() === thisYear;
+      return date.getMonth() + 1 === currentMonth && date.getFullYear() === currentYear;
     }).length;
-  }, [hearings]);
+  }, [hearings, currentMonth, currentYear]);
+
+  // Apply heatmap background colors to day cells
+  const dayCellClassNames = useCallback((arg) => {
+    // Only apply in dayGridMonth view
+    const dateStr = arg.date.toISOString().split("T")[0];
+    const dayData = heatMap[dateStr];
+    if (!dayData) return [];
+    // Return a CSS class based on load level
+    switch (dayData.load) {
+      case "light": return ["heatmap-light"];
+      case "moderate": return ["heatmap-moderate"];
+      case "heavy": return ["heatmap-heavy"];
+      default: return [];
+    }
+  }, [heatMap]);
 
   // Handle event click
   const handleEventClick = (clickInfo) => {
@@ -229,6 +304,14 @@ export function Calendar() {
         console.error("No hearing data available");
         return;
       }
+
+      // If it's a non-working day and admin, show remove option
+      if (data.isNonWorkingDay && userRole === "admin") {
+        setSelectedHearing(data);
+        setDialogOpen(true);
+        return;
+      }
+
       setSelectedHearing(data);
       setDialogOpen(true);
     } catch (e) {
@@ -266,6 +349,21 @@ export function Calendar() {
     if (result) {
       setMarkDayDialogOpen(false);
       setSelectedDate(null);
+      // Refresh heatmap after marking
+      const monthStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
+      fetchHeatMap(monthStr);
+    }
+  };
+
+  // Handle removing a non-working day
+  const handleRemoveNonWorkingDay = async (date) => {
+    const result = await removeNonWorkingDay(date);
+    if (result) {
+      setDialogOpen(false);
+      setSelectedHearing(null);
+      // Refresh heatmap after removal
+      const monthStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
+      fetchHeatMap(monthStr);
     }
   };
 
@@ -278,6 +376,9 @@ export function Calendar() {
       setError(err);
     }
   };
+
+  // Check if data is loading (holidays or NWDs)
+  const isRefreshing = holidaysLoading || nonWorkingDaysLoading;
 
   // Error state
   if (error) {
@@ -309,21 +410,34 @@ export function Calendar() {
           <h1 className="text-2xl font-bold">Hearing Calendar</h1>
           <p className="mb-4 text-sm md:text-lg">
             You have{" "}
-            <span className=" font-medium text-redBase">{thisMonthCount}</span>{" "}
-            upcoming hearings this month.
+            <span className=" font-medium text-redBase">{viewedMonthCount}</span>{" "}
+            hearings this month.
           </p>
         </div>
-        <Button
-          onClick={handleRetry}
-          variant="outline"
-          size="sm"
-          className="gap-2"
-          disabled={loading}
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          {isRefreshing && (
+            <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+          )}
+          <Button
+            onClick={handleRetry}
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            disabled={loading}
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+        </div>
       </div>
+
+
+      {/* Heatmap CSS — injected inline for simplicity */}
+      <style>{`
+        .heatmap-light { background-color: rgba(16, 185, 129, 0.1) !important; }
+        .heatmap-moderate { background-color: rgba(245, 158, 11, 0.12) !important; }
+        .heatmap-heavy { background-color: rgba(239, 68, 68, 0.12) !important; }
+      `}</style>
 
       <FullCalendar
         ref={calendarRef}
@@ -334,6 +448,7 @@ export function Calendar() {
         dateClick={userRole === "admin" ? handleDateClick : undefined}
         selectable={userRole === "admin"}
         datesSet={handleDatesSet}
+        dayCellClassNames={dayCellClassNames}
         headerToolbar={{
           left: "prev,next today",
           center: "title",
@@ -342,78 +457,163 @@ export function Calendar() {
         height="auto"
       />
 
-      {/* Admin hint */}
-      {userRole === "admin" && (
-        <p className="text-xs text-gray-500 mt-2">💡 Tip: Click on any date to mark it as a non-working day (holiday, typhoon, etc.)</p>
-      )}
 
-      {/* Hearing Details Dialog - Enhanced like Google Calendar */}
+
+      {/* Legends */}
+      <EventLegend />
+      <HeatmapLegend />
+
+      {/* Hearing Details Dialog / Non-Working Day Details */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-lg">
-              <span className="text-2xl">📋</span>
-              Hearing #{selectedHearing?.hearing_number || "N/A"}
-              {selectedHearing?.case_type_label && (
-                <span className="text-base font-normal text-gray-500">
-                  - {selectedHearing.case_type_label}
-                </span>
+          {/* Non-Working Day detail view */}
+          {selectedHearing?.isNonWorkingDay ? (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-lg">
+                  <CalendarOff className="w-5 h-5 text-purple-600" />
+                  Non-Working Day
+                </DialogTitle>
+                <p className="text-sm text-gray-500">
+                  {selectedHearing.date && new Date(selectedHearing.date + "T00:00:00").toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </p>
+              </DialogHeader>
+              <div className="border-t border-gray-200 pt-4 space-y-2 text-sm">
+                <div className="flex gap-2">
+                  <span className="font-medium text-gray-600 w-28">Reason:</span>
+                  <span className="capitalize">{selectedHearing.reason_display || selectedHearing.reason}</span>
+                </div>
+                {selectedHearing.description && (
+                  <div className="flex gap-2">
+                    <span className="font-medium text-gray-600 w-28">Description:</span>
+                    <span>{selectedHearing.description}</span>
+                  </div>
+                )}
+              </div>
+              {userRole === "admin" && (
+                <DialogFooter>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => handleRemoveNonWorkingDay(selectedHearing.date)}
+                    disabled={nonWorkingDaysLoading}
+                  >
+                    {nonWorkingDaysLoading ? (
+                      <><Loader2 className="w-4 h-4 animate-spin" /> Removing...</>
+                    ) : (
+                      <><Trash2 className="w-4 h-4" /> Remove Non-Working Day</>
+                    )}
+                  </Button>
+                </DialogFooter>
               )}
-            </DialogTitle>
-            <p className="text-sm text-gray-500">
-              {selectedHearing?.hearing_date && new Date(selectedHearing.hearing_date).toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}
-              {selectedHearing?.time && ` · ${selectedHearing.time}`}
-            </p>
-          </DialogHeader>
-
-          <div className="border-t border-gray-200 pt-4">
-            <p className="text-sm font-medium text-gray-700 mb-3">HearEase Hearing Details</p>
-            <div className="space-y-2 text-sm">
-              <div className="flex gap-2">
-                <span className="font-medium text-gray-600 w-32">Case:</span>
-                <span className="font-mono text-xs bg-gray-100 px-2 py-0.5 rounded">
-                  #{selectedHearing?.case_number || selectedHearing?.case || "N/A"}
-                </span>
+            </>
+          ) : selectedHearing?.isHoliday ? (
+            /* Holiday detail view */
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-lg">
+                  <span className="text-2xl">🇵🇭</span>
+                  {selectedHearing.name}
+                </DialogTitle>
+                <p className="text-sm text-gray-500">
+                  {selectedHearing.date && new Date(selectedHearing.date + "T00:00:00").toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </p>
+              </DialogHeader>
+              <div className="border-t border-gray-200 pt-4 space-y-2 text-sm">
+                <div className="flex gap-2">
+                  <span className="font-medium text-gray-600 w-28">Type:</span>
+                  <span className="capitalize px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">
+                    {selectedHearing.holidayType || selectedHearing.type || "Holiday"}
+                  </span>
+                </div>
+                {selectedHearing.description && (
+                  <div className="flex gap-2">
+                    <span className="font-medium text-gray-600 w-28">Description:</span>
+                    <span>{selectedHearing.description}</span>
+                  </div>
+                )}
               </div>
+            </>
+          ) : (
+            /* Hearing detail view */
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-lg">
+                  <span className="text-2xl">📋</span>
+                  Hearing #{selectedHearing?.hearing_number || "N/A"}
+                  {selectedHearing?.case_type_label && (
+                    <span className="text-base font-normal text-gray-500">
+                      - {selectedHearing.case_type_label}
+                    </span>
+                  )}
+                </DialogTitle>
+                <p className="text-sm text-gray-500">
+                  {selectedHearing?.hearing_date && new Date(selectedHearing.hearing_date).toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                  {selectedHearing?.time && ` · ${selectedHearing.time}`}
+                </p>
+              </DialogHeader>
 
-              <div className="flex gap-2">
-                <span className="font-medium text-gray-600 w-32">Type:</span>
-                <span>{selectedHearing?.case_type_label || "Not specified"}</span>
-              </div>
+              <div className="border-t border-gray-200 pt-4">
+                <p className="text-sm font-medium text-gray-700 mb-3">HearEase Hearing Details</p>
+                <div className="space-y-2 text-sm">
+                  <div className="flex gap-2">
+                    <span className="font-medium text-gray-600 w-32">Case:</span>
+                    <span className="font-mono text-xs bg-gray-100 px-2 py-0.5 rounded">
+                      #{selectedHearing?.case_number || selectedHearing?.case || "N/A"}
+                    </span>
+                  </div>
 
-              <div className="flex gap-2">
-                <span className="font-medium text-gray-600 w-32">Hearing Number:</span>
-                <span>{selectedHearing?.hearing_number || "N/A"}</span>
-              </div>
+                  <div className="flex gap-2">
+                    <span className="font-medium text-gray-600 w-32">Type:</span>
+                    <span>{selectedHearing?.case_type_label || "Not specified"}</span>
+                  </div>
 
-              <div className="flex gap-2">
-                <span className="font-medium text-gray-600 w-32">Status:</span>
-                <span className={`capitalize px-2 py-0.5 rounded text-xs font-medium ${selectedHearing?.hearing_status === 'scheduled' ? 'bg-blue-100 text-blue-700' :
-                  selectedHearing?.hearing_status === 'completed' ? 'bg-green-100 text-green-700' :
-                    selectedHearing?.hearing_status === 'pending_schedule' ? 'bg-amber-100 text-amber-700' :
-                      selectedHearing?.hearing_status === 'pending_decision' ? 'bg-red-100 text-red-700' :
-                        'bg-gray-100 text-gray-600'
-                  }`}>
-                  {selectedHearing?.hearing_status?.replace(/_/g, " ") || "Unknown"}
-                </span>
-              </div>
+                  <div className="flex gap-2">
+                    <span className="font-medium text-gray-600 w-32">Hearing Number:</span>
+                    <span>{selectedHearing?.hearing_number || "N/A"}</span>
+                  </div>
 
-              <div className="flex gap-2">
-                <span className="font-medium text-gray-600 w-32">Assigned Lupon:</span>
-                <span>{selectedHearing?.lupon_member_name || "Unassigned"}</span>
-              </div>
+                  <div className="flex gap-2">
+                    <span className="font-medium text-gray-600 w-32">Status:</span>
+                    <span className={`capitalize px-2 py-0.5 rounded text-xs font-medium ${selectedHearing?.hearing_status === 'scheduled' ? 'bg-blue-100 text-blue-700' :
+                      selectedHearing?.hearing_status === 'completed' ? 'bg-green-100 text-green-700' :
+                        selectedHearing?.hearing_status === 'pending_schedule' ? 'bg-amber-100 text-amber-700' :
+                          selectedHearing?.hearing_status === 'pending_decision' ? 'bg-red-100 text-red-700' :
+                            'bg-gray-100 text-gray-600'
+                      }`}>
+                      {selectedHearing?.hearing_status?.replace(/_/g, " ") || "Unknown"}
+                    </span>
+                  </div>
 
-              <div className="flex gap-2">
-                <span className="font-medium text-gray-600 w-32">Remarks:</span>
-                <span className="text-gray-500">{selectedHearing?.remarks || "No remarks"}</span>
+                  <div className="flex gap-2">
+                    <span className="font-medium text-gray-600 w-32">Assigned Lupon:</span>
+                    <span>{selectedHearing?.lupon_member_name || "Unassigned"}</span>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <span className="font-medium text-gray-600 w-32">Remarks:</span>
+                    <span className="text-gray-500">{selectedHearing?.remarks || "No remarks"}</span>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            </>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -426,7 +626,7 @@ export function Calendar() {
               Mark as Non-Working Day
             </DialogTitle>
             <DialogDescription>
-              {selectedDate && new Date(selectedDate).toLocaleDateString('en-US', {
+              {selectedDate && new Date(selectedDate + "T00:00:00").toLocaleDateString('en-US', {
                 weekday: 'long',
                 year: 'numeric',
                 month: 'long',
@@ -444,8 +644,7 @@ export function Calendar() {
                 <p className="text-xs text-amber-700 mt-1">
                   {hearingsOnSelectedDate <= 2
                     ? "They will be inserted into available slots on the next working day."
-                    : "All hearings will be pushed to the next working day (cascade effect)."
-                  }
+                    : "All hearings will be pushed to the next working day (cascade effect)."}
                 </p>
               </div>
             )}

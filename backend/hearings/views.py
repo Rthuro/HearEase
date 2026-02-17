@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 User = get_user_model()
 
 # Time slots available for hearings (09:00 is the default)
-TIME_SLOTS = ["09:00", "10:00", "11:00", "08:00", "13:00", "14:00", "15:00", "16:00"]
+TIME_SLOTS = ["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00"]
 
 
 def get_available_slots(date, exclude_hearing_id=None):
@@ -73,7 +73,7 @@ def get_optimal_time_slot(date):
 
 def get_alternative_dates(start_date, num_alternatives=3):
     """
-    Get alternative dates (skipping Sundays and with least load).
+    Get alternative dates (skipping Sundays and non-working days, with least load).
     """
     if isinstance(start_date, str):
         start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
@@ -82,8 +82,8 @@ def get_alternative_dates(start_date, num_alternatives=3):
     current_date = start_date + timedelta(days=1)
     
     while len(alternatives) < num_alternatives:
-        # Skip Sundays
-        if current_date.weekday() != 6:
+        # Skip Sundays and non-working days
+        if current_date.weekday() != 6 and not NonWorkingDay.objects.filter(date=current_date).exists():
             # Count hearings on this date
             hearing_count = Hearing.objects.filter(hearing_date=current_date).count()
             optimal_slot = get_optimal_time_slot(current_date)
@@ -110,23 +110,30 @@ class HearingView(APIView):
         email = request.query_params.get("email")
 
         if role == "user":
-            try:
-                user_id = CasePerson.objects.filter(email=email).first().id
-                cases = Case.objects.filter(complainants=user_id)
-                # print(user_id, email)
-            except AttributeError:
-                cases = Case.objects.none()
+            # Direct ORM join — no need to load all Cases into memory
+            hearings = Hearing.objects.filter(
+                case__complainants__email=email
+            )
         else:
-            cases = Case.objects.all()
-        
-        case_ids = [case.id for case in cases]
-        hearings = Hearing.objects.filter(case_id__in=case_ids)
-        # print("my hearings", hearings)
-        # print("case ids", case_ids)
-        serializer = HearingSerializer(hearings, many=True)
+            hearings = Hearing.objects.all()
+
+        # Optional date-range filter (for calendar month views)
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
+        if start_date:
+            hearings = hearings.filter(hearing_date__gte=start_date)
+        if end_date:
+            hearings = hearings.filter(hearing_date__lte=end_date)
+
+        # Prefetch related objects to avoid N+1 in serializer
+        hearings = hearings.select_related(
+            'case__case_type', 'lupon_member'
+        )
 
         if not hearings.exists():
             return Response({"error": "No hearings found for this case."}, status=status.HTTP_200_OK)
+
+        serializer = HearingSerializer(hearings, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
 

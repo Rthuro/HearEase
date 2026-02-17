@@ -202,7 +202,7 @@ const useHearingStore = create((set, get) => ({
     try {
       const response = await updateHearingProgress(hearingId, payload);
       return { success: true, data: response };
-      } catch (error) {
+    } catch (error) {
       const isNetworkError = !error.response;
       const errorMessage = isNetworkError
         ? "Network error. Please check your connection."
@@ -263,7 +263,7 @@ const useHearingStore = create((set, get) => ({
       set({ nonWorkingDaysLoading: false });
     }
   },
-  
+
   removeNonWorkingDay: async (date) => {
     try {
       const response = await axios.delete(`${API_URL}/non-working-day/${date}/`);
@@ -280,7 +280,44 @@ const useHearingStore = create((set, get) => ({
     }
   },
 
-  
+  // Calendar Heatmap
+  heatMap: {},
+  heatMapLoading: false,
+
+  fetchHeatMap: async (month) => {
+    set({ heatMapLoading: true });
+    try {
+      const params = month ? { month } : {};
+      const response = await axios.get(`${API_URL}/calendar-heatmap/`, { params });
+      set({ heatMap: response.data.heat_map || {} });
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching heatmap:", error);
+      return null;
+    } finally {
+      set({ heatMapLoading: false });
+    }
+  },
+
+  // Early Warning System
+  earlyWarnings: null,
+  earlyWarningsLoading: false,
+
+  fetchEarlyWarnings: async () => {
+    set({ earlyWarningsLoading: true });
+    try {
+      const response = await axios.get(`${API_URL}/early-warning/`);
+      set({ earlyWarnings: response.data });
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching early warnings:", error);
+      return null;
+    } finally {
+      set({ earlyWarningsLoading: false });
+    }
+  },
+
+
 }));
 
 export default useHearingStore;
