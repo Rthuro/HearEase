@@ -26,6 +26,8 @@ export const custom_email = async (email, subject, message) => {
 
 export const useUserStore = create((set, get) => ({
     loading: false,
+    showSync: true,
+    setShowSync: (value) => set({ showSync: value }),
     updateUser: async (userId, updatedData) => {
         set({ loading: true });
         try {
