@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Trash2, 
   Settings, 
@@ -29,18 +29,20 @@ import { Input } from "@/components/ui/input";
 import { useCaseStore } from "@/store/useCaseStore";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-export function CaseSettingsModal({ role, caseData}) {
+import { useGenerateDocumentStore } from "@/store/useGenerateDocumentStore";
+
+export function CaseSettingsModal({ role, caseData, hearings}) {
   const {deleteCase, updateCaseInfo} = useCaseStore();
+  const { templates, fetchTemplates, generateDocument} = useGenerateDocumentStore();
+
   const [open, setOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteInput, setDeleteInput] = useState("");
   const [loader, setLoader] = useState(false);
   const navigate = useNavigate();
   // Placeholder handlers
-  const handleExportPDF = () => console.log("Exporting PDF for", caseData.id);
   const handlePrint = () => window.print();
-  const handleArchive = () => console.log("Archiving", caseData.id);
-  const handleResolve = () => console.log("Marking resolved", caseData.id);
+
 
   // Secure Delete Logic
   const handleDelete = () => {
@@ -54,6 +56,35 @@ export function CaseSettingsModal({ role, caseData}) {
       error: 'Error deleting case.',
     });
   };
+
+  const handleTemplateSelect = async (case_data, template_name) => {
+        if(templates.length === 0){
+              setLoader(true);
+              try {
+                  await fetchTemplates();
+              } catch (error) {
+                return toast.error("Error fetching templates. Please try again.");
+              } finally {
+                  setLoader(false);
+              }
+          }
+
+        const template_id = templates.find(t => t.template_type === template_name)?.id;  
+
+        try {
+            const findHearingCase = hearings?.filter( hearing => hearing?.case == case_data.id)
+            .sort((a, b) => a.hearing_number - b.hearing_number) || [] ;
+
+            toast.promise( generateDocument(case_data,findHearingCase, template_name, template_id), {
+                loading: 'Generating document...',
+                success: 'Document generated successfully!',
+                error: 'Error generating document.',
+            })
+
+        } catch (error) {
+            toast.error("Error generating document. Please try again.");
+        }
+    }
 
   const handleCancelCase = async () => {
     setLoader(true);
@@ -101,7 +132,7 @@ export function CaseSettingsModal({ role, caseData}) {
             <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Documents</h4>
             
             <div className="grid grid-cols-2 gap-4">
-              <Button variant="outline" className="justify-start h-auto py-3 px-4" onClick={handleExportPDF}>
+              <Button variant="outline" className="justify-start h-auto py-3 px-4" onClick={() => handleTemplateSelect(caseData, 'case_report')}>
                 <FileText className="h-4 w-4 mr-2 text-gray-500" />
                 <div className="flex flex-col items-start">
                   <span className="text-sm font-semibold">Export PDF</span>
@@ -109,7 +140,8 @@ export function CaseSettingsModal({ role, caseData}) {
                 </div>
               </Button>
 
-              <Button variant="outline" className="justify-start h-auto py-3 px-4" onClick={handlePrint}>
+              <Button variant="outline" className="justify-start h-auto py-3 px-4" 
+              onClick={() => handleTemplateSelect(caseData, 'monitoring')}>
                 <Printer className="h-4 w-4 mr-2 text-gray-500" />
                 <div className="flex flex-col items-start">
                   <span className="text-sm font-semibold">Print Record</span>
@@ -122,7 +154,7 @@ export function CaseSettingsModal({ role, caseData}) {
           <Separator />
 
           {/* Section 3: Case Management */}
-          { role == 'admin' && (
+          {/* { role == 'admin' && (
             <>
               <div className="space-y-4">
                 <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Management</h4>
@@ -141,7 +173,7 @@ export function CaseSettingsModal({ role, caseData}) {
               <Separator />
             </>
           
-          )}
+          )} */}
           
 
 
@@ -155,7 +187,9 @@ export function CaseSettingsModal({ role, caseData}) {
                     </div>
                     <div>
                         <h4 className="text-sm font-bold text-red-900">Danger Zone</h4>
-                        <p className="text-xs text-red-700">Irreversible actions regarding this case.</p>
+                        <p className="text-xs text-red-700">Irreversible actions regarding this case.
+                          {caseData.summon_status !== 'served' ? " Cancelling will archive the case and remove it from active lists." : " Cancelling will mark the case as resolved with a remark of 'Settled outside Katarungang Pambarangay Jurisdiction'."}
+                        </p>
                     </div>
                 </div>
                 <Button 
@@ -188,7 +222,7 @@ export function CaseSettingsModal({ role, caseData}) {
                     </div>
                     <div>
                         <h4 className="text-sm font-bold text-red-900">Danger Zone</h4>
-                        <p className="text-xs text-red-700">Irreversible actions regarding this case.</p>
+                        <p className="text-xs text-red-700">Irreversible actions regarding this case. This will remove the case from the system permanently.</p>
                     </div>
                 </div>
                 <Button 
