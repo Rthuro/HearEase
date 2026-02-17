@@ -83,7 +83,6 @@ export function GenerateDocument() {
             template_id: templates.find( t => t.template_type === 'no-show')?.id,
         }
     ]
-    console.log(generate)
 
     const [term, setTerm] = useState("all");
 

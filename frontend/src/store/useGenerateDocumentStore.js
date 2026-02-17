@@ -3,6 +3,7 @@ import { create } from "zustand";
 import useHearingStore from './useHearingStore';
 import { useLuponStore } from './useLuponStore';
 import toast from 'react-hot-toast';
+import { formatedDateTimeToString, formatedDateToString } from '@/lib/helpers';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api"
 const { hearings } = useHearingStore.getState();
@@ -52,7 +53,7 @@ export const useGenerateDocumentStore = create((set) => ({
 
                     formData = {
                         template_id: template_id,
-                        date_filed: new Date().toISOString().split('T')[0],
+                        date_filed: formatedDateTimeToString(case_data.date_filed),
                         respondents: case_data.respondents?.map(r => r.first_name + ' ' + r.last_name).join(', '),
                         complainants: case_data.complainants?.map(c => c.first_name + ' ' + c.last_name).join(', '),
 
@@ -115,6 +116,25 @@ export const useGenerateDocumentStore = create((set) => ({
                     }
                     break;
                 }
+            case 'case_report':
+                formData = {
+                    template_id: template_id,
+                    date: new Date().toISOString().split('T')[0],
+                    respondents: case_data.respondents?.map(r => r.first_name + ' ' + r.last_name).join(', '),
+                    complainants: case_data.complainants?.map(c => c.first_name + ' ' + c.last_name).join(', '),
+                    case_type: case_data.case_type.case_name,
+                    case_number: case_data.id,
+                    date_filed: formatedDateTimeToString(case_data.date_filed),
+                    severity: case_data.case_type.severity,
+                    description: case_data.description,
+                    status: case_data.case_status,
+                    settlement_type: case_data.settlement_type.settlement_name || 'Case not yet settled',
+                    resolution_date: formatedDateToString(case_hearings[case_hearings.length - 1]?.hearing_date) || 'Pending',
+                    remarks: case_data.remarks || 'N/A',
+                    punong_barangay: 'Hon. Pedro Lopez',
+                    secretary_name: 'Susan D.C. Cabato',
+                }
+                break;
             default:
                 toast.error('Invalid template name provided.');
                 return;
