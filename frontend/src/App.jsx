@@ -72,6 +72,7 @@ function App() {
             <Route  element={<AdminLayout />}>
               <Route path='Admin/' element={<Dashboard />} />
               <Route path="Admin/File-Case" element={<FileCase />} />
+              <Route path="Admin/File-Case/:caseNum" element={<FileCase />} />
               <Route path="Admin/Calendar" element={<Calendar />} />
               <Route path="Admin/File-Case/Case-Form" element={<CaseForm />} />
               <Route path="Admin/Case/:case_number" element={<Case />} />

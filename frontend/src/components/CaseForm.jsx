@@ -80,23 +80,28 @@ export function CaseForm() {
         e.preventDefault();
         // setLoading(true); 
         if(submission == 'submit'){
-            toast.promise(addCaseData(), {
-                loading: 'Submitting Case Form...',
-                success: (data) => {
-                    setStepNumber(5); 
-                    setLoading(false);
+            const check = formData.caseDetails?.case_status?.value;
+            const actionPromise = check == null ? addCaseData() : draftCase('submit');
 
-                return <b>Case form submitted successfully!</b>;
+            toast.promise(actionPromise, {
+                loading: check == null ? 'Submitting Case Form...' : 'Submitting draft case...',
+                success: (data) => {
+                    setStepNumber(5);
+                    setLoading(false);
+                    return <b>Case submitted successfully!</b>;
                 },
                 error: (err) => {
                     setLoading(false);
-                    return <b>An error occurred: {err.message}</b>;
+                    // Extract error message if it exists
+                    const errMsg = err.response?.data?.error || err.message;
+                    return <b>An error occurred: {errMsg}</b>;
                 },
             });
+            
         }
         
         if(submission == 'draft') {
-            toast.promise(draftCase(), {
+            toast.promise(draftCase('draft'), {
                 loading: 'Saving case to draft...',
                 success: (data) => {
                     setStepNumber(5); 

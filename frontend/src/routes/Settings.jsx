@@ -443,7 +443,7 @@ export function Settings() {
                                         <DropdownMenu id="barangay">
                                         <DropdownMenuTrigger asChild>
                                             <Button variant="outline">
-                                                {getBarangayName(barangays, selectedBarangay) || 'Select'}
+                                                {selectedBarangay || 'Select'}
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent className="w-72">
@@ -457,7 +457,7 @@ export function Settings() {
                                             }}>
 
                                             {barangays.map(b => (
-                                                <DropdownMenuRadioItem key={b.name} value={b.id}>{b.name}
+                                                <DropdownMenuRadioItem key={b.name} value={b.name}>{b.name}
                                                 </DropdownMenuRadioItem>
                                             ))}
 

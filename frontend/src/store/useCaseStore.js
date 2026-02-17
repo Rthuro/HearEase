@@ -115,12 +115,12 @@ export const useCaseStore = create((set, get) => ({
 
     predictions: null,
     predictionsLoading: false,
-    case: {
+    case_info: {
         case_number: "",
         date: "",
     },
     setCaseInfo: (info) => {
-        set({ case: { ...get().case, ...info } });
+        set({ case_info: { ...get().case_info, ...info } });
     },
 
     complainantList: [],
@@ -163,6 +163,7 @@ export const useCaseStore = create((set, get) => ({
             description: { value: "", required: true },
             documents: { value: [], required: false },
             predicted_number: { value: null, required: false },
+            case_status: { value: null, required: false },
         },
         hearingInfo: [],
     },
@@ -250,7 +251,7 @@ export const useCaseStore = create((set, get) => ({
         const { formData, complainantList, respondentList, set_complainants, set_respondents } = get();
 
         let caseData = {
-            id: get().case.case_number,
+            id: get().case_info.case_number,
             complainants: complainantList,
             respondents: respondentList,
             case_type: formData.caseDetails.nature_of_complaint_code.value,
@@ -333,14 +334,14 @@ export const useCaseStore = create((set, get) => ({
         }
     },
 
-    draftCase: async () => {
+    draftCase: async (submit) => {
         const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
         const data = JSON.parse(stored);
 
-        const { cases, formData, complainantList, respondentList, set_complainants, set_respondents } = get();
+        const { cases, fetchCases, formData, complainantList, respondentList, set_complainants, set_respondents } = get();
 
         let caseData = {
-            id: get().case.case_number,
+            id: get().case_info.case_number,
             complainants: complainantList,
             respondents: respondentList,
             case_type: formData.caseDetails.nature_of_complaint_code.value,
@@ -350,7 +351,7 @@ export const useCaseStore = create((set, get) => ({
             predicted_hearings: formData.caseDetails.predicted_number.value || 0,
             remarks: "",
             relationship: formData.caseDetails.relationship.value,
-            case_status: "filed",
+            case_status: submit == 'submit' ? (data.userRole === 'admin' ? "approved" : "pending_approval") : "filed",
             create_by: data.userRole === 'admin' ? "admin" : "user",
         };
 
@@ -375,10 +376,19 @@ export const useCaseStore = create((set, get) => ({
         const case_documents = formData.caseDetails.documents.value;
 
         try {
+            fetchCases();
             const check = cases.find(c => c.id == caseData.id);
 
             let res = null;
             if (check) {
+                
+                if(submit == 'submit') {
+                        caseData = {
+                        ...caseData,
+                        hearing_info: formData.hearingInfo,
+                    }
+                }
+
                 res = await axios.put(`${API_URL}/update-case/${caseData.id}/`, caseData);
 
                 const checkDocuments = await axios.get(

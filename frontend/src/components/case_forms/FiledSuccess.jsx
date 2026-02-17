@@ -13,7 +13,7 @@ export function FiledSuccess(){
                 <p className="text-2xl font-medium">Case Filed Successfully!</p>
                 <p className="text-sm text-zinc-500 text-center max-w-[530px]">
                     {userRole === 'admin' ?
-                        `The case has been registered and scheduled. You may now download the following documents generated for this case.`
+                        `The case has been registered.`
                         :
                         `You have successfully filed a case. Please wait for your case status update. We will keep you informed via email.`
                     }
