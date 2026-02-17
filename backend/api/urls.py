@@ -72,6 +72,7 @@ urlpatterns = [
     # Scheduling endpoints
     path('check-time-conflict/', HearingViews.CheckTimeConflictView.as_view(), name='check-time-conflict'),
     path('optimal-slot/', HearingViews.GetOptimalSlotView.as_view(), name='optimal-slot'),
+    path('schedule-overtime/', HearingViews.ScheduleOvertimeView.as_view(), name='schedule-overtime'),
     
     # Advanced scheduling & analytics (Phase 3)
     path('calendar-heatmap/', HearingViews.CalendarHeatMapView.as_view(), name='calendar-heatmap'),

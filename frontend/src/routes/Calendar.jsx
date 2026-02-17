@@ -6,7 +6,7 @@ import interactionPlugin from "@fullcalendar/interaction";
 import { PageSync } from "@/components/PageSync";
 import useHearingStore from "@/store/useHearingStore";
 import { useGoogleCalendarStore } from "@/store/useGoogleCalendarStore";
-import { AlertTriangle, RefreshCw, Loader2, CalendarOff, Trash2 } from "lucide-react";
+import { AlertTriangle, RefreshCw, Loader2, CalendarOff, Trash2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -26,7 +26,12 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 
+import toast from "react-hot-toast";
+import axios from "axios";
+
 const LOCAL_STORAGE_KEY = "authData";
+const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
+const OVERTIME_SLOTS = ["16:00", "17:00", "18:00"];
 
 // Error Boundary Component
 function CalendarErrorFallback({ error, onRetry }) {
@@ -130,6 +135,15 @@ export function Calendar() {
   const [markDayReason, setMarkDayReason] = useState("holiday");
   const [markDayDescription, setMarkDayDescription] = useState("");
   const [hearingsOnSelectedDate, setHearingsOnSelectedDate] = useState(0);
+
+  // Overtime dialog state
+  const [overtimeDialogOpen, setOvertimeDialogOpen] = useState(false);
+  const [otCaseId, setOtCaseId] = useState("");
+  const [otDate, setOtDate] = useState("");
+  const [otTime, setOtTime] = useState("");
+  const [otRemarks, setOtRemarks] = useState("");
+  const [otSubmitting, setOtSubmitting] = useState(false);
+  const [otCaseSearch, setOtCaseSearch] = useState("");
 
   // Get user role
   const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -429,6 +443,23 @@ export function Calendar() {
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
             Refresh
           </Button>
+          {userRole === "admin" && (
+            <Button
+              onClick={() => {
+                setOvertimeDialogOpen(true);
+                setOtCaseId("");
+                setOtDate("");
+                setOtTime("");
+                setOtRemarks("");
+                setOtCaseSearch("");
+              }}
+              size="sm"
+              className="gap-2 bg-amber-500 hover:bg-amber-600 text-white"
+            >
+              <Clock className="w-4 h-4" />
+              Schedule Overtime
+            </Button>
+          )}
         </div>
       </div>
 
@@ -690,6 +721,131 @@ export function Calendar() {
               ) : (
                 <>Mark as Non-Working</>
               )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Overtime Scheduling Dialog */}
+      <Dialog open={overtimeDialogOpen} onOpenChange={setOvertimeDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Clock className="w-5 h-5 text-amber-500" />
+              Schedule Overtime Hearing
+            </DialogTitle>
+            <DialogDescription>
+              Schedule a hearing after regular work hours (4 PM – 6 PM).
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-4 mt-2">
+            {/* Case search & select */}
+            <div className="flex flex-col gap-1">
+              <Label>Case</Label>
+              <Input
+                placeholder="Search case by number..."
+                value={otCaseSearch}
+                onChange={(e) => setOtCaseSearch(e.target.value)}
+              />
+              <Select value={otCaseId} onValueChange={setOtCaseId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a case" />
+                </SelectTrigger>
+                <SelectContent className="max-h-48">
+                  {(hearings || [])
+                    .reduce((acc, h) => {
+                      const caseId = h.case;
+                      const caseNum = h.case_number || `Case #${caseId}`;
+                      if (!acc.find((c) => c.id === caseId)) {
+                        acc.push({ id: caseId, label: caseNum });
+                      }
+                      return acc;
+                    }, [])
+                    .filter((c) =>
+                      otCaseSearch
+                        ? c.label.toLowerCase().includes(otCaseSearch.toLowerCase())
+                        : true
+                    )
+                    .map((c) => (
+                      <SelectItem key={c.id} value={String(c.id)}>
+                        {c.label}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Date picker */}
+            <div className="flex flex-col gap-1">
+              <Label>Date</Label>
+              <Input
+                type="date"
+                value={otDate}
+                onChange={(e) => setOtDate(e.target.value)}
+              />
+            </div>
+
+            {/* Overtime time slot */}
+            <div className="flex flex-col gap-1">
+              <Label>Overtime Slot</Label>
+              <Select value={otTime} onValueChange={setOtTime}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select overtime slot" />
+                </SelectTrigger>
+                <SelectContent>
+                  {OVERTIME_SLOTS.map((slot) => (
+                    <SelectItem key={slot} value={slot} className="text-amber-700">
+                      ⏰ {slot}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Remarks */}
+            <div className="flex flex-col gap-1">
+              <Label>Remarks (optional)</Label>
+              <Input
+                placeholder="e.g. Urgent follow-up"
+                value={otRemarks}
+                onChange={(e) => setOtRemarks(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="mt-4">
+            <Button
+              variant="outline"
+              onClick={() => setOvertimeDialogOpen(false)}
+              disabled={otSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="bg-amber-500 hover:bg-amber-600 text-white gap-2"
+              disabled={!otCaseId || !otDate || !otTime || otSubmitting}
+              onClick={async () => {
+                setOtSubmitting(true);
+                try {
+                  await axios.post(`${API_URL}/schedule-overtime/`, {
+                    case_id: otCaseId,
+                    hearing_date: otDate,
+                    time: otTime,
+                    remarks: otRemarks || "Overtime hearing.",
+                  });
+                  toast.success("Overtime hearing scheduled!");
+                  setOvertimeDialogOpen(false);
+                  await fetchHearings();
+                } catch (err) {
+                  const msg = err.response?.data?.error || "Failed to schedule overtime.";
+                  toast.error(msg);
+                } finally {
+                  setOtSubmitting(false);
+                }
+              }}
+            >
+              {otSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+              Schedule
             </Button>
           </DialogFooter>
         </DialogContent>

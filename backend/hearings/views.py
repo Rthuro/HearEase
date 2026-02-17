@@ -255,6 +255,78 @@ class SetCaseHearingsView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
+class ScheduleOvertimeView(APIView):
+    """Create a single overtime hearing for an existing case (admin only)."""
+
+    def post(self, request):
+        case_id = request.data.get("case_id")
+        hearing_date = request.data.get("hearing_date")
+        time_slot = request.data.get("time")
+        lupon_id = request.data.get("lupon_member_id")
+        remarks = request.data.get("remarks", "Overtime hearing.")
+
+        # Validation
+        if not case_id or not hearing_date or not time_slot:
+            return Response(
+                {"error": "case_id, hearing_date, and time are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if time_slot not in OVERTIME_SLOTS:
+            return Response(
+                {"error": f"Time must be an overtime slot: {OVERTIME_SLOTS}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            case = Case.objects.get(id=case_id)
+        except Case.DoesNotExist:
+            return Response({"error": "Case not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Check for conflict
+        if isinstance(hearing_date, str) and "T" in hearing_date:
+            hearing_date = hearing_date.split("T")[0]
+
+        conflict = Hearing.objects.filter(
+            hearing_date=hearing_date, time=time_slot
+        ).exists()
+        if conflict:
+            return Response(
+                {"error": f"A hearing already exists at {time_slot} on {hearing_date}."},
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        # Determine hearing number (next in sequence for this case)
+        last_hearing = (
+            Hearing.objects.filter(case=case)
+            .order_by("-hearing_number")
+            .first()
+        )
+        next_number = (last_hearing.hearing_number or 0) + 1 if last_hearing else 1
+
+        hearing = Hearing.objects.create(
+            case=case,
+            hearing_number=next_number,
+            hearing_date=hearing_date,
+            time=time_slot,
+            lupon_member_id=lupon_id,
+            remarks=remarks,
+            hearing_status="scheduled",
+            is_overtime=True,
+        )
+
+        # Auto-sync to Google Calendar
+        try:
+            from google_calendar.views import sync_hearing_to_google
+            sync_hearing_to_google(hearing, action="create")
+        except Exception as sync_error:
+            print(f"[Auto-Sync] Error syncing overtime hearing: {sync_error}")
+
+        return Response(
+            {"success": "Overtime hearing created.", "hearing": HearingSerializer(hearing).data},
+            status=status.HTTP_201_CREATED,
+        )
+
 class UpdateHearingView(APIView):
     def put(self, request, pk):
         
