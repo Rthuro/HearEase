@@ -116,6 +116,9 @@ class Case(models.Model):
     )
 
     case_completed_date = models.DateTimeField(blank=True, null=True)
+    approved_case_date = models.DateTimeField(blank=True, null=True)
+    rejected_case_date = models.DateTimeField(blank=True, null=True)
+
     create_by = models.CharField( max_length=20, choices=CREATED,
         default="none",
         blank=True,

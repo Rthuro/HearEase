@@ -39,11 +39,7 @@ export function Reports() {
 
     function resetDateRange() {
         setDateRange({ from: oneMonthAgo, to: today })
-        toast.promise( fetchReport(), {
-            loading: "Resetting date range...",
-            success: "Date range reset to last month",
-            error: "Failed to reset date range"
-        })
+        fetchReport();
     }
 
     const fetchReport = () => {

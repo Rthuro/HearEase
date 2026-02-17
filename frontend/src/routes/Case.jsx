@@ -195,7 +195,7 @@ export function Case() {
 
         try {
             await toast.promise(
-                updateCaseStatus({ id: caseInfo.id, case_status: "approved" }, "approved"),
+                updateCaseStatus({ id: caseInfo.id, case_status: "approved", approved_case_date: new Date() }, "approved"),
                 {
                     loading: "Approving case...",
                     success: async () => {

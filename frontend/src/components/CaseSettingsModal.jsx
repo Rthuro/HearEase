@@ -90,10 +90,10 @@ export function CaseSettingsModal({ role, caseData, hearings}) {
     setLoader(true);
     let  updateData = null;
     if( caseData.summon_status !=='served'){
-      updateData = { case_status: 'archived'};
+      updateData = { case_status: 'archived', case_completed_date: new Date(), remarks: 'Case cancelled before service of summons' };
     }
     if(caseData.summon_status =='served'){
-      updateData = { case_status: 'resolved', remarks: 'Settled outside Katarungang Pambarangay Jurisdiction' };
+      updateData = { case_status: 'resolved', case_completed_date: new Date(), remarks: 'Settled outside Katarungang Pambarangay Jurisdiction' };
     }
     await updateCaseInfo(updateData, 'case', caseData.id);
     navigate(-1);
