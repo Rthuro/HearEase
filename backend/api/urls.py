@@ -35,6 +35,7 @@ urlpatterns = [
 
     path('all-case-persons/', CasePersonViews.AllCasePersonsView.as_view(), name='case-person-cases'),
     path('custom-email/', CasePersonViews.CustomEmailView.as_view(), name='custom-email'),
+    path('custom-text/', CasePersonViews.CustomSmsView.as_view(), name='custom-text'),
 
     path('login/', UserViews.LoginView.as_view(), name='login'),
     path('barangays/', AddressViews.BarangayListView.as_view(), name='barangay-list'),

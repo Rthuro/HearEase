@@ -20,6 +20,7 @@ import { useCaseStore } from "@/store/useCaseStore";
 import { SendEmailDialog } from "@/components/SendEmailDialog";
 import { EditCasePerson } from "@/components/EditCasePerson";
 import { nanoid } from 'nanoid'
+import { SendSmsDialog } from "@/components/SendSmsDialog";
 
 export function CasePerson() {
   const { id } = useParams();
@@ -100,6 +101,12 @@ export function CasePerson() {
                     recipientEmail={personData?.email} 
                     recipientName={`${personData?.first_name} ${personData?.last_name}`} 
                 />
+                )}
+                {personData?.contact_number && (
+                  <SendSmsDialog 
+                      recipientNumber={personData?.contact_number} 
+                      recipientName={`${personData?.first_name} ${personData?.last_name}`} 
+                  />
                 )}
                 <Button variant="outline" onClick={handleRefresh} disabled={refreshLoader}>
                     <RefreshCw className={refreshLoader ? "animate-spin" : ""} />

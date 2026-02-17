@@ -1,13 +1,15 @@
 from django.shortcuts import render
 from rest_framework.views import APIView 
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, permissions
 from .models import CasePerson
 from .serializers import CasePersonSerializer
 from cases.models import Case
 from django.db.models import Q
 from cases.serializers import CaseSerializer
-from users.utils import EmailNotification
+from users.utils import EmailNotification, PhoneNotification
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.authentication import TokenAuthentication
 
 class CasePersonView(APIView):
     # Retrieve CasePersons by type (complainant or respondent)
@@ -170,3 +172,23 @@ class CustomEmailView(APIView):
         EmailNotification.custom_email(email, subject, message)
         
         return Response({"message": "Email sent successfully."}, status=status.HTTP_200_OK)
+
+class CustomSmsView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
+
+    def post(self, request):
+        contact_number = request.data.get("contact_number")
+        message = request.data.get("message")
+
+        def format_phone_number(number):
+            clean_number = str(number).replace(" ", "").replace("-", "")
+            if clean_number.startswith("09"):
+                return "+63" + clean_number[1:] # Converts 0917... to +63917...
+            if not clean_number.startswith("+"):
+                return "+" + clean_number
+            return clean_number
+
+        PhoneNotification.custom_sms(format_phone_number(contact_number), message)
+
+        return Response({"message": "SMS sent successfully."}, status=status.HTTP_200_OK)
