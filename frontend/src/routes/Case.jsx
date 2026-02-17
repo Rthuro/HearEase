@@ -281,6 +281,7 @@ export function Case() {
             setCaseInfo(updatedCase);
             fetchHearingsByCase(case_number);
             setFindHearingCase(caseHearings);   
+            fetchCaseDocuments(case_number);
             setRefreshLoader(false);
         }
         catch(error){
@@ -494,7 +495,10 @@ export function Case() {
                 <div className="flex items-center justify-between">
                     <h2 className="text-lg font-medium">{caseDetails.section}</h2>
                     <EditCaseInfo section="case"
-                        caseInfo={caseInfo} refresh={refreshCaseData} />
+                        caseInfo={{
+                            ...caseInfo,
+                            case_documents: case_documents
+                        }} refresh={refreshCaseData} />
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

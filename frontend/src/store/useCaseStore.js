@@ -654,7 +654,50 @@ export const useCaseStore = create((set, get) => ({
                 try {
                     const res = await axios.put(`${API_URL}/update-case/${id}/`, data);
 
-                    console.log(res);
+                    if(data?.case_documents){
+
+                        const checkDocuments = await axios.get(
+                            `${API_URL}/case-documents/?case_number=${id}`
+                        );
+                        const dbDocuments = checkDocuments.data; 
+
+                        const docsToDelete = dbDocuments.filter(dbDoc => 
+                            !data.case_documents.some(uiDoc => uiDoc.name === dbDoc.title)
+                        );
+
+                        for (const doc of docsToDelete) {
+                            try {
+                                await axios.delete(`http://127.0.0.1:8000/api/case-documents/${doc.id}/`);
+                                console.log(`Deleted file and record for: ${doc.title}`);
+                            } catch (err) {
+                                console.error("Failed to delete document:", err);
+                            }
+                        }
+
+                        const existingDocNames = dbDocuments.map(doc => doc.title);
+
+                        if (data?.case_documents && data?.case_documents.length > 0) {
+                            for (const case_doc of data.case_documents) {
+                                if (!existingDocNames.includes(case_doc.name)) {
+                                    const case_document_formData = new FormData();
+                                    case_document_formData.append("case", data.id);
+                                    case_document_formData.append("title", case_doc.name);
+                                    case_document_formData.append("file", case_doc);
+
+                                    try {
+                                        await axios.post(
+                                            "http://127.0.0.1:8000/api/case-documents/",
+                                            case_document_formData,
+                                            { headers: { "Content-Type": "multipart/form-data" } }
+                                        );
+                                    } catch (error) {
+                                        console.error("Upload failed:", error);
+                                    }
+                                }
+                            }
+                        }
+
+                    }
 
                     if (res.status === 200) {
                         fetchCases();
