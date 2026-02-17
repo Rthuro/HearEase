@@ -345,35 +345,22 @@ class CaseListView(APIView):
     def post(self, request):
         first_name = request.data.get("first_name", "")
         last_name = request.data.get("last_name", "")
-        middle_name = request.data.get("middle_name", "")
 
-        # print(f"Searching for: {first_name} (Middle: {middle_name}) {last_name}")
+        print(f"Searching for: {first_name} {last_name}")
 
         # print(f"CasePersons:", CasePerson.objects.all())
-        base_matches = CasePerson.objects.annotate(
-            clean_first=Trim('first_name'),
-            clean_last=Trim('last_name'),
-            clean_middle=Trim('middle_name')
-        ).filter(
-            clean_first__iexact=first_name,
-            clean_last__iexact=last_name,
+        base_matches = CasePerson.objects.filter(
+            first_name__icontains=first_name.strip(),
+            last_name__iexact=last_name.strip(),
             email__isnull=True
         )
 
-        # print("Base Matches IDs:", base_matches)
+        print("Base Matches IDs:", base_matches)
 
         final_persons = []
-
-        if middle_name:
-            matches = base_matches.filter(clean_middle=middle_name)
-            for match in matches:
+        for match in base_matches:
                 final_persons.append(match.id)
-        else:
-            matches = base_matches.filter(clean_middle__isnull=True)
-            for match in matches:
-                final_persons.append(match.id)
-
-        # print("Matching IDs:", list(final_persons))
+            
 
         if not final_persons:
             return Response([], status=status.HTTP_200_OK)
