@@ -43,6 +43,9 @@ class Hearing(models.Model):
     # --- Google Calendar sync
     google_event_id = models.CharField(max_length=255, blank=True, null=True)
 
+    # --- Overtime flag
+    is_overtime = models.BooleanField(default=False, help_text="Whether this hearing is scheduled during overtime hours (after 4 PM)")
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

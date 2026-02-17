@@ -33,11 +33,16 @@ import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
 
-// Available time slots for hearings
-const TIME_SLOTS = [
+// Regular work hours (8AM-4PM, lunch 12-1PM)
+const REGULAR_SLOTS = [
   "08:00", "09:00", "10:00", "11:00",
-  "13:00", "14:00", "15:00", "16:00"
+  "13:00", "14:00", "15:00"
 ];
+
+// Overtime slots (after 4PM dismissal, admin only)
+const OVERTIME_SLOTS = ["16:00", "17:00", "18:00"];
+
+const LOCAL_STORAGE_KEY = "authData";
 
 // Workload level badge colors
 const LOAD_COLORS = {
@@ -54,6 +59,9 @@ export function HearingSched({ predicted, luponMembers }) {
   const [mode, setMode] = useState("standard");
   const [expediteInterval, setExpediteInterval] = useState(null);
   const [loadingTimeSlot, setLoadingTimeSlot] = useState(null);
+
+  // Track occupied time slots per date (key = "YYYY-MM-DD", value = Set of occupied times)
+  const [occupiedSlots, setOccupiedSlots] = useState({});
 
   // Workload state for smart Lupon assignment
   const [luponWorkloads, setLuponWorkloads] = useState({});
@@ -354,7 +362,7 @@ export function HearingSched({ predicted, luponMembers }) {
     }
   }, [mode, expediteInterval, luponMembers, Object.keys(luponWorkloads).length]);
 
-  // Fetch optimal time slot for a given date
+  // Fetch optimal time slot for a given date and store occupied slots
   const fetchOptimalTime = async (date, index) => {
     if (!date) return "09:00"; // Default to 9 AM
 
@@ -364,6 +372,16 @@ export function HearingSched({ predicted, luponMembers }) {
       const response = await axios.get(`${API_URL}/optimal-slot/`, {
         params: { date: dateStr }
       });
+
+      // Store occupied slots for this date
+      if (response.data?.all_slots) {
+        const occupied = new Set(
+          response.data.all_slots
+            .filter(s => s.occupied)
+            .map(s => s.time)
+        );
+        setOccupiedSlots(prev => ({ ...prev, [dateStr]: occupied }));
+      }
 
       // API returns { optimal_time: "09:00", all_slots: [...], load_status: "light" }
       if (response.data?.optimal_time) {
@@ -625,17 +643,69 @@ export function HearingSched({ predicted, luponMembers }) {
               {/* Time */}
               <div className="grid grid-cols-1 gap-2">
                 <Label htmlFor={`time-${i}`}>Time</Label>
-                <Input
-                  id={`time-${i}`}
-                  type="time"
-                  value={hearingInfo[i]?.time || ""}
-                  onChange={(e) => {
-                    const newHearingInfo = [...hearingInfo];
-                    newHearingInfo[i].time = e.target.value;
-                    setHearingInfo(newHearingInfo);
-                    setHearings(newHearingInfo);
-                  }}
-                />
+                {(() => {
+                  const dateStr = hearingInfo[i]?.hearing_date
+                    ? new Date(hearingInfo[i].hearing_date).toISOString().split('T')[0]
+                    : null;
+                  const occupied = dateStr ? (occupiedSlots[dateStr] || new Set()) : new Set();
+
+                  return (
+                    <Select
+                      value={hearingInfo[i]?.time || ""}
+                      onValueChange={(val) => {
+                        const newHearingInfo = [...hearingInfo];
+                        newHearingInfo[i].time = val;
+                        setHearingInfo(newHearingInfo);
+                        setHearings(newHearingInfo);
+                      }}
+                    >
+                      <SelectTrigger id={`time-${i}`} className="w-full">
+                        <SelectValue placeholder="Select time" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>Regular Hours</SelectLabel>
+                          {REGULAR_SLOTS.map((time) => {
+                            const isBusy = occupied.has(time);
+                            return (
+                              <SelectItem
+                                key={time}
+                                value={time}
+                                disabled={isBusy}
+                                className={isBusy ? "text-zinc-400 opacity-50" : ""}
+                              >
+                                {time} {isBusy ? "(Occupied)" : ""}
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectGroup>
+                        {(() => {
+                          const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+                          const authData = stored ? JSON.parse(stored) : {};
+                          if (authData.userRole !== "admin") return null;
+                          return (
+                            <SelectGroup>
+                              <SelectLabel className="text-amber-600">⏰ Overtime (After 4 PM)</SelectLabel>
+                              {OVERTIME_SLOTS.map((time) => {
+                                const isBusy = occupied.has(time);
+                                return (
+                                  <SelectItem
+                                    key={time}
+                                    value={time}
+                                    disabled={isBusy}
+                                    className={isBusy ? "text-zinc-400 opacity-50" : "text-amber-700"}
+                                  >
+                                    {time} {isBusy ? "(Occupied)" : "(OT)"}
+                                  </SelectItem>
+                                );
+                              })}
+                            </SelectGroup>
+                          );
+                        })()}
+                      </SelectContent>
+                    </Select>
+                  );
+                })()}
               </div>
 
               {/* Lupon Selector */}

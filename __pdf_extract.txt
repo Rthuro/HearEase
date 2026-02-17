@@ -1,0 +1,4397 @@
+Republic of the Philippines 
+Western Mindanao State University 
+College of Computing Studies 
+DEPARTMENT OF COMPUTER SCIENCE 
+Zamboanga City 
+ 
+HEAREASE: OPTIMIZING BARANGAY HEARING SCHEDULING 
+AND PREDICTING CASE RESOLUTION TIME USING DEEP 
+NEURAL NETWORK 
+ 
+A Thesis Presented to the Faculty of  
+Department of Computer Science 
+College of Computing Studies 
+ 
+In Partial Fulfillment of the Requirements for the Degree of 
+Bachelor of Science in Computer Science 
+ 
+RUTHIEMY K. ORIBELLO 
+ROMELYN F. DANGARAN 
+EMMANUEL JOHN NUÑEZ 
+Researchers 
+ 
+CEED JEZREEL B. LORENZO, MIT 
+Adviser 
+ 
+May 2026 
+ 
+ 
+1 
+Republic of the Philippines 
+Western Mindanao State University 
+College of Computing Studies 
+DEPARTMENT OF COMPUTER SCIENCE 
+Zamboanga City 
+ 
+ 
+Approval Sheet 
+ 
+The Thesis attached hereto, entitled “HearEase: Optimizing Barangay Hearing 
+Scheduling and Predicting Case Resolution Time Using Deep Neural 
+Network”, prepared and submitted by Emmanuel John Nuñez, Romelyn F. 
+Dangaran, and Ruthiemy K. Oribello, in partial fulfillment of the requirements 
+for the degree of Bachelor of Science in Computer Science, is hereby 
+recommended for Oral Examination. 
+ 
+ 
+​
+CEED JEZREEL B. LORENZO             
+                                                                                                   Adviser 
+ 
+APPROVED by the Oral Examination  Committee on _______________ with a 
+rating of PASSED. 
+ 
+ 
+<FIRST_NAME> <MI> <LAST_NAME PANEL 1> 
+Chairperson 
+<PANEL 2> 
+Member 
+<PANEL 3> 
+Member 
+​
+ 
+ACCEPTED in partial fulfillment of the requirements for the degree of 
+BACHELOR OF SCIENCE IN COMPUTER SCIENCE 
+ 
+ 
+ 
+MR. JAYDEE C. BALLAHO, MIT 
+Head, Department of Computer Science 
+ 
+ 
+ 
+ENGR. MARK L. FLORES, PhD 
+Dean, College of Computing Studies
+ 
+2 
+Acknowledgment 
+ 
+The researchers wish to extend their profound gratitude and sincere 
+appreciation to the following individuals and organizations, whose guidance, 
+support, and generosity were vital in the realization of this study: 
+First and foremost, to The Almighty God, for the gift of wisdom, health, 
+and perseverance. His divine grace provided the researchers with the strength to 
+navigate the complexities of this study and the clarity to overcome every 
+obstacle. 
+To the dedicated adviser, Mr. Ceed Jezreel B. Lorenzo, MIT, for his 
+expert mentorship and technical guidance. His patience and commitment to 
+excellence pushed the researchers to transcend their limits and deliver a system 
+that is both innovative and meaningful. 
+To Mr. Jaydee C. Ballaho, MIT, Head of the Computer Science 
+Department, and Engr. Mark L. Flores, PhD, Dean of the College of Computing 
+Studies, for their administrative support and for maintaining the high academic 
+standards that shaped the researchers’ growth. 
+To Engr. Gian Karlo Go, for his time and technical expertise in reviewing 
+the system flow. His professional insights were crucial in ensuring the logical 
+integrity and efficiency of the HearEase platform. 
+3 
+To the local government of Barangay Tetuan, Zamboanga City, for their 
+hospitality and cooperation. The researchers wish to thank the Punong 
+Barangay, Hon. Richard Mariano, for allowing the implementation of this study 
+in the community. Sincere gratitude is also extended to the late Hon. Dennis 
+Gaspar, whose initial openness and support paved the way for this project, to 
+Hon. Daniela Marie Alpez, SK Member, for her instrumental help in facilitating 
+the initial communications with the officials, to the Lupong Tagapamayapa 
+Secretary, Ms. Susan Cabato, and the 25 resident respondents for their time 
+and cooperation during the evaluation phase. 
+To Mr. and Mrs., for their extraordinary kindness in opening their home. 
+The researchers are deeply grateful for the catering and the sanctuary provided 
+during the weekly overnight stays; such hospitality turned the most demanding 
+nights of this research into moments of comfort and inspiration. 
+To the Parents and Families of the researchers, for their unconditional 
+love and for being the primary source of financial and emotional support. Every 
+line of code written and every page of this manuscript is a tribute to their 
+sacrifices and belief in the researchers' potential. 
+ 
+ 
+ 
+4 
+Abstract 
+Barangay hearing scheduling has to be more effective due to the growing 
+complexity of legal cases in Philippine communities. This thesis presents the 
+HearEase system, which uses deep neural networks to optimize the scheduling 
+of barangay hearings and predict case resolution times. The study recognizes a 
+number of flaws in traditional scheduling techniques that frequently lead to both 
+unresolved cases and postponed hearings. HearEase, a pilot project in Barangay 
+Tetuan, Zamboanga City, Philippines, was chosen because of the community's 
+active involvement, the volume of cases it handles each year, and their 
+willingness to fully cooperate with the study. 
+By utilizing various advanced algorithms, HearEase aims to provide 
+barangay staff with a user-friendly interface which automates scheduling per 
+historical data with predictive analytics. The methodology involves gathering data 
+from past hearings, case results, and the implementation of deep learning 
+models for prediction of future case resolutions. Initial outcomes indicate that the 
+implementation of HearEase has the capacity to enhance the effectiveness of 
+barangay hearings, ensuring resolutions of cases in a timely manner. In addition 
+to reducing the administrative load on the Lupong Tagapamayapa and barangay 
+employees, this system seeks to enhance the accessibility of justice for the local 
+populace. 
+Keywords: Philippine governance, barangay hearings, deep neural network, 
+resolution prediction, scheduling optimization 
+5 
+Table of Contents 
+Approval Sheet.....................................................................................................2 
+Acknowledgment................................................................................................. 3 
+Abstract................................................................................................................ 5 
+Table of Contents.................................................................................................6 
+List of Figures.................................................................................................... 10 
+List of Tables...................................................................................................... 10 
+List of Appendices.............................................................................................10 
+CHAPTER I​
+INTRODUCTION..................................................................................................11 
+Background of the Study.................................................................................11 
+Statement of the Problem...............................................................................15 
+Objectives.......................................................................................................16 
+Scope and Limitations.................................................................................... 16 
+Scope of the Study....................................................................................16 
+Limitations of the Study.............................................................................18 
+Significance of the Study................................................................................20 
+Definition of Terms..........................................................................................23 
+Table 1: Definition of Terms.......................................................................23 
+CHAPTER II​
+REVIEW OF RELATED LITERATURE................................................................28 
+Related Studies.............................................................................................. 28 
+Artificial Intelligence‑Driven Systems..............................................................29 
+Deep Neural Networks................................................................................... 30 
+Case Resolutions and Barangay Hearings.....................................................31 
+Conventional Approaches...............................................................................32 
+Synthesis........................................................................................................34 
+Table 2: Synthesis.....................................................................................34 
+Conceptual Framework.................................................................................. 38 
+Figure 1: Conceptual Framework..............................................................38 
+CHAPTER III​
+METHODOLOGY................................................................................................ 40 
+Research Design............................................................................................40 
+Participants and Sampling..............................................................................41 
+Data Source....................................................................................................42 
+Data Gathering Instrument............................................................................. 43 
+Data Gathering Technique and Procedures................................................... 44 
+6 
+Data Analysis..................................................................................................46 
+Software Development Methodology..............................................................49 
+Figure 2:  HearEase Relational Database Schema highlighting AI Model 
+Tracking and Multi-Platform Integration.................................................... 53 
+Development.................................................................................................. 55 
+1. Frontend Development..........................................................................55 
+2. Backend Development..........................................................................55 
+3. AI Model Development..........................................................................57 
+Figure 3: Model Architecture.....................................................................59 
+Table 3: Architecture Breakdown.............................................................. 59 
+Table 4: Core ML Stack.............................................................................60 
+Table 5: Preprocessing Libraries...............................................................61 
+Table 6: Evaluation Metrics Libraries........................................................ 62 
+Table 7: Utility Libraries.............................................................................62 
+Developmental Tools and Cost.......................................................................64 
+Table 8: Developmental Tools and Cost....................................................64 
+Evaluation.......................................................................................................66 
+2. Assessment of User Acceptance................................................................68 
+4. Data Triangulation...................................................................................... 68 
+CHAPTER IV​
+RESULTS AND DISCUSSION............................................................................ 69 
+4.1 Analysis of Existing Case Workflows........................................................69 
+4.2 Data Collection and Dataset Characteristics............................................70 
+Figure 4: Case Type Distribution...............................................................71 
+Figure 5: Outcome Distribution................................................................. 71 
+4.3 Development of HearEase....................................................................... 71 
+4.4 Evaluation of Predictive Accuracy............................................................ 72 
+I. The Core Dichotomy: Hearings vs. Resolution Time............................. 72 
+Table 9: Hearings x Resolution Times.......................................................73 
+II. Internal Factors That Lengthen Case Duration (The Multipliers).......... 74 
+Table 10: Internal Factors That Lengthen Case Duration......................... 74 
+III. Internal Factors That Lessen Case Duration (The Shortener).............75 
+Table 11: Internal Factors That Shortens Case Duration (The Multipliers)75 
+IV. Case Type Patterns and Predicted Outcome (Settlement Type)......... 75 
+A. Low Longevity Cases (High Likelihood of Amicable Settlement).... 75 
+Table 12: Low Longevity Cases................................................................ 75 
+B. High Longevity Cases (Higher Likelihood of Difficult Settlement or 
+CFA).....................................................................................................76 
+7 
+Table 13: Internal Factors That Lengthen Case Duration......................... 77 
+V. Detailed Summary of Important Predictors for Action...........................77 
+4.4.1  Feature Engineering & Preprocessing..................................................80 
+Step 2: Categorical One-Hot Encoding.......................................................... 80 
+Final Input Vector............................................................................................81 
+Training Pipeline.............................................................................................81 
+Data Split...................................................................................................81 
+Table 14: Training Configuration............................................................... 82 
+Table 15: Saved Artifacts.......................................................................... 82 
+Figure 6: Model Evaluation Metrics...........................................................84 
+Step-by-Step Derivation................................................................................. 85 
+4.4.2 Prediction Pipeline.................................................................................85 
+4.4.3 Retraining & Fine-Tuning.......................................................................86 
+Table 16: Two Training Modes.................................................................. 86 
+Table 17: Automatic Retraining Configuration...........................................86 
+4.4.3 Model Comparison................................................................................ 87 
+Model Overview..............................................................................................87 
+Table 18: Model Comparison.................................................................... 87 
+Capability Comparison................................................................................... 90 
+Table 19: Comparison of Model Capabilities Against HearEase System 
+Requirements............................................................................................91 
+Figure 7: Radar Chart Comparison of Model Performance Metrics.......... 92 
+Table 20: Performance Metrics Comparison of Evaluated Machine 
+Learning Models........................................................................................92 
+4.4.3 Training Curves..................................................................................... 94 
+Figure 7: Model Convergence Analysis and Performance Metrics Across 
+Training Epochs........................................................................................ 94 
+4.5 System Design and Implementation Features..........................................95 
+4.5.1 The Centralized Administrative Dashboard......................................95 
+Figure 10: HearEase Administrative Dashboard.......................................95 
+Figure 11: AI-Driven Case Filing and Prediction Results.......................... 97 
+Figure 12: Lupon Member Recommendation and Date Selection............ 99 
+4.5.4 Digital Document Synthesis Engine.................................................99 
+Figure 13: Automated Document Generation........................................... 99 
+4.5.6 Public-Facing Resident Portal..........................................................99 
+Figure 14: Resident Case Filing and Tracking Portal..............................100 
+4.6 Assessment of Usability and Efficiency.................................................. 100 
+Figure 15: Expert User Evaluation Result...............................................102 
+8 
+Table 16. Frequency Distribution of Citizen Evaluation Results..............103 
+CHAPTER V​
+CONCLUSION AND RECOMMENDATIONS....................................................107 
+Summary of Findings....................................................................................107 
+System Development and Functionality..................................................107 
+Predictive Accuracy.................................................................................108 
+User Acceptance and Satisfaction.......................................................... 108 
+Data-Driven Decision Making..................................................................108 
+Transparency and Accessibility...............................................................109 
+Scalability Potential.................................................................................109 
+Conclusions..................................................................................................109 
+AI Integration Enhances Barangay Justice Administration..................... 109 
+Predictive Analytics Improves Resource Allocation.................................110 
+Technology Adoption Requires User-Centric Design.............................. 110 
+Digital Transformation Enhances Transparency and Trust......................110 
+Historical Data is Valuable for System Training.......................................111 
+Hybrid Approach Balances Innovation and Tradition...............................111 
+Pilot Implementation Validates Broader Applicability...............................111 
+Recommendations........................................................................................112 
+For Barangay Tetuan:..............................................................................112 
+For Other Barangays in Zamboanga City:...............................................112 
+For Local Government Units (LGUs) and the Department of the Interior 
+and Local Government (DILG):............................................................... 113 
+For Future Researchers:......................................................................... 114 
+For Technology Developers and Academic Institutions:..........................114 
+For the Community and Residents:.........................................................115 
+References........................................................................................................117 
+Appendix A: Sample Data Collected..............................................................122 
+Appendix B: System Design...........................................................................124 
+Figure 10: HearEase Flow Chart.............................................................124 
+Appendix C: Evaluation Tool.......................................................................... 125 
+Appendix D: Relevant Source Code...............................................................127 
+Appendix E: Ethical Clearance.......................................................................128 
+Appendix F: Plagiarism Report...................................................................... 129 
+Appendix G: Research Critique and Editing Certificate...............................130 
+Appendix H: Curriculum Vitae........................................................................ 131 
+ 
+9 
+List of Figures 
+Figure 1: Conceptual Framework...........................................................................2 
+Figure 2: HearEase Relational Database Schema highlighting AI Model Tracking 
+and Multi-Platform Integration. ..............................................................................3 
+Figure 3: Model Architecture..................................................................................5 
+Figure 4: Case Type Distribution............................................................................6 
+Figure 5: Outcome Distribution............................................................................ 10 
+Figure 6: Model Evaluation Metrics......................................................................10 
+Figure 7: Model Convergence Analysis and Performance Metrics Across Training 
+Epochs.................................................................................................................10 
+Figure 8: Expert User Evaluation Results..............................................................6 
+Figure 9: End User Evaluation Results................................................................10 
+Figure10: HearEase Administrative Dashboard...................................................10 
+Figure 11: AI-Driven Case Filing and Prediction Results....................................... 6 
+Figure 12: Lupon Member Recommendation and Date Selection.......................10 
+Figure13: Automated Document Generation....................................................... 10 
+Figure14: Resident Case Filing and Tracking Portal............................................10 
+ 
+ 
+ 
+List of Tables 
+Table 1: Definition of Terms................................................................................ 2 
+Table 2: Synthesis................................................................................................3 
+Table 3: Architecture Breakdown....................................................................... 5 
+Table 4: Core ML Stack........................................................................................6 
+Table 5: Preprocessing Libraries......................................................................10 
+Table 6: Evaluation Metrics Libraries...............................................................10 
+Table 7: Utility Libraries.....................................................................................10 
+Table 8: Developmental Tools and Cost............................................................ 2 
+Table 9: Hearings x Resolution Times............................................................... 3 
+Table 10: Internal Factors That Lengthen Case Duration.................................5 
+Table 11: Internal Factors than Shortens Case Duration (The Multipliers).....6 
+Table 12: Low Longevity Cases........................................................................10 
+Table 6: Evalu..................................................................................................... 10 
+Table 7: Utility Libraries.....................................................................................10 
+10 
+ 
+List of Appendices 
+Appendix A: Data Collected​
+17 
+Appendix B: System Design​
+18 
+Appendix C: Evaluation Tool​
+19 
+Appendix D: Relevant Source Code​
+20 
+Appendix E: Ethical Clearance​
+21 
+Appendix F: Plagiarism Report​
+22 
+Appendix G: Research Critique and Editing Certificate​
+23 
+Appendix H: Curriculum Vitae​
+24 
+ 
+ 
+11 
+CHAPTER I​
+INTRODUCTION 
+ 
+Background of the Study 
+With its function as the first level of government, barangay hearings play a 
+vital role in resolving conflicts and maintaining community peace in the 
+Philippines. Though important, long wait times and scheduling issues often call 
+into question the effectiveness of barangay hearings. Especially for people in 
+communities who depend on quick and fair choices, these elements disturb the 
+tranquility of the community and act as obstacles to justice. Ignoring these 
+obstacles could make barangay hearings face challenges in meeting community 
+needs and offering prompt case resolutions, therefore hindering social progress. 
+Often run traditionally by writing everything down, which is error-prone and 
+time-consuming, barangay hearings face one of the biggest obstacles to 
+success. Resolving a case presented to the barangay hearing format on an ad 
+hoc basis creates more problems and drags out the dispute since the mode of 
+justice becomes ineffective. The unwieldy nature of justice diminishes confidence 
+in the entire system because residents do not see the outcome of a hearing in a 
+timely manner.  
+On top of this, there are no new solutions that can improve scheduling, the 
+timing of resolutions, and resource allocation. Automated systems would help 
+ 
+12 
+reduce human error and inefficiencies in barangay hearings, which can lead to 
+delays and unresolved cases. The inability to address this variety of challenging 
+situations could be inconvenient for residents and barangay officials, especially 
+when they feel overwhelmed by several cases that continue to grow in volume 
+with limited resources. The lack of technological solutions means that there will 
+not be enough improvements made for the efficiency of hearings and that delays 
+and frustrations continue in the community. 
+Many studies have looked at how technology can be used in ways to 
+increase efficiency in administrative processes in the public sector. For example, 
+a study evaluated the effective ways to implement AI-based systems for the 
+municipality of Carmona, Cavite. The incorporation of automation increased the 
+number of resource allocations, thus minimizing delays due to inefficient manual 
+processes [1]. Another study conducted by Balilia et al. looked at how 
+implementing automated systems in barangay offices improved administrative 
+function related to automating project monitoring and record keeping as well. 
+Notable improvements in efficiency increased public service delivery to residents 
+[2]. The authors propose a more comprehensive system that focuses on 
+administrative functions such as monitoring projects and processing documents, 
+while excluding the consideration of barangay hearing procedures from the 
+study’s scope. 
+Melnik and Nasonov studied how Deep Neural Networks (DNN) and 
+Reinforcement Learning can be used for scheduling optimization in general 
+ 
+13 
+workflow systems. They did report slightly positive results in which workflow 
+assignments were enhanced and reduced processing times [3]. While they 
+provide evidence that could demonstrate a positive improvement to several 
+workflows developed, it has not been tested in other administrative 
+environments, specifically barangay hearings, which involve a high structure of 
+procedures, complex logics, and limits in resources. 
+Alternatively, a relevant study examined the use of Artificial Intelligence 
+(AI) as a supplementary tool in judicial hearings. Their study goes further by 
+proposing that AI could also assist in legal practice, particularly in adjudicating 
+disputes. They suggested that AI possess the possibility to contribute to legal 
+expertise or judgement, and even envisioned scenarios where cases could be 
+fully resolved by a robotic judge handling the entire adjudication process. 
+However, the issue of fairness was mostly limited to the extreme position of AI 
+providing the full resolution outcome. They suggested that working with artificial 
+intelligence as a support for decision-making would be fitting to apply human 
+expertise [4]. 
+Lastly, Bringula et al. examined the creation of e-Barangay, a web-based 
+system meant to improve local government at the Philippines' barangay level. 
+Their research developed an e-Barangay framework with elements including 
+complaint processing, document requests, reminders and alerts. Using both 
+subjective and objective criteria, the system's usability was assessed. The results 
+revealed that e-Barangay satisfied local needs. The e-Barangay system 
+ 
+14 
+efficiently completed tasks in objective measurements and had positive feedback 
+in subjective evaluations [5]. 
+This study presents the development of HearEase, a web-based platform 
+that leverages a Deep Neural Network (DNN) to optimize the scheduling of 
+barangay hearings and predict case resolution timelines.  
+Designed for web accessibility, the system features distinct, role-based 
+portals for barangay officials and a transparent mechanism for citizens to file 
+complaints and track case status. By automating the scheduling process 
+according to established Katarungang Pambarangay rules, the system aims to 
+enhance administrative efficiency, minimize procedural delays, and facilitate the 
+delivery of timely justice to the community. 
+This system will begin implementation in Barangay Tetuan in Zamboanga 
+City for several important reasons. To begin with, Barangay Tetuan is among the 
+largest barangays in Zamboanga City in terms of caseload and will therefore 
+provide an opportunity to test the impact of the program without being vastly 
+limited by its size. Having also a diverse population means that we can expect a 
+broad selection of cases that can be used to assess the impact of the program 
+across different demographics. Additionally, the local officials in Barangay Tetuan 
+expressed that they will also provide a receptive environment for technological 
+improvements in administrative processes. Their local officials welcomed the idea 
+of incorporating technology to strengthen administrative processes in their 
+ 
+15 
+Barangay. Lastly, Barangay Tetuan produces good records of case hearings and 
+resolutions. Therefore, available data points to train the AI system in the most 
+effective way will be accessible. The study wishes to use Barangay Tetuan as a 
+pilot study to collect effective feedback and outputs for disseminating the study to 
+other barangays in the same region in the future. 
+ 
+Statement of the Problem 
+While the barangay justice system plays a vital role in local dispute 
+resolution, Barangay Tetuan continues to rely on traditional, manual scheduling 
+processes that are often unstructured and susceptible to human error. This 
+reliance on ad-hoc methods frequently results in scheduling conflicts, resource 
+mismanagement, and inconsistent estimation of hearing durations.  
+ 
+Consequently, these inefficiencies lead to procedural delays and potential 
+inequity in accessing swift justice for complainants. Currently, there is a lack of 
+data-driven mechanisms that utilize historical patterns to optimize hearing 
+schedules and predict case resolution timelines, leaving the barangay unable to 
+cope effectively with its increasing caseload. 
+ 
+ 
+16 
+Objectives 
+This study aims to build an artificial intelligence-driven system employing 
+Deep Neural Networks (DNN) to maximize barangay hearing schedules and 
+forecast case resolution times. 
+ 
+Specifically, the study will: 
+●​ Analyze the existing case resolution workflows and scheduling constraints 
+in Barangay Tetuan to identify requirements for automation.  
+●​ Collect case data to be used to train the neural network for schedule 
+prediction. 
+●​ Develop HearEase, a web-based information system that integrates 
+AI-driven scheduling and case management features.  
+●​ Evaluate the predictive accuracy of the DNN model in forecasting hearing 
+frequency and resolution timelines.  
+●​ Assess the system’s usability, efficiency, and user satisfaction with the 
+Lupong Tagapamayapa compared to traditional manual procedures. 
+ 
+Scope and Limitations 
+Scope of the Study  
+This study focuses on the design, development, and deployment of 
+"HearEase," a web-based hearing scheduling and management system 
+integrated with a Deep Neural Network (DNN) model. The primary objective is to 
+ 
+17 
+optimize the administrative workflow of the Katarungang Pambarangay by 
+automating scheduling procedures and predicting case resolution timelines 
+based on historical data patterns.  
+The study is conducted within the specific context of Barangay Tetuan, 
+Zamboanga City. The system is designed to serve two distinct user groups:  
+1. Barangay Administrators (Punong Barangay, Barangay Secretary, and 
+Lupong Tagapamayapa Secretary) 
+The system provides them with a dashboard for digital case filing, 
+automated hearing scheduling, notification management, and analytical 
+reporting.  
+2. Constituents (Residents) 
+The system provides a public-facing portal for filing complaints online and 
+tracking the real-time status of their cases.  
+Technically, the system’s scope covers the full cycle of case 
+management—from the filing of the complaint to the issuance of the final 
+certification (Settled, Arbitration, or Certificate to File Action). The predictive 
+capabilities are limited to estimating the number of hearings and resolution 
+duration using a dataset constructed from Barangay Tetuan’s case records. 
+ 
+18 
+Limitations of the Study 
+To ensure the feasibility and focus of the research, the following limitations 
+are established:  
+1. Geographical and Contextual Limit 
+The system is customized specifically for the operational workflow 
+and volume of Barangay Tetuan. While the underlying logic may be 
+applicable elsewhere, the dataset used to train the AI is localized; 
+therefore, the prediction accuracy may not be immediately generalizable 
+to other barangays with different demographic profiles without re-training.  
+2. Administrative vs. Judicial Role 
+The AI model is strictly limited to administrative scheduling and time 
+estimation. It does not attempt to predict the legal outcome of a case nor 
+suggest specific settlement terms. The discretionary power to mediate and 
+decide on cases remains exclusively with the Lupon Tagapamayapa, in 
+accordance with the Local Government Code.  
+3. Jurisdictional Limit on Fines 
+The system's case management is limited to disputes falling within 
+the Katarungang Pambarangay’s jurisdiction, specifically those that do not 
+ 
+19 
+involve a fine exceeding Five Thousand Pesos (₱5,000), as per the rules 
+of the Local Government Code. 
+3. Parties in Conflict 
+The system will only process complaints between natural persons 
+residing or working in Barangay Tetuan. It will not cater to complaints filed 
+by or against organizations, corporations, or non-residents of the 
+barangay. This limitation is necessary because the jurisdiction of the 
+Katarungang Pambarangay, which HearEase is designed to support, is 
+generally confined to disputes between natural persons who are residents 
+of the same, contiguous, or specific barangays, and does not extend to 
+juridical entities like corporations, pursuant to the Local Government Code 
+of 1991. 
+4. Procedural Adherence 
+While the system allows for online filing, it does not replace the 
+legal requirement for face-to-face confrontation. The system serves as a 
+logistical tool to facilitate the scheduling of these in-person meetings. The 
+issuance of summons and certifications will still be physically printed and 
+served by Barangay Tanods as required by law, though the documents are 
+generated digitally.  
+5. User Adoption 
+ 
+20 
+The system is web-based and requires an internet connection to 
+function. The study evaluates the usability and efficiency of the system but 
+does not measure the long-term behavioral change of the residents 
+regarding digital adoption. The effectiveness of the system relies on the 
+willingness of the barangay staff to transition from manual logbooks to 
+digital encoding. 
+Significance of the Study 
+The development and implementation of HearEase offers significant 
+contributions to the modernization of the barangay justice system. By integrating 
+Artificial Intelligence into local governance, this study yields specific benefits for 
+the following stakeholders:  
+For the Barangay Officials and Lupong Tagapamayapa 
+As the primary users, this system directly addresses their 
+administrative burden. HearEase streamlines the hearing scheduling 
+process by minimizing conflicts and human errors, providing reliable 
+administrative support. By automating complex logistical tasks, officials 
+can optimize their time management and focus their energy on 
+substantive dispute resolution rather than clerical challenges. This shift 
+from manual to digital operations is anticipated to improve workflow 
+efficiency and overall job satisfaction.  
+ 
+21 
+For the Community and Local Residents  
+The system promotes a more accessible and transparent avenue 
+for justice. By ensuring hearings are scheduled efficiently and 
+communicated clearly, residents are spared the inconvenience of long wait 
+times or unannounced cancellations. A more organized justice system 
+fosters public trust, encouraging citizens to utilize proper legal channels 
+for dispute resolution rather than resorting to informal or escalating 
+conflicts.  
+For the Local Government Units (LGUs) and DILG  
+This study serves as a proof-of-concept for digital transformation at 
+the grassroots level. The data generated by HearEase provides LGUs with 
+valuable insights into crime trends, case volumes, and resolution rates, 
+enabling data-driven decision-making and policy formulation. Furthermore, 
+this system demonstrates how technology can enhance transparency and 
+accountability in public service delivery.  
+For Future Researchers and the Academic Community  
+This research contributes to the growing body of knowledge 
+regarding GovTech (Government Technology) and the application of Deep 
+Neural Networks (DNN) in public administration. It serves as a 
+foundational reference for future studies aiming to digitize other barangay 
+ 
+22 
+processes. The methodologies and datasets established in this study 
+provide a benchmark for researchers attempting to solve similar 
+scheduling and resource allocation problems in the Philippines. 
+ 
+23 
+Definition of Terms 
+Table 1: Definition of Terms 
+Term 
+Definition 
+1.​ Barangay 
+The smallest political unit in the Philippines, 
+performing the grassroots level of governance 
+responsible for local neighborhoods, including 
+public hearings and local officials. 
+2.​ Conciliation Hearing 
+ Less formal than arbitration, this is a dispute 
+resolution process where Lupong Tagapamayapa 
+facilitate discussions between disputing parties in 
+order to assist them in arriving at a voluntary 
+settlement. In contrast to mediation, the barangay 
+officials can also provide possible solutions for the 
+parties but leave the decision for them to settle the 
+compromise agreement. 
+3.​ Conversational 
+User 
+Interfaces (CUIs) 
+Allow users to interact with computers or systems 
+using natural language, either through text or 
+voice, similar to chatting with a person. Examples 
+ 
+24 
+Term 
+Definition 
+include chatbots and voice assistants like Siri or 
+Alexa. 
+4.​ Deep Neural Network 
+(DNN) 
+A kind of artificial intelligence that emulates the 
+way the human brain learns. It processes 
+information through several layers, enabling it to 
+detect patterns and make predictions. It can make 
+realistic approximations, meaning it can learn and 
+model complex relationships between input and 
+output. 
+5.​ Department of Trade 
+and Industry (DTI) 
+A government agency in the Philippines 
+responsible for spearheading trade, industry, and 
+investment. It helps businesses grow, protects 
+consumers, and supports economic development 
+through policies, programs, and services. 
+6.​ Explainable AI (XAI) 
+An AI that can clearly explain how it makes 
+decisions. Instead of just giving an answer, it 
+shows the reasons behind it, making it easier for 
+people to understand and trust. 
+ 
+25 
+Term 
+Definition 
+7.​ Institutional Service 
+Providers (ISPs)  
+Organizations that provide important services such 
+as legal, financial, and tech support  for 
+businesses, communities, and even governments. 
+They can be local, national, or even global. These 
+service providers play a significant part in driving 
+economic growth, putting policies into action, and 
+making sure things run smoothly across different 
+sectors. 
+8.​ Local Government 
+Unit (LGU) 
+LGU manages specific areas, like provinces, cities, 
+or even smaller communities like barangays in the 
+Philippines. The Local Government Units (LGUs) 
+operate under the Department of the Interior and 
+Local Government (DILG). They are vested with a 
+fair amount of independence when it comes to 
+handling local matters. This includes, public 
+services, law enforcement, infrastructure, health, 
+and education.  
+ 
+26 
+Term 
+Definition 
+9.​ Lupong 
+Tagapamayapa 
+A local conflict resolution group in the Philippines 
+under the Barangay Justice System. This unit is 
+made up of barangay officials along with a few 
+community members they appoint. Their main job 
+is to mediate and sort out disputes right at the 
+barangay level, which helps keep those minor 
+issues from clogging up the courts. 
+10.​Mediation Hearing 
+Informal sessions that are spearheaded by the 
+Lupong Tagapamayapa. Mediation Hearing is the 
+three (3) initial hearings where the Lupons try to 
+reconcile the complainant and the respondent to 
+avoid further fluctuation of the case. 
+11.​Natural Language 
+Processing (NLP) 
+A branch of Artificial intelligence that helps 
+computers to understand, interpret, and even 
+create sentences like a human. NLPs are 
+commonly used for chatbots, translation services, 
+and voice assistants.  
+ 
+27 
+Term 
+Definition 
+12.​Reinforcement 
+Learning (RL) 
+A type of AI that learns through experience through 
+trial and error. Computers try things out, get 
+feedback, and adjusts their actions to get better 
+results.  
+13.​Scheduling Algorithm 
+A set of guidelines and rules that automated 
+systems use to figure out how to best allocate time 
+slots and resources for different events and 
+appointments. 
+14.​Technology-Organizati
+on-Environment (TOE)  
+Framework 
+The TOE Framework looks at three big factors: 
+first, there  technology itself, second, the 
+organization, which includes how things are 
+structured and the resources available and lastly, 
+the environment, which pertains to market trends 
+and regulations. These pieces come together to 
+help organizations figure out the best way to 
+assess the factors that influence the adoption of a 
+new technology. 
+ 
+28 
+Term 
+Definition 
+15.​User Interface (UI) 
+This is how a user interacts with a system. It 
+scopes everything from visual elements like 
+buttons, screens, and navigation tools that are 
+designed to make User Experience (UX) as 
+smooth as possible.  
+ 
+ 
+29 
+CHAPTER II​
+REVIEW OF RELATED LITERATURE 
+ 
+Related Studies 
+The Barangay Justice System, or Katarungang Pambarangay, serves as 
+the Philippines’ oldest and most community-centered dispute resolution 
+mechanism. Established by Presidential Decree No. 1508 in 1978 and later 
+strengthened through Republic Act 7160 (Local Government Code of 1991), it 
+institutionalized the practice of conciliating minor disputes at the grassroots level 
+before elevating them to higher courts [6]. Designed to ease judicial backlogs 
+and promote harmony among neighbors, the system underscores mediation, 
+conciliation, and arbitration as primary tools of justice .​ 
+Contemporary research regards the BJS as one of the most adaptive 
+community-based justice systems in Southeast  Asia. Medina and Agustin 
+describe it as a hybrid legal institution, merging traditional consensus-building 
+with statutory frameworks that empower the Lupon Tagapamayapa–a council of 
+mediators appointed by the barangay captain–to pursue amicable settlements 
+[7]. A 2025 policy study from the Philippine Information Agency reported the 
+rollout of new Barangay Justice System modules across Mindanao, aiming to 
+integrate legal frameworks with cultural practices and strengthen peace and 
+governance at the barangay level [8]. 
+ 
+30 
+The Ministry  of  Interior  and  Local  Government in the Bangsamoro  
+Autonomous  Region  in  Muslim  Mindanao (MILG‑BARMM) has invested 
+resources in modernizing local governance, training barangay officials in 
+mediation, and creating digital knowledge products for dispute monitoring . 
+Despite these advancements, inefficiencies persist in manual documentation, 
+record retrieval, and hearing scheduling—problems now being addressed 
+through emerging AI‑driven innovations such as Barangay Automated Records 
+Solution 
+(BARS), 
+which 
+digitizes 
+dispute management and enhances 
+transparency [9] .​ 
+This 
+review 
+contextualizes 
+the 
+HearEase 
+project 
+within 
+recent 
+developments by organizing the literature under key domains: Artificial 
+Intelligence‑Driven Systems, Deep Neural Networks, Case Resolutions and 
+Barangay Hearings, and Conventional Approaches. Each subtopic situates 
+previous work within theoretical, technical, and contextual frameworks relevant to 
+barangay‑level governance. 
+Artificial Intelligence‑Driven Systems 
+Scholarly attention toward artificial intelligence in governance has 
+accelerated in the past decade, emphasizing automation’s role in policy 
+decisions and administrative workflows. Studies by Hilbert et al. highlight how AI 
+governance enhances process accuracy, enabling predictive and data‑informed 
+decision‑making within public institutions [10] . Similarly, Rowe identifies that 
+ 
+31 
+integrating ethical frameworks into AI supervision fosters transparency and 
+accountability [11]. 
+In the Philippines, the Department of Trade and Industry’s National AI 
+Strategy Roadmap promotes the use of machine learning for administrative 
+optimization, encouraging LGUs to adopt AI‑assisted document and case 
+systems. In  Zamboanga Peninsula, Zabala reported that AI deployments in 
+LGUs boosted citizen engagement and data accuracy, particularly in complaint 
+tracking [12]. These findings mirror innovations such as the SLSU‑LGU‑PNP 
+AI‑Driven Municipal Crime System (2025), which leveraged predictive analytics 
+for incident scheduling and management, proving the feasibility of AI in localized 
+governmental systems [13]. 
+However, Rjab et al. caution that successful AI adoption requires 
+addressing technical, environmental, and organizational barriers, including staff 
+resistance and limited ICT literacy [14]. This aligns with the HearEase project’s 
+aim of designing an adaptive, user‑friendly system that empowers barangay 
+officials while retaining procedural transparency. 
+Deep Neural Networks 
+Deep Neural Networks (DNNs) represent one of the most advanced forms 
+of artificial intelligence used in predictive analytics and scheduling optimization. 
+Melnik and Nasonov showcased how coupling DNN models with Reinforcement 
+Learning substantially improves dynamic workflows [15]. Building on such 
+ 
+32 
+concepts, Bouška, Šůcha, and Hanzálek presented a deep learning‑driven 
+scheduling algorithm that minimized tardiness in industrial timetables to 
+near‑optimal 
+outcomes . 
+Their 
+research demonstrated that DNNs can 
+autonomously learn scheduling priorities from data—an idea directly transferable 
+to barangay hearing scheduling [16]. 
+Locally, Belacho et al. at National University Dasmariñas developed a 
+Barangay 
+Information 
+Management 
+System 
+(BIMS) 
+applying 
+early 
+machine‑learning elements to automate data logging . This represents the 
+preliminary phase of integrating DNNs for Philippine governance systems. The 
+iterative learning and adaptive optimization techniques within HearEase extend 
+these principles to case resolution prediction, combining historical barangay 
+hearing data with localized socio‑legal features to forecast case durations more 
+accurately. [17]. 
+Case Resolutions and Barangay Hearings 
+The Katarungang Pambarangay ensures accessible, low‑cost alternatives 
+to formal litigation, but inefficiencies in manual processes still impede timely 
+justice delivery. Respicio outlines that barangay complaint proceedings 
+encompass 
+scheduling 
+summonses, 
+mediation, 
+conciliation, 
+and 
+arbitration—steps vulnerable to delay without digital tracking  [18]. The 
+International Research Journal of Science, Technology, Education, and 
+ 
+33 
+Management found that community satisfaction hinges heavily on timely 
+hearings, yet limited digitization slows outcome recording .​ 
+Medina and Agustin observed that integration of cultural traditions with 
+statutory law makes barangay justice unique but also fragmented when 
+inconsistently applied [19]. BARMM’s 2025 knowledge modules  and the 
+Bangsamoro Rollout Program have demonstrated how integrating legal guidance 
+with local governance training revitalizes community‑based justice [20]. Together 
+with DNN predictive modeling, these developments affirm how HearEase can 
+modernize BJS by ensuring accurate scheduling, equitable access, and 
+consistent resolution tracking across barangays.​ 
+Conventional Approaches 
+Most barangays continue to rely on conventional manual systems—bound 
+ledgers, handwritten minutes, and physical summons logs—that often lead to lost 
+records and procedural redundancies. Porcincula documented these issues 
+among Laguna municipalities, noting frequent duplication of entries and missing 
+documentation [21]. The Barangay Automated Records Solution (BARS) initiative 
+responded 
+by 
+digitizing 
+hearings 
+and 
+document 
+archives, 
+improving 
+law‑enforcement coordination and data transparency [22].​ 
+Furthermore, mainstream jurisprudence studies from the Philippine Law 
+Journal  revisit BJS legal frameworks, recommending electronic case lodgement 
+to lessen judiciary case backlogs . Without automation, barangay officials face 
+ 
+34 
+administrative overload, inconsistent scheduling, and limited visibility of case 
+histories. Hence, transitioning toward AI‑enabled systems like HearEase not only 
+revamps operations but also aligns local justice with national e‑governance 
+modernization 
+efforts 
+championed 
+by 
+the 
+Department of the Interior and Local Government (DILG) [23]. 
+ 
+35 
+Synthesis 
+Table 2: Synthesis 
+ 
+36 
+Enhancing 
+Process 
+Automation 
+Using 
+Reinforceme
+nt Learning 
+and Deep 
+Neural 
+Networks 
+AI-based 
+Smart 
+Management 
+Information 
+System for 
+Enterprise 
+Judicial 
+Cases for 
+Power Grid 
+Enterprises 
+ 
+Exploring the 
+Applicability of 
+Artificial 
+Intelligence in 
+Local 
+Government 
+Units 
+ 
+Readiness for 
+AI Adoption of 
+Philippine 
+Business and 
+Industry: The 
+Government's 
+Role in 
+Fostering 
+Innovation- and 
+AI-Driven 
+Industrial 
+Development 
+Using Artificial 
+Intelligence to 
+Provide 
+Intelligent 
+Dispute 
+Resolution 
+Support 
+HearEase: 
+Optimizing 
+Barangay 
+Hearing 
+Scheduling and 
+Predicting Case 
+Resolution 
+Times Using 
+DNN 
+(This Study) 
+Highlighted 
+the "black 
+box" nature of 
+DNNs, noting 
+how lack of 
+transparency 
+hinders 
+stakeholder 
+trust and 
+complicates 
+debugging. 
+Emphasized 
+integrating 
+legal and 
+operational 
+context to 
+create a 
+tailored 
+system that 
+addresses 
+specific 
+industry 
+challenges. 
+Identified primary 
+adoption barriers 
+in LGUs: limited 
+technical 
+expertise, poor 
+data 
+infrastructure, 
+and financial 
+constraints. 
+Quantitatively 
+assessed AI 
+readiness 
+across sectors 
+using digital 
+infrastructure 
+indices to 
+establish a 
+baseline for 
+adoption. 
+Reviewed the 
+evolution of 
+Online Dispute 
+Resolution 
+(ODR) to 
+highlight gaps 
+and the 
+necessity of 
+user-centric 
+design. 
+Integrates AI 
+predictive 
+modeling with 
+real-world 
+barangay data to 
+optimize hearing 
+schedules and 
+validate 
+administrative 
+efficiency. 
+ 
+37 
+Enhancing 
+Process 
+Automation 
+Using 
+Reinforceme
+nt Learning 
+and Deep 
+Neural 
+Networks 
+AI-based 
+Smart 
+Management 
+Information 
+System for 
+Enterprise 
+Judicial 
+Cases for 
+Power Grid 
+Enterprises 
+ 
+Exploring the 
+Applicability of 
+Artificial 
+Intelligence in 
+Local 
+Government 
+Units 
+ 
+Readiness for 
+AI Adoption of 
+Philippine 
+Business and 
+Industry: The 
+Government's 
+Role in 
+Fostering 
+Innovation- and 
+AI-Driven 
+Industrial 
+Development 
+Using Artificial 
+Intelligence to 
+Provide 
+Intelligent 
+Dispute 
+Resolution 
+Support 
+HearEase: 
+Optimizing 
+Barangay 
+Hearing 
+Scheduling and 
+Predicting Case 
+Resolution 
+Times Using 
+DNN 
+(This Study) 
+RL and DNN 
+models 
+struggle to 
+generalize 
+learned 
+behaviors 
+across 
+different tasks 
+and 
+industries. 
+Used NLP, 
+knowledge 
+graphs, and 
+deep learning 
+to extract 
+information 
+and derive 
+insights from 
+judicial case 
+documents. 
+Proposed 
+capacity building, 
+academic 
+partnerships, and 
+data 
+infrastructure 
+investments to 
+address adoption 
+challenges. 
+Case studies 
+highlight how 
+organizational 
+size, sector, and 
+geography 
+influence AI 
+integration 
+success in PH 
+firms. 
+Analyzed early 
+ODR systems 
+to show how 
+prioritizing 
+technology over 
+user needs 
+leads to design 
+shortcomings. 
+Uses historical 
+hearing records, 
+case durations, 
+and scheduling 
+procedures from 
+Barangay Tetuan 
+as primary 
+training data. 
+Emphasizes 
+high-quality 
+data; warns 
+that biased 
+Uses active 
+learning and 
+human-machi
+ne labeling to 
+Highlights 
+streamlined 
+processes, 
+chatbots, 
+Employed a 
+framework to 
+categorize 
+obstacles: digital 
+Deconstructs 
+ODR into 
+essential 
+elements 
+Follows 
+structured 
+preprocessing 
+(cleaning/labelin
+ 
+38 
+Enhancing 
+Process 
+Automation 
+Using 
+Reinforceme
+nt Learning 
+and Deep 
+Neural 
+Networks 
+AI-based 
+Smart 
+Management 
+Information 
+System for 
+Enterprise 
+Judicial 
+Cases for 
+Power Grid 
+Enterprises 
+ 
+Exploring the 
+Applicability of 
+Artificial 
+Intelligence in 
+Local 
+Government 
+Units 
+ 
+Readiness for 
+AI Adoption of 
+Philippine 
+Business and 
+Industry: The 
+Government's 
+Role in 
+Fostering 
+Innovation- and 
+AI-Driven 
+Industrial 
+Development 
+Using Artificial 
+Intelligence to 
+Provide 
+Intelligent 
+Dispute 
+Resolution 
+Support 
+HearEase: 
+Optimizing 
+Barangay 
+Hearing 
+Scheduling and 
+Predicting Case 
+Resolution 
+Times Using 
+DNN 
+(This Study) 
+datasets 
+cause 
+overfitting and 
+poor 
+real-world 
+generalization
+. 
+improve 
+accuracy; 
+hybrid 
+expert-system 
+optimizes via 
+user 
+feedback. 
+data-driven 
+resource 
+allocation, and 
+increased citizen 
+engagement. 
+infrastructure, 
+awareness, 
+skills gaps, and 
+funding. 
+(Triaging, 
+Advisory, 
+Drafting) to 
+guide intelligent 
+system design. 
+g) and rigorous 
+DNN parameter 
+tuning to predict 
+resolution 
+timelines. 
+High 
+computational 
+costs of 
+training 
+RL/DNN 
+models create 
+bottlenecks in 
+Synthesizes 
+semantic 
+retrieval with 
+predictive 
+modeling to 
+recommend 
+strategies 
+Highlights pilot 
+projects 
+(chatbots) and 
+emphasizes 
+ethical oversight 
+to ensure 
+Interviewed 
+diverse 
+stakeholders 
+(business/govt) 
+to capture the 
+full ecosystem of 
+Developed a 
+conceptual 
+user-centric 
+ODR model 
+integrating 
+hybrid tools for 
+Assesses 
+effectiveness via 
+model accuracy, 
+scheduling 
+efficiency, and 
+user satisfaction 
+ 
+ 
+39 
+Enhancing 
+Process 
+Automation 
+Using 
+Reinforceme
+nt Learning 
+and Deep 
+Neural 
+Networks 
+AI-based 
+Smart 
+Management 
+Information 
+System for 
+Enterprise 
+Judicial 
+Cases for 
+Power Grid 
+Enterprises 
+ 
+Exploring the 
+Applicability of 
+Artificial 
+Intelligence in 
+Local 
+Government 
+Units 
+ 
+Readiness for 
+AI Adoption of 
+Philippine 
+Business and 
+Industry: The 
+Government's 
+Role in 
+Fostering 
+Innovation- and 
+AI-Driven 
+Industrial 
+Development 
+Using Artificial 
+Intelligence to 
+Provide 
+Intelligent 
+Dispute 
+Resolution 
+Support 
+HearEase: 
+Optimizing 
+Barangay 
+Hearing 
+Scheduling and 
+Predicting Case 
+Resolution 
+Times Using 
+DNN 
+(This Study) 
+resource-limit
+ed 
+environments. 
+based on 
+historical legal 
+events. 
+transparency and 
+public trust. 
+AI adoption 
+challenges. 
+diverse dispute 
+scenarios. 
+vs. traditional 
+methods. 
+Errors during 
+the RL 
+learning 
+phase can 
+have costly 
+safety 
+consequence
+s in 
+automation. 
+Integrated 
+encryption 
+and access 
+controls to 
+safeguard 
+data integrity 
+and 
+confidentiality 
+during 
+processing. 
+Stresses 
+multi-stakeholder 
+collaboration and 
+best-practice 
+sharing to 
+enhance 
+confidence in AI 
+integration. 
+Analyzed 
+international 
+case studies to 
+identify 
+strategies and 
+policies 
+adaptable to the 
+Philippine 
+context. 
+ Initial metrics 
+show that 
+user-centric 
+design 
+significantly 
+improves 
+satisfaction and 
+resolution rates. 
+Ensures data 
+security for case 
+records. 
+Limitations 
+include potential 
+training bias and 
+scalability needs. 
+Conceptual Framework 
+ 
+ 
+Figure 1: Conceptual Framework 
+The conceptual model shows how DNN will be used to maximize case 
+scheduling and resolution in barangay hearings. Input, Processes, Outputs, and 
+Outcomes form four main components of it. Historical case data—including past 
+hearing records, case lengths, and scheduling procedures—makes up the Input 
+section. The AI-driven system is built upon these databases. 
+The component on processes emphasizes the evolution of artificial 
+intelligence systems. Data preparation starts it. Historical data is labeled and 
+augmented to improve learning accuracy. After that, algorithm choice and 
+parameter tuning help to build the Deep Neural Network (DNN) model so as to 
+ 
+40 
+optimize case predictions. Furthermore planned is a user interface that 
+guarantees accessibility and usability by thorough testing. 
+The system generates expected case resolutions based on past data, 
+idealized hearing schedules, and a user satisfaction assessment. For barangay 
+officials, these outputs help to automate scheduling, improve case management, 
+and sharpen decision-making. At last, the results of the framework highlight 
+long-term advantages including better transparency, more case handling 
+efficiency, and the possible system scalability to other barangays. The framework 
+incorporates a feedback loop to enable ongoing development depending on user 
+experience and fresh data. 
+ 
+ 
+41 
+CHAPTER III​
+METHODOLOGY 
+ 
+Research Design 
+This study utilizes a Developmental Research Design, specifically 
+focusing on the creation, deployment, and evaluation of HearEase, an 
+AI-powered hearing scheduling system. This design is appropriate as the study 
+aims to produce a functional software artifact that addresses administrative 
+inefficiencies through technological intervention. The system will be deployed as 
+a Web-Based Application, ensuring accessibility for barangay officials and 
+constituents.  
+To analyze the system's efficacy, the research employs a Quantitative 
+approach. This involves two phases:  
+Model Evaluation: Assessing the DNN's performance using standard error 
+metrics (MAE, RMSE, R², POISSON DEVIANCE) and prediction accuracy 
+against the historical and synthetic datasets from Barangay Tetuan. 
+System Evaluation: Conducting User Acceptance Testing (UAT) via ISO 25010 
+standards to measure usability, efficiency, and functionality based on feedback 
+from the Lupong Tagapamayapa and barangay staff.  
+ 
+42 
+Participants and Sampling 
+The study will employ a purposive sampling method, as the participants 
+will be selected based on their direct involvement and experience with the 
+barangay justice system in the pilot site of Barangay Tetuan. The participants will 
+consist of two groups:  
+ 
+1. Barangay Officials and Lupong Tagapamayapa (Expert Users)  
+This group comprises the primary administrators of the system, 
+including the Punong Barangay, Barangay Secretary, and the appointed 
+Lupon members. The study aims for Total Enumeration or the inclusion of 
+the entire available workforce responsible for mediation, estimated at 10 to 
+15 participants. This comprehensive coverage ensures that the feedback 
+represents the collective operational needs of the barangay, validating the 
+system’s functional suitability and workflow efficiency.  
+ 
+2. Local Residents (End-Users) 
+To evaluate the public-facing portal, 25 residents who have prior 
+experience with filing complaints or attending hearings will be selected. 
+These participants will be engaged for User Acceptance Testing (UAT) to 
+assess the system’s usability, interface clarity, and transparency. This 
+sample size is sufficient to identify usability flaws and gauge general user 
+satisfaction in a developmental pilot study context. 
+ 
+43 
+Data Source 
+The research data for the purpose of developing an AI technology system 
+using Deep Neural Networks (DNNs) to enhance barangay hearings will be from 
+primary data and secondary data. The historical case records will present a vital 
+component as they will be used to obtain information on previous barangay 
+cases. Case records will include details like types of cases, duration of cases, 
+predicted number of hearings, resolutions of cases, and any delays observed in 
+case processing. These records will be provided by the records management 
+division of Barangay Tetuan, Zamboanga City.  
+Demographic data on the parties in the cases will also be collected 
+including persons' ages, gender, and other socioeconomic status information. 
+This will be done to identify trends in handling cases, along with identifying user 
+needs. Demographic data will be collected in coordination with barangay officials 
+and may also emerge from municipality census files.  
+The study will also acquire qualitative and perception data through the 
+following means:  
+Surveys issued to members of the Lupong Tagapamayapa and barangay 
+workers to further understand current practices, perceived challenges, and 
+opportunities for enhanced case management of semi-structured interviews of 
+barangay officials to gather deeper understandings of operational workflows and 
+trends in case thinking. Then, all data collected will be compiled and 
+ 
+44 
+pre-processed, prior for analysis. This means structuring historical case data, 
+anonymizing sensitive information, coder survey, and interview responses into 
+datasets for analysis.  
+Lastly, User Acceptance testing, UAT will occur during the system 
+evaluation process. Structured feedback and surveys will be used by users to 
+assess usability in terms of the effectiveness of the system and user satisfaction. 
+The UAT feedback will be an important input information for system refinement 
+and evaluating the system's effectiveness on the case management process.  
+Through this empirical approach to data gathering means that the 
+development of the system is driven by real-world data, contextual reality of the 
+human factors operationalized, and the input feedback from the stakeholders 
+engaged. 
+Data Gathering Instrument 
+The core dataset for training the Deep Neural Network (DNN) model is 
+derived from the actual case blotters of Barangay Tetuan, Zamboanga City, 
+covering the period from 2018 to 2025. This timeframe captures pre-pandemic, 
+lockdown, and post-pandemic operational contexts.  
+To understand the nuances of the Katarungang Pambarangay workflow, 
+semi-structured interviews will be conducted with the Punong Barangay, 
+Barangay Secretary, and Lupon members. These interviews focused on 
+ 
+45 
+identifying unwritten rules of scheduling, common causes of delays, and the 
+impact of party relationships on settlement speed. Direct observations of the 
+hearing scheduling process were also performed to map the manual workflow 
+and identify bottlenecks. 
+For system evaluation, perception data will be gathered through UAT 
+surveys administered to both Lupong Tagapamayapa Secretary and selected 
+residents. These surveys utilize standard usability metrics (ISO 25010) to assess 
+the system’s functional suitability, ease of use, and efficiency in comparison to 
+traditional manual procedures.  
+All collected data adheres strictly to the Data Privacy Act of 2012 (RA 
+10173). Historical records will be anonymized during the digitization process; 
+names of actual constituents will be replaced with synthetic identifiers or generic 
+placeholders to protect confidentiality. No sensitive socioeconomic or financial 
+data beyond what is necessary for case classification will be recorded. 
+ 
+Data Gathering Technique and Procedures 
+Data collection for this study will employ a variety of methods that aim to 
+effectively gather and collect qualitative and quantitative data. These methods 
+are: 
+●​ Surveys to document resident and legal staff comments, opinions, and 
+impressions of their barangay hearing experiences. 
+ 
+46 
+●​ Semi-structured interviews allow one to have in-depth conversations with 
+the barangay official in which open-ended questions let them address 
+operational concerns, and experiences running the hearings. 
+●​ Data extraction to compile past case files including specifics on case 
+types, length, resolutions, schedules and results. 
+●​ Observational studies to directly view barangay hearings and acquire first 
+understanding of the procedural dynamics and interactions during the 
+events. 
+Using these approaches requires methodical steps as follows: 
+●​ Step 1 - Get permission from Barangay Tetuan officials pertaining to the 
+study of past case records and surveys. This meant personally getting in 
+touch with officials to let them know about the goals of the study and the 
+need for their cooperation. 
+●​ Step 2 - Create and distribute a structured survey aimed at residents and 
+legal staff members. The survey should consist of a mix of closed and 
+open-ended questions to gain quantitative data and qualitative feedback 
+on their experiences with the current barangay hearing process. 
+●​ Step 3 - Conduct semi-structured interviews with barangay officials. This 
+may involve guided questions while also allowing space for officials to 
+contribute additional comments about their operating challenges and 
+perceived effectiveness of the current process. 
+ 
+47 
+●​ Step 4 - Obtain historical case data through barangay record cases. This 
+step will involve a review of these case files with barangay staff to uncover 
+relevant information on case type, timeframes, outcomes, and scheduling. 
+●​ Step 5 - Observe barangay hearings as a way to gain qualitatively 
+representative data on procedural dynamics, interaction patterns, and 
+operational challenges described in the surveys and interviews. This data 
+will complement the overall understanding of the barangay hearing 
+processes. 
+●​ Step 6 - Aggregate and organize all data that has been collected with 
+pre-processing. This will involve data cleaning for error reduction, coding 
+survey responses, and reconstructing data as datasets ready for analysis 
+and model development. 
+Data Analysis 
+The data gathered through the aforementioned techniques will be 
+analyzed using a Convergent Parallel Mixed Methods approach, integrating both 
+quantitative and qualitative findings to provide a holistic assessment of the 
+HearEase system.  
+1. Data Pre-processing and Cleaning  
+Prior to analysis, the historical case records will undergo rigorous 
+pre-processing. This involves Data Cleaning to remove duplicate entries or 
+formatting errors, Normalization to scale numerical values, and One-Hot 
+ 
+48 
+Encoding to convert categorical variables into machine-readable formats. The 
+dataset will be split into training (80%) and validation (20%) sets to prepare for 
+the Deep Neural Network (DNN) training.  
+2. Quantitative Analysis (AI Model Performance)  
+To evaluate the effectiveness of the AI prediction engine, the study will 
+utilize standard regression error metrics rather than simple accuracy 
+percentages. The following metrics will be calculated: 
+●​ Mean Absolute Error (MAE) - To measure the average magnitude of 
+errors in predicting the number of hearings and resolution days.  
+●​ Root Mean Square Error (RMSE) - To penalize larger prediction errors 
+and ensure reliability in complex cases. 
+●​ Mean Poisson Deviance: Specifically utilized to evaluate the Hearings 
+Head of the neural network. Since the number of mediation sessions is 
+count data (non-negative integers), Poisson Deviance provides a more 
+accurate measure of the model's "goodness-of-fit" than standard squared 
+error metrics. A lower deviance value indicates a superior fit for the 
+discrete distribution of barangay hearings. 
+●​ Coefficient of Determination: Used to quantify the proportion of variance 
+in the targets that is predictable from the input features. This metric 
+validates the "explanatory power" of the socio-legal variables (Case Type, 
+Relationship, and Severity) on the final resolution timeline. 
+ 
+49 
+●​ Descriptive Statistics: Measures such as Mean, Median, and Standard 
+Deviation were used to summarize the distribution of the 1,199-record 
+dataset, ensuring that the stratified sampling maintained the natural 
+"Severity Gradient" and "Temporal Patterns" (e.g., COVID-era delays) of 
+the original records. 
+3. Qualitative Analysis (Interviews and Observations)  
+Qualitative data gathered from semi-structured interviews with the Lupong 
+Tagapamayapa and operational observations will be subjected to Thematic 
+Analysis. This process involves coding responses to identify recurring patterns 
+regarding scheduling bottlenecks, administrative pain points, and user readiness 
+for digital adoption. These insights will validate the necessity of specific system 
+features. 
+4. System Evaluation (User Acceptance Testing)  
+Data from the User Acceptance Testing (UAT) surveys will be analyzed 
+using Descriptive Statistics. The responses, rated on a Likert Scale, will be 
+computed for Weighted Means to determine the system’s performance in terms 
+of Functional Suitability, Performance Efficiency, and Usability, adhering to ISO 
+25010 Software Quality Standards.  
+5. Comparative Analysis  
+ 
+50 
+Finally, the study will perform a comparative analysis between the 
+traditional manual method and the HearEase automated system. Key 
+performance indicators (KPIs), specifically Scheduling Time (minutes) and 
+Conflict Detection Rate, will be compared to statistically quantify the efficiency 
+gains provided by the AI system. Why 
+Software Development Methodology 
+This study employs the Agile Software Development Life Cycle (SDLC) to 
+ensure the efficient design, development, and deployment of HearEase. The 
+Agile methodology was selected for its iterative nature, allowing for continuous 
+refinement based on user feedback and the dynamic operational requirements of 
+the barangay justice system.  
+ 
+By utilizing the Scrum framework within Agile, the development process is 
+divided into sprint cycles. This approach enables the researchers to address 
+functional issues early, adapt to the specific needs of the Lupong 
+Tagapamayapa, and ensure that the final output is a robust, user-centric 
+administrative and judicial support system. Continuous integration and testing are 
+embedded in the workflow to guarantee system stability and data integrity.  
+ 
+Each sprint cycle consists of the following phases:  
+●​ Planning: Defining the backlog, user stories, and specific objectives for 
+the sprint based on barangay procedural rules.  
+ 
+51 
+●​ Design: creating process flowcharts, entity-relationship diagrams (ERD), 
+and high-fidelity wireframes to visualize the system architecture.  
+●​ Development: Writing the source code for the frontend interfaces and 
+backend logic, including the integration of the AI prediction engine and 
+scheduling algorithms.  
+●​ Testing: Conducting Unit Testing and Integration Testing to ensure all 
+modules function correctly and securely.  
+●​ Review: Demonstrating the developed features to Barangay Tetuan 
+officials to gather immediate feedback and validation. Deployment: Rolling 
+out the approved iteration to the live web server for real-world simulation 
+and user acceptance. 
+Optimization of Hearing Scheduling 
+To optimize the scheduling workflow within HearEase, the system employs 
+a Hybrid Scheduling Engine that combines AI-driven predictive analytics with a 
+rule-based algorithm. This approach ensures that hearing timelines are not only 
+historically accurate but also logistically feasible within the barangay’s resource 
+constraints. 
+1. Predictive Resource Allocation (AI Role) 
+The core optimization begins with the Deep Neural Network (DNN) 
+Prediction Engine. Upon case filing, the AI analyzes parameters such as case 
+severity, party complexity, and historical resolution patterns to forecast the Total 
+ 
+52 
+Number of Hearings required. This effectively estimates the "volume" of the case, 
+allowing the system to reserve the necessary number of time slots in advance, 
+rather than scheduling strictly on a per-hearing basis. 
+2. Conflict Detection and Slot Allocation (Algorithm Role) 
+Once the required number of hearings is predicted, the system’s Calendar 
+Optimization Algorithm calculates specific dates and times. It utilizes a Conflict 
+Detection Mechanism to scan the database for existing appointments, holidays, 
+and venue availability. If a projected date falls on a non-working day or a fully 
+booked slot, the system automatically shifts the schedule to the next available 
+working day, ensuring zero overlap and maximizing venue utilization. 
+3. Adaptive Scheduling Intervals (Expedite Feature) 
+Recognizing that high-stakes cases require swifter resolution, the system 
+includes an Adaptive Interval Feature. While standard cases follow the default 
+7-day interval (e.g., Monday-to-Monday) to allow for summons delivery, the 
+system allows Administrators to toggle an "Expedite Mode" for urgent cases. This 
+overrides the standard interval with a shortened duration (e.g., 2–3 days), 
+triggering the algorithm to find the earliest available slots while maintaining 
+conflict checks. 
+4. Automated Document Synthesis 
+ 
+53 
+Finally, optimization extends to administrative output. Upon finalizing the 
+schedule, the system automatically generates and populates legal documents, 
+including Summons and Notices of Hearing, with the specific dates and times 
+derived from the optimization engine. This integration eliminates manual 
+encoding errors and significantly reduces the time between scheduling and 
+document service. 
+Database Design 
+ 
+ 
+54 
+Figure 2:  HearEase Relational Database Schema highlighting AI Model Tracking 
+and Multi-Platform Integration. 
+HearEase utilizes Supabase, a cloud-native platform, to manage its 
+PostgreSQL-based relational database. This selection provides advanced 
+features such as Row-Level Security (RLS) for granular data privacy, real-time 
+data broadcasting, and native support for complex JSONB data types (used for 
+flexible scheduling and generated document data). The schema is designed to 
+handle multi-party case relationships, automated hearing scheduling, and the 
+logging of AI model performance metrics. 
+The database is organized into five core functional modules:  
+1.​ Case Management Module: Centered around the cases_case table, this 
+module manages the lifecycle of a complaint. It links to cases_casetype 
+(severity and classification), cases_settlementtype, and uses junction 
+tables (cases_case_complainants and cases_case_respondents) to 
+handle multiple parties involved in a single dispute.  
+2.​ Hearing & Scheduling Module: This module manages the logistical 
+execution 
+of 
+the 
+Katarungang 
+Pambarangay 
+process. 
+The 
+hearings_hearing table tracks dates, times, and statuses, while 
+hearings_hearingattendance records the presence of parties. It also 
+integrates hearings_nonworkingday to ensure the scheduling algorithm 
+avoids holidays and weekends.  
+ 
+55 
+3.​ User & Security Module: Beyond basic authentication, this module 
+includes users_notificationpreference to manage SMS and Email alerts via 
+the custom gateway and Resend API. It also utilizes users_otp for secure 
+multi-factor verification during sensitive administrative actions.  
+4.​ AI & Analytics Module: Unique to this study, the AIModel_traininghistory 
+and AIModel_retrainconfig tables track the performance of the Deep 
+Neural Network. They store metrics such as Mean Absolute Percentage 
+Error (MAPE) for both days and hearings, allowing the system to monitor 
+prediction accuracy over time.  
+5.​ Integration 
+& 
+Document 
+Module: 
+This 
+manages 
+external 
+synchronization 
+with 
+Google 
+Calendar 
+via 
+OAuth 
+tokens 
+(google_calendar_googlecalendartoken) and stores the templates and 
+JSON 
+data 
+for 
+the 
+Automated 
+Document 
+Synthesis 
+engine 
+(documents_generateddocument). 
+To comply with the Data Privacy Act of 2012 (RA 10173), the database 
+utilizes Supabase Row-Level Security (RLS) policies. This ensures that sensitive 
+personal information in the case_persons_caseperson table is only accessible to 
+authorized is_admin or is_superadmin users. Furthermore, all personally 
+identifiable information (PII) is isolated from the AI training datasets to prevent 
+data leakage during model optimization." 
+ 
+56 
+ 
+Development 
+ 
+The development of HearEase adheres to the Agile methodology, 
+structured into four distinct technical phases: 
+ 
+1. Frontend Development 
+●​ The client-side interface is constructed using a modern technology stack 
+comprising Tailwind CSS for utility-first styling and shadcn/ui for 
+accessible, high-quality UI components. This combination ensures a 
+responsive, professional design that adapts to both desktop monitors and 
+mobile devices. Visual communication is enhanced through the integration 
+of Lucide Icons, providing intuitive cues for non-technical users. 
+FullCalendar, a robust JavaScript scheduling library, is utilized to handle 
+the complex logic required for rendering hearing dates and interactive 
+calendar views.  
+2. Backend Development 
+The backend of the system was developed using Django REST 
+Framework (DRF), an extension of the Django web framework designed for 
+building Web APIs. The primary factor for choosing DRF was its ability to provide 
+a robust, scalable, and secure interface between the PostgreSQL database and 
+ 
+57 
+the frontend application. This setup eliminates the overhead of a traditional 
+monolithic server, providing a faster and more scalable user experience. 
+●​ Data Management (CRUD): The backend executes secure Create, Read, 
+Update, and Delete operations for case records, enforcing referential 
+integrity within the database. 
+●​ Hybrid Scheduling Engine: This is the core logical module. It acts as the 
+bridge between the AI and the calendar. Once the AI predicts the number 
+of hearings, this Django module calculates the specific dates (using the 
+7-day or Expedited interval), performs Conflict Detection against existing 
+appointments, and finalizes the schedule. 
+●​ API Architecture: Custom RESTful API endpoints manage the 
+communication between the frontend and the AI model, ensuring 
+low-latency data transfer during prediction requests. 
+●​ Security & Authentication: Firebase Authentication handles session 
+management, supporting secure email/password and OAuth protocols. 
+Data security is further reinforced at the database level through Supabase 
+Row-Level Security (RLS), ensuring that sensitive case blotters are only 
+accessible to authorized barangay officials. Communication security is 
+maintained via SSL/TLS encryption across all API requests. 
+●​ Automated 
+Notification 
+Alerts: 
+To 
+facilitate 
+timely 
+information 
+dissemination, the system integrates the Resend API for transactional 
+emails (account verifications and system alerts) and a Custom Android 
+ 
+58 
+SMS Gateway. The gateway utilizes a local Android device as a digital 
+bridge, allowing the system to send SMS notifications through local 
+cellular networks, ensuring high deliverability and cost-efficiency for the 
+barangay.​
+ 
+3. AI Model Development 
+ 
+●​ Data Preprocessing: The input layer processes a 30-dimensional feature 
+vector. This is derived through a multi-step preprocessing pipeline:  
+1.​ Ordinal Encoding: Case Severity is mapped to an integer scale 
+(Low: 1, Medium: 2, High: 3).  
+2.​ One-Hot Encoding: Categorical variables including Case Type (15 
+types), Relationship (6 types), and Lockdown Status (3 types) are 
+transformed into 27 binary columns.  
+3.​ Z-Score Normalization: Numerical features such as the number of 
+complainants and respondents are standardized to a mean of 0 and 
+standard deviation of 1 using StandardScaler.  
+ 
+●​ Feature Engineering: To optimize prediction accuracy, the model utilizes 
+specific engineered features derived from the "Barangay Logic": 
+ 
+59 
+○​ Party Complexity: The count of Complainants and Respondents is 
+factored in to predict scheduling delays caused by availability 
+conflicts. 
+○​ Relational Dynamics: The relationship between parties (e.g., 
+Family vs. Stranger) is weighted to account for the emotional 
+intensity of disputes. 
+○​ Contextual Factors: Variables such as Intoxication or Recidivism 
+are included to refine the estimated resolution timeline. 
+ 
+●​ Model Architecture:  
+ 
+The HearEase system utilizes a Multi-Output Multilayer Perceptron 
+(MLP) architecture built with TensorFlow 2.x and Keras. Unlike standard 
+single-task models, this architecture employs a shared feature extraction 
+trunk (comprising 128 and 64-unit Dense layers with ReLU activation) that 
+branches into two independent prediction heads.  
+ 
+This 'split-head' design allows the model to learn common 
+socio-legal patterns in the shared trunk while specializing the output layers 
+for two distinct distributions:  
+ 
+1.​ Hearings Head: Predicts a discrete count (1–6 sessions).  
+ 
+60 
+2.​ Resolution Head: Predicts a continuous timeframe (3–172 
+days). To prevent overfitting on the 1,199-record dataset, a 
+Dropout layer (rate=0.2) is integrated into the shared trunk, 
+ensuring the model generalizes well to new cases rather 
+than memorizing training data. 
+ 
+Figure 3: Model Architecture 
+ 
+Table 3: Architecture Breakdown 
+Layer 
+Type 
+Units 
+Activation 
+Purpose 
+ 
+61 
+input_features 
+Input 
+30 
+— 
+Receives 
+preprocessed 
+feature vector 
+shared_dense_12
+8 
+Dense 
+128 
+ReLU 
+Shared 
+feature 
+extraction 
+shared_dropout 
+Dropout 
+20% 
+— 
+Regularization to 
+prevent 
+overfitting 
+shared_dense_64 
+Dense 
+64 
+ReLU 
+Shared 
+deeper 
+representation 
+hearings_dense_3
+2 
+Dense 
+32 
+ReLU 
+Hearings-specific 
+features 
+hearings_output 
+Dense 
+1 
+Linear 
+Predicts 
+total 
+hearings count 
+days_dense_32 
+Dense 
+32 
+ReLU 
+Days-specific 
+features 
+days_output 
+Dense 
+1 
+Linear 
+Predicts 
+resolution time in 
+days 
+ 
+Table 4: Core ML Stack 
+ 
+62 
+Library 
+Role 
+TensorFlow 2.x 
+Deep learning framework — model building, 
+training, inference 
+Keras (bundled with TF) 
+High-level API for defining layers, models, and 
+training loops 
+scikit-learn 
+Preprocessing 
+(OneHotEncoder, 
+StandardScaler), metrics, train/test splitting 
+NumPy 
+Numerical operations, array manipulation, 
+random seeding 
+pandas 
+CSV loading, DataFrame operations, feature 
+manipulation 
+  
+Table 5: Preprocessing Libraries 
+Library Component 
+Role 
+sklearn.preprocessing.OneHotEncoder 
+Converts categorical features → binary 
+columns (27 total) 
+sklearn.preprocessing.StandardScaler 
+Z-score normalizes numerical features to 
+mean=0, std=1 
+sklearn.model_selection.train_test_split 
+80/20 train/test split with random_state=42 
+ 
+63 
+ 
+Table 6: Evaluation Metrics Libraries 
+Function 
+Role 
+mean_absolute_error 
+Average absolute prediction error (MAE) 
+mean_squared_error 
+Squared error for RMSE calculation 
+r2_score 
+Coefficient of determination (R²) 
+mean_poisson_deviance 
+Tailored metric for count data accuracy 
+  
+Table 7: Utility Libraries 
+Library 
+Role 
+joblib 
+Serialization of encoder, scaler, feature_info to 
+.pkl files 
+matplotlib 
+Graph generation for training curves and 
+evaluation plots 
+json 
+Saving/loading training results for persistence 
+base64 / io 
+Converting matplotlib figures to base64 PNGs 
+for frontend 
+ 
+64 
+  
+4. Testing & Deployment 
+●​ Testing Strategy: The system undergoes a tiered testing approach: 
+○​ Unit Testing: To validate individual functions (e.g., date calculation 
+logic). 
+○​ Integration Testing: To ensure seamless data flow between the 
+Database, AI Model, and User Interface. 
+○​ User 
+Acceptance 
+Testing 
+(UAT): 
+Conducted 
+with 
+Lupon 
+Tagapamayapa Secretary using ISO 25010 criteria to validate 
+functional suitability and usability. 
+○​ Cloud Deployment: Following successful testing, HearEase will be 
+deployed on a secure cloud hosting platform. This architecture 
+ensures 24/7 accessibility for residents tracking their cases while 
+maintaining 
+a 
+centralized, 
+secure 
+database 
+for 
+barangay 
+administrators. 
+○​ Security & Privacy: Communications are secured via SSL/TLS 
+encryption (HTTPS). To comply with the Data Privacy Act of 2012, 
+all public-facing data is anonymized, and personal records are 
+accessible only via encrypted authentication. 
+ 
+ 
+65 
+Developmental Tools and Cost 
+ 
+Table 8: Developmental Tools and Cost 
+Name 
+Purpose 
+Price 
+Quantity 
+Total 
+Programming 
+Languages  
+For developing the 
+system and the 
+DNN Model 
+FREE 
+- 
+FREE 
+Libraries: 
+Scikit-learn, 
+TensorFlow/Ker
+as 
+Machine Learning 
+Algorithms 
+FREE 
+- 
+FREE 
+Visual Studio 
+Code 
+Integrated 
+development 
+FREE 
+- 
+FREE 
+Google Cloud 
+Platform (GCP) 
+or AWS (Free 
+Tier) 
+Cloud Computing 
+(Model Training, 
+Data Storage) 
+FREE 
+1 
+FREE 
+ 
+66 
+Name 
+Purpose 
+Price 
+Quantity 
+Total 
+Cloud Hosting 
+(Beyond Free 
+Tier) 
+Potential for 
+increased usage 
+beyond free limits 
+₱1,000.00 
+- 
+₱1,000.00 
+Survey Platform 
+(Printed) 
+Data Gathering 
+from Barangay 
+Officials, 
+Residents 
+₱2.00 
+50 
+₱100.00 
+Statistical 
+Software 
+(Jamovi) 
+Data analysis and 
+testing of collected 
+data 
+FREE 
+1 
+FREE 
+Online 
+Collaboration 
+Tools (Notion)  
+Communication, 
+Project 
+Management 
+FREE 
+- 
+FREE 
+Contingency/Mi
+scellaneous 
+Expenses 
+(Internet, Fare, 
+etc.) 
+Unexpected Costs 
+During 
+Development and 
+Testing Phases 
+₱2,000.00 
+- 
+₱2,000.00 
+ 
+67 
+Name 
+Purpose 
+Price 
+Quantity 
+Total 
+PyInstaller 
+Packaging 
+Python-based 
+HearEase into an 
+executable 
+FREE 
+- 
+FREE 
+Inno Setup 
+(Windows) 
+Installer for 
+Windows 
+FREE 
+- 
+FREE 
+Grand Total ₱3,050.00 
+ 
+Evaluation 
+The evaluation phase synthesizes the quantitative and qualitative data 
+gathered to assess the practical value and efficacy of the HearEase system. This 
+process is designed to validate whether the specific research objectives have 
+been met, focusing on technical accuracy, user acceptance, and operational 
+impact. 
+1. Evaluation of AI Prediction Accuracy 
+To verify the system's ability to forecast resolution timelines, dataset will 
+be used for testing. The model’s predictions will be compared against the actual 
+historical values using statistical error metrics: 
+ 
+68 
+●​ Mean Absolute Error (MAE): Utilized to quantify the average deviation in 
+the predicted number of days and hearing counts. This provides a clear, 
+real-world interpretation of the error (e.g., an MAE of 0.70 hearings 
+indicates the prediction is usually within one session of the actual result). 
+●​ Mean Poisson Deviance: Specifically employed to evaluate the "Total 
+Hearings" prediction head. Since mediation sessions are discrete count 
+data (non-negative integers), Poisson Deviance provides a more accurate 
+measure of the model's goodness-of-fit than standard regression metrics, 
+identifying how well the model captures the frequency distribution of 
+barangay cases. 
+●​ Coefficient of Determination: Used to assess the model's explanatory 
+power. This metric measures the proportion of variance in resolution time 
+that is predictable from the input features (Severity, Relationship, and 
+Case Type), proving that the chosen variables are statistically significant 
+drivers of case longevity. 
+Accuracy Rate (Margin-based): To measure the percentage of predictions 
+that fall within a practically acceptable margin. For Resolution Time, a margin of 
+hearing was applied. High success rates in these margins validate the reliability 
+of the "Predictive Resource Allocation" feature for administrative use. 
+ 
+69 
+2. Assessment of User Acceptance 
+Data from the surveys administered to the Lupong Tagapamayapa and 
+residents will be analyzed using Descriptive Statistics. User feedback will be 
+quantified based on the ISO 25010 Software Quality Standards, specifically 
+measuring: 
+●​ Functional Suitability: Does the system perform the scheduling tasks as 
+required? 
+●​ Usability: Is the interface intuitive for non-technical barangay officials? 
+●​ High weighted mean scores in these categories will serve as the indicator 
+of the system’s successful design and user-friendliness. 
+ 
+4. Data Triangulation 
+To ensure the reliability of the findings, the study will employ Data 
+Triangulation. Consistency will be cross-verified between the Quantitative Results 
+(System Logs/AI Metrics) and the Qualitative Insights (Interview Feedback). For 
+instance, if the AI reports a 50% reduction in scheduling time, this should 
+correspond with interview statements from the Barangay Secretary regarding 
+reduced workload. This holistic approach ensures that the evaluation captures 
+both the technical performance and the lived experience of the stakeholders. 
+ 
+ 
+70 
+ 
+CHAPTER IV​
+RESULTS AND DISCUSSION 
+This chapter presents the findings of the study, organized according to the 
+specific objectives defined in Chapter I. It covers the analysis of current 
+workflows, the results of the data collection and AI training, the features of the 
+developed system, and the evaluation of its predictive accuracy and usability. 
+4.1 Analysis of Existing Case Workflows 
+To identify requirements for automation, the researchers conducted 
+interviews and observations at Barangay Tetuan. 
+●​ Workflow Constraints: The existing process relies on a manual logbook 
+system. Scheduling is done on an ad-hoc basis, usually set exactly 7 days 
+apart without considering case complexity. 
+●​ Bottlenecks: Key issues identified include overlapping appointments 
+(conflicts), difficulty in tracking case history, and inconsistent estimation of 
+how many hearings a case might require. 
+●​ Requirement for AI: The findings confirmed that a "one-size-fits-all" 7-day 
+schedule does not account for high-severity cases or complex 
+relationships, justifying the need for a predictive model. 
+ 
+71 
+ 
+4.2 Data Collection and Dataset Characteristics 
+The researchers collected and processed 1,199 stratified records from the 
+Barangay Tetuan case blotters (2018–2025). 
+●​ Case Distribution: The dataset reflects 15 distinct case types. As shown 
+in the findings, Gossip/Oral Defamation (14.0%) and Neighborhood 
+Disturbance (12.7%) are the most common. 
+●​ Validation of Socio-Legal Patterns: Analysis of the collected data 
+revealed a Severity Gradient: Low-severity cases average 2.75 hearings, 
+while High-severity cases average 4.05 hearings. Furthermore, Family 
+disputes were found to be the most complex, requiring a mean of 4.06 
+hearings. 
+●​ Data Integrity: The stratified sampling preserved the sharp drop in case 
+volume during 2020–2021, representing the COVID-19 lockdown impact, 
+which was critical for training the AI to distinguish between case 
+complexity and administrative delays. 
+ 
+72 
+ 
+ 
+Figure 4: Case Type Distribution 
+ 
+ 
+Figure 5: Outcome Distribution 
+ 
+4.3 Development of HearEase 
+ 
+The system was successfully developed using a cloud-native architecture. 
+Tech Stack Implementation: Unlike traditional monolithic designs, HearEase 
+utilizes Supabase (PostgreSQL) for relational data and Firebase for real-time 
+ 
+73 
+ 
+authentication. The frontend was built with Tailwind CSS and shadcn/ui for 
+accessibility. 
+ 
+-​
+AI-Driven Features: The system integrates a Multi-Output Multilayer 
+Perceptron (MLP). When a case is filed, the AI predicts the number of 
+hearings and resolution days. These values are then passed to the 
+FullCalendar scheduling engine. 
+-​
+Communication Bridge: To address Objective 1's notification bottleneck, 
+a Custom Android SMS Gateway was integrated to provide instant alerts 
+to residents, ensuring procedural adherence even for users without 
+smartphones. 
+ 
+4.4 Evaluation of Predictive Accuracy  
+This summary integrates the analysis of the dataset's framework, detailing 
+how every core variable affects a case's complexity (Total Hearings) and duration 
+(Resolution Time), with a specific focus on the provided "Summary Table for 
+Dataset." 
+I. The Core Dichotomy: Hearings vs. Resolution Time 
+The dataset reveals a fundamental relationship between the number of 
+hearings and the total days to resolve a case: 
+ 
+74 
+ 
+●​ Normal Operational Context (2018–2019, 2022–2025): There is a direct 
+positive correlation. Since hearings are scheduled strictly one week apart, 
+Resolution Time is largely a function of Total Hearings × 7 Days. 
+●​ Pandemic Context (Lockdown Status): The correlation decouples. 
+During ECQ (Strict Lockdown), Resolution Time increases massively (+90 
+to +150 days) regardless of the number of hearings. This confirms that the 
+AI model successfully learned to distinguish between case difficulty and 
+force majeure delays. 
+Table 9: Hearings x Resolution Times 
+Factor 
+Total Hearings 
+(Longevity) 
+Resolution Time 
+(Days) 
+Key Explanation 
+Normal 
+Environment 
+Direct Driver 
+Direct Multiplier ( 
+       ≈\approx≈ 
+      
+Total Hearings 
+       ×\times× 
+      
+7 days) 
+A strong positive correlation exists 
+under standard conditions. 
+Lockdown 
+Status 
+Neutral 
+Massive Increase ( 
+       
++90\mathbf{+90}+9
+0 
+      
+to 
+       
++150\mathbf{+150}
++150 
+      
+External administrative freeze 
+decouples the metrics, proving the 
+delay is not due to case difficulty. 
+ 
+75 
+ 
+days) 
+II. Internal Factors That Lengthen Case Duration (The Multipliers) 
+The Deep Neural Network (DNN) identified specific features that 
+significantly lengthen or shorten the judicial process: 
+Table 10: Internal Factors That Lengthen Case Duration 
+Variable 
+Correlati
+on to 
+Hearings 
+Explanation from 
+Framework / Table 
+Effect on Number 
+of Hearings 
+Effect on 
+Resolution Time 
+(Days) 
+Case Type 
+Positive 
+“Have inherently 
+different 
+complexities, 
+essentially 
+determines the 
+baseline difficulty of 
+a case,” 
+Increases (Complex 
+cases increases the 
+number of hearings 
+needed to be settled 
+while simple cases 
+usually take lesser 
+time to be resolved) 
+Lengthens (up to 4x 
+difference between 
+complex and simple 
+cases) 
+Case 
+Severity 
+Positive 
+"Is subjective to the 
+person assessing 
+the case, but it tells 
+a rough idea on how 
+urgent or difficult the 
+case is" 
+Increases (High 
+severity = 4 avg vs 
+Low severity = 2.75 
+avg hearings) 
+Lengthens (Due to 
+increased hearings 
+and resistance) 
+Number of 
+Responde
+nts 
+Positive 
+"More people = 
+more scheduling 
+conflicts and 
+conflicting 
+testimonies." 
+Slightly Increases 
+(More parties to 
+mediate and 
+schedule) 
+Lengthens (Directly 
+impacts scheduling 
+and "Turuan") 
+Recidivism 
+(Prev. 
+Cases) 
+Positive 
+"Habitual offenders 
+are resistant to 
+amicable 
+settlement." 
+Increases (Pushes 
+case toward 
+maximum 
+hearings/CFA) 
+Lengthens (Pushes 
+case towards 
+maximum 
+hearings/CFA) 
+ 
+76 
+ 
+Family 
+Relationsh
+ip 
+Positive 
+"Emotional baggage 
+extends mediation 
+time." 
+Increases (More 
+sessions needed for 
+emotional 
+mediation) 
+Lengthens 
+(Requires more time 
+for emotional 
+venting, thus more 
+hearings) 
+III. Internal Factors That Lessen Case Duration (The Shortener) 
+Table 11: Internal Factors That Shortens Case Duration (The Multipliers) 
+Variable 
+Correlatio
+n to 
+Hearings 
+Explanation from 
+Framework / Table 
+Effect on Number of 
+Hearings 
+Effect on 
+Resolution 
+Time (Days) 
+Intoxication 
+(at 
+incident) 
+Negative 
+"Sobering up" leads 
+to faster admission of 
+guilt and apology. 
+Decreases 
+(Respondent sobers 
+up, admits guilt faster 
+due to evidence of 
+intoxication, fewer 
+mediation sessions 
+needed) 
+Shortens 
+(Faster 
+Resolution, 
+fewer hearings) 
+IV. Case Type Patterns and Predicted Outcome (Settlement Type) 
+The case types are categorized by their predicted longevity, which 
+influences the final Outcome (Settlement Type). 
+A. Low Longevity Cases (High Likelihood of Amicable Settlement) 
+These cases tend to resolve quickly, often in 1-2 hearings. 
+Table 12: Low Longevity Cases 
+Case Type 
+Percentage of 
+Caseload 
+Pattern & Predicted Outcome 
+ 
+77 
+ 
+Gossip/Oral 
+Defamation 
+       14.00% 
+      
+"Heat of the moment" issue. High 
+likelihood of Amicable Settlement with 
+apology/retraction. 
+Neighborhood 
+Disturbance 
+       12.67% 
+      
+Generally transactional, outcome 
+depends on dispute nature (similar to 
+Strangers/Neighbors). 
+Slight Physical 
+Injuries 
+       7.67% 
+      
+Outcome depends on compensation for 
+damages/medical expenses. Likely 
+Amicable Settlement if resolved quickly. 
+Malicious Mischief 
+       7.60% 
+      
+"Petty Mischief." Likely Amicable 
+Settlement with payment of damage. 
+Unjust Vexation 
+       6.73% 
+      
+Outcome depends on apology and 
+cessation of activity. Likely Amicable 
+Settlement. 
+Alarm and Scandal 
+       3.00% 
+      
+"Heat of the moment" issue. High 
+likelihood of Amicable Settlement. 
+Ejectment/Squatting 
+       2.93% 
+      
+Although High Longevity due to 
+procedure, if resolved, it's a formal 
+settlement. If not, leads to CFA. 
+Trespass to Dwelling 
+       2.27% 
+      
+Outcome depends on severity. Can lead 
+to Amicable Settlement or CFA. 
+Light Coercion 
+       1.60% 
+      
+Outcome depends on respondent's 
+resistance to avoiding court record. Can 
+lead to Amicable Settlement or CFA. 
+B. High Longevity Cases (Higher Likelihood of Difficult Settlement or CFA) 
+These cases demand more procedural steps or are driven by deep-seated 
+issues, increasing hearings and resolution time. 
+ 
+78 
+ 
+Table 13: Internal Factors That Lengthen Case Duration 
+Case Type 
+Percentage of 
+Caseload 
+Pattern & Predicted Outcome 
+Collection of Sum of 
+Money 
+       11.60% 
+High Longevity due to financial 
+negotiations. Higher risk of CFA if 
+repayment is not agreed upon. 
+Grave Threats 
+       9.20% 
+      
+High Severity. Outcome heavily 
+influenced by Recidivism and 
+Intoxication. Higher risk of CFA if 
+respondent is resistant. 
+Land/Boundary 
+Dispute 
+       6.87% 
+      
+High Longevity due to ocular 
+inspection/document verification. Can 
+lead to CFA if no agreement on 
+boundaries. 
+Family Support 
+(Financial) 
+       4.80% 
+      
+High Longevity due to financial 
+negotiations. Outcome depends on 
+ability to pay; can lead to CFA. 
+Breach of Contract 
+(Lease) 
+       4.67% 
+      
+Outcome depends on ability to pay/fulfill 
+contract. Can lead to CFA if not resolved. 
+Estafa (Small Scale) 
+       4.40% 
+      
+High Severity/Financial. Outcome 
+depends on restitution. Higher risk of CFA 
+if respondent is resistant or a recidivist. 
+Ejectment/Squatting 
+       2.93% 
+      
+(Reiterated from Low Longevity due to 
+Outcome Nuance) High Longevity due to 
+procedure. If unresolved, leads to CFA. 
+ 
+V. Detailed Summary of Important Predictors for Action 
+ 
+ 
+79 
+ 
+The analysis highlights key factors that significantly influence case 
+duration and complexity, informing administrative decisions and predictive 
+modeling. 
+1.​ Recidivism: 
+○​ Correlation: Positive to Hearings and Resolution Time. 
+○​ Significance: This is the strongest predictor of a failed amicable 
+settlement, leading to cases being pushed to the maximum allowed 
+hearings and time, ultimately resulting in a Certificate to File Action 
+(CFA). It significantly lengthens Resolution Time. 
+2.​ Lockdown Status (Pandemic Era): 
+○​ Correlation: Neutral to Hearings, but Massive Positive to Days. 
+○​ Significance: This factor is crucial for data integrity and AI training. 
+It allows for the decoupling of administrative delays from actual 
+case complexity. A case taking a long time during a lockdown is 
+due to external factors (Force Majeure), not inherent difficulty. 
+3.​ Number of Respondents: 
+○​ Correlation: Positive to Hearings and Resolution Time. 
+○​ Significance: Identified as the "single biggest administrative factor" 
+due to scheduling conflicts and the need to resolve the "Blame 
+Game" (Turuan). This directly impacts the ease of scheduling and 
+the total duration of the mediation process. 
+4.​ Case Type (High Longevity Groups): 
+ 
+80 
+ 
+○​ Correlation: Positive to Hearings and Resolution Time. 
+○​ Significance: The 26.2%\mathbf{26.2\%}26.2% of cases in the 
+High Longevity group (e.g., Land Disputes, Family Support, 
+Collection of Money) are the primary drivers of internal case 
+complexity. They demand specific procedural steps that inherently 
+take more time and hearings, thus influencing the Resolution Time. 
+5.​ Family Relationship: 
+○​ Correlation: Positive to Hearings and Resolution Time. 
+○​ Significance: This "Emotional Factor" adds time because resolving 
+deep-seated 
+grudges and past history requires significant 
+emotional venting across multiple hearings, thus extending 
+Resolution Time. 
+6.​ Intoxication: 
+○​ Correlation: Negative to Hearings and Resolution Time. 
+○​ Significance: This is the key factor that can actively shorten 
+resolution time. The "Sober Apology" mechanism leads to faster 
+admissions and settlements, reducing both hearings and overall 
+duration. 
+7.​ Case Severity: 
+○​ Correlation: Positive to Hearings and Resolution Time. 
+○​ Significance: The underlying threat of heavier court penalties 
+motivates respondents to resist settlement and extend the process 
+ 
+81 
+ 
+to avoid legal records, thereby increasing hearings and resolution 
+time. 
+ 
+4.4.1  Feature Engineering & Preprocessing 
+Step 1: Severity Encoding 
+Severity strings mapped to ordinal integers: 
+{"Low": 1, "Medium": 2, "High": 3} 
+Step 2: Categorical One-Hot Encoding 
+Feature 
+Categories 
+One-Hot Columns 
+Case_Type 
+15 
+15 binary columns 
+Settlement_Type (Outcome) 
+4 
+4 binary columns 
+Relationship 
+6 
+6 binary columns 
+Lockdown_Status 
+3 
+3 binary columns 
+Total 
+— 
+27 columns 
+ 
+Encoder uses handle_unknown="ignore" so unseen categories produce all-zero vectors. 
+ 
+82 
+ 
+Step 3: Numerical Standardization 
+Three numerical features Z-score normalized: z = (x - mean) / std 
+Feature 
+Raw Range 
+After Scaling 
+Severity 
+1–3 
+mean≈0, std≈1 
+Num_Complainants 
+~ 
+mean≈0, std≈1 
+Num_Respondents 
+~ 
+mean≈0, std≈1 
+  
+Final Input Vector 
+The final input is a 30-dimensional vector: 27 one-hot + 3 standardized numerical 
+features. 
+Training Pipeline 
+Data Split 
+Total: 1,199 samples​
+• Training: 80% → 959 samples​
+  ├── Fit: 767 samples​
+ 
+83 
+ 
+  └── Validation: 192 samples​
+• Test: 20% → 240 samples (held out) 
+Table 14: Training Configuration 
+Parameter 
+Value 
+Rationale 
+Epochs 
+50 
+Sufficient for convergence 
+Batch Size 
+32 
+Standard for small-to-medium 
+datasets 
+Validation Split 
+0.2 
+20% held for monitoring 
+Optimizer 
+Adam (lr=0.001) 
+Adaptive learning rate 
+Loss Function 
+MSE 
+Standard regression loss 
+Random Seed 
+42 
+Reproducible results 
+ 
+MSE penalizes large errors quadratically. MAE Loss gives equal weight to all 
+errors. Poisson Loss could work for counts but MSE proved more stable. Huber Loss 
+adds unnecessary complexity. 
+Table 15: Saved Artifacts 
+File 
+Format 
+Content 
+ 
+84 
+ 
+model.keras 
+Keras SavedModel 
+Full neural network weights and 
+architecture 
+encoder.pkl 
+Joblib pickle 
+Fitted 
+OneHotEncoder 
+with 
+category mappings 
+scaler.pkl 
+Joblib pickle 
+Fitted 
+StandardScaler 
+with 
+mean/std values 
+feature_info.pkl 
+Joblib pickle 
+Column names and one-hot 
+category lists 
+training_results.json 
+JSON 
+Metrics, 
+accuracy, 
+graphs, 
+training history 
+  
+ 
+ 
+85 
+ 
+Figure 6: Model Evaluation Metrics 
+Metric 
+Hearings 
+Days 
+What It Means 
+MAE 
+0.7000 
+5.2910 
+Average abs error: 
+±0.70 hearings, ±5.29 
+days 
+RMSE 
+0.8693 
+7.4976 
+Root 
+of 
+squared 
+error; some outliers 
+exist 
+R² 
+0.6536 
+0.7508 
+Explains 
+65.4% 
+/ 
+75.1% variance 
+Poisson Dev. 
+0.2639 
+2.2036 
+Count data fit; lower 
+is better 
+ 
+ 
+The accuracy metric used is MAE-based relative accuracy: 
+ 
+86 
+ 
+Accuracy = (1 - MAE / Mean) × 100  
+Step-by-Step Derivation 
+Hearings Accuracy:​
+1. Test set mean ≈ 3.40​
+2. MAE = 0.7000​
+3. MAE/Mean = 0.2059​
+4. Accuracy = (1 - 0.2059) × 100 = 79.41% 
+Days Accuracy:​
+1. Test set mean ≈ 24.09​
+2. MAE = 5.2910​
+3. MAE/Mean = 0.2196​
+4. Accuracy = (1 - 0.2196) × 100 = 78.04% 
+4.4.2 Prediction Pipeline 
+User Input → Validate → Encode → Scale → Predict → Clamp → Return 
+1. 
+Input: 
+Case_Type, 
+Severity, 
+Relationship, 
+Num_Complainants, 
+Num_Respondents, Lockdown_Status 
+2. Severity converted: String → numeric (Low=1, Medium=2, High=3) 
+3. Per-settlement prediction: Model predicts for each of the 4 settlement types 
+4. Feature encoding: OneHotEncoder + StandardScaler applied 
+ 
+87 
+ 
+5. Model inference: Forward pass produces raw predictions 
+6. Post-processing: Hearings clamped to 1–6, Days minimum 1, Weeks = days/7 
+4.4.3 Retraining & Fine-Tuning 
+Table 16: Two Training Modes 
+Mode 
+Trigger 
+Dataset 
+Process 
+Full Training 
+Manual (website) 
+CSV file (casedata.csv) 
+New 
+model 
+from 
+scratch 
+Fine-Tuning 
+Auto/Manual 
+Django database 
+Loads 
+existing, 
+continues training 
+Table 17: Automatic Retraining Configuration 
+Setting 
+Default 
+Description 
+auto_retrain_enabled 
+True 
+Enable/disable auto retraining 
+threshold_cases 
+100 
+Resolved cases before trigger 
+default_epochs 
+50 
+Epochs for fine-tuning 
+default_validation_split 
+0.2 
+Validation split 
+ Safety Mechanisms 
+●​ Versioned Backups: Every retrain creates a timestamped backup 
+ 
+88 
+ 
+●​ Automatic Rollback: If fine-tuning fails, previous model restored 
+●​ Minimum Data Check: Requires at least 50 resolved cases 
+●​ Cache Invalidation: Predictor cache cleared after retraining 
+4.4.3 Model Comparison 
+Four machine learning models were evaluated under identical conditions 
+to determine the most suitable algorithm for the HearEase barangay mediation 
+prediction system. Each model was trained on the same 959-sample training set, 
+evaluated on the same 240-sample held-out test set, and measured using the 
+same accuracy formula (MAE-based relative accuracy). No hyperparameter 
+optimization was performed for any model to ensure a fair baseline comparison. 
+Model Overview 
+Table 18: Model Comparison 
+Model 
+Type 
+What It Does 
+How It Can Be 
+Used 
+for 
+HearEase 
+Compatibilit
+y 
+with 
+HearEase 
+ 
+89 
+ 
+Ridge 
+Regression 
+Linear Model 
+(L2 
+Regularized) 
+Finds the best 
+linear 
+combination of 
+input 
+features 
+to predict each 
+target. 
+It 
+assumes 
+that 
+the relationship 
+between inputs 
+(case 
+type, 
+severity, 
+etc.) 
+and 
+outputs 
+(hearings, 
+days) 
+is 
+approximately 
+linear. 
+L2 
+regularization 
+(penalty 
+on 
+large 
+coefficients) 
+prevents 
+overfitting. 
+Could 
+predict 
+hearings 
+and 
+resolution 
+days 
+using a simple 
+weighted sum of 
+case 
+features. 
+Each 
+feature 
+gets 
+a 
+fixed 
+coefficient (e.g., 
+High 
+severity 
+adds 
++1.3 
+hearings). 
+Predictions 
+are 
+fast (0.01s) and 
+fully interpretable 
+— 
+barangay 
+officials 
+could 
+see exactly why 
+each 
+prediction 
+was made. 
+Low 
+compatibility. 
+Cannot 
+learn 
+incrementally 
+from 
+new 
+resolved cases 
+— requires full 
+retraining from 
+scratch. 
+Cannot 
+capture 
+non-linear 
+interactions 
+(e.g., Family + 
+High Severity 
+having 
+a 
+disproportionat
+e 
+effect). 
+HearEase's 
+auto-retrain 
+pipeline relies 
+on incremental 
+fine-tuning, 
+which 
+Ridge 
+does 
+not 
+support. 
+Random 
+Forest 
+Ensemble 
+of 
+Decision 
+Trees 
+(Bagging) 
+Builds 
+200 
+independent 
+decision trees, 
+each 
+trained 
+on a random 
+subset of data. 
+Each 
+tree 
+makes its own 
+prediction, and 
+the final output 
+is the average 
+of 
+all 
+trees. 
+Naturally 
+handles 
+Could 
+predict 
+case 
+outcomes 
+using ensemble 
+voting from 200 
+decision 
+trees. 
+Provides built-in 
+feature 
+importance 
+scores showing 
+which 
+case 
+factors (severity, 
+case 
+type, 
+relationship) are 
+most influential. 
+Moderate 
+compatibility. 
+Handles 
+non-linear 
+patterns 
+well, 
+but 
+cannot 
+learn 
+incrementally 
+— 
+every 
+update 
+requires 
+retraining 
+all 
+200 trees from 
+scratch on the 
+ 
+90 
+ 
+non-linear 
+relationships 
+and 
+feature 
+interactions 
+without 
+requiring 
+special 
+preprocessing. 
+Robust and hard 
+to misconfigure. 
+full 
+combined 
+dataset. Trains 
+two 
+independent 
+models 
+(hearings and 
+days 
+separately) 
+with no shared 
+learning, which 
+may 
+produce 
+logically 
+inconsistent 
+predictions 
+(e.g., 1 hearing 
+but 90 days). 
+XGBoost 
+Sequential 
+Ensemble 
+(Gradient 
+Boosting) 
+Builds 
+trees 
+sequentially 
+where 
+each 
+new 
+tree 
+corrects 
+the 
+errors of the 
+previous ones. 
+Includes 
+built-in 
+L1/L2 
+regularization. 
+Widely 
+considered the 
+state-of-the-art 
+for 
+structured/tabu
+lar data in both 
+industry 
+and 
+academic 
+machine 
+learning 
+competitions. 
+Could 
+provide 
+highly 
+accurate 
+predictions 
+on 
+tabular 
+case 
+data. 
+Offers 
+SHAP-based 
+interpretability 
+for 
+explaining 
+individual 
+predictions. 
+Strong 
+regularization 
+prevents 
+overfitting 
+even 
+on 
+small 
+datasets. 
+Moderate 
+compatibility. 
+Strong 
+on 
+static datasets 
+but 
+cannot 
+learn 
+incrementally 
+— the entire 
+sequential 
+boosting chain 
+must be rebuilt 
+from 
+scratch 
+when new data 
+arrives. 
+Requires 
+two 
+completely 
+separate 
+models 
+(hearings and 
+days) with no 
+shared 
+representation. 
+Hyperparamet
+er 
+management 
+ 
+91 
+ 
+becomes more 
+critical as the 
+dataset 
+evolves. 
+MLP (DNN) 
+(This 
+Study) 
+Multi-Output 
+Neural 
+Network 
+A deep neural 
+network with a 
+shared feature 
+extraction trunk 
+(128 
+→ 
+64 
+neurons) 
+and 
+two 
+independent 
+prediction 
+heads (one for 
+hearings, 
+one 
+for days). Uses 
+ReLU 
+activation 
+for 
+non-linearity 
+and 
+dropout 
+(20%) 
+for 
+regularization. 
+Learns internal 
+representation
+s 
+through 
+backpropagatio
+n 
+over 
+the 
+assigned 
+training 
+epochs. 
+Predicts 
+both 
+Total 
+Hearings 
+and 
+Resolution 
+Time 
+Days 
+simultaneously 
+through a shared 
+architecture. The 
+shared 
+trunk 
+learns 
+general 
+case 
+representations 
+that benefit both 
+predictions 
+(multi-task 
+learning). 
+Can 
+be incrementally 
+fine-tuned 
+with 
+new 
+resolved 
+cases 
+via 
+the 
+existing 
+compare_and_re
+train.py pipeline. 
+High 
+compatibility. 
+Native 
+incremental 
+fine-tuning 
+allows 
+the 
+model to learn 
+from 
+newly 
+resolved cases 
+without 
+full 
+retraining. The 
+shared-trunk 
+architecture 
+ensures 
+hearings 
+and 
+days 
+predictions 
+remain 
+logically 
+consistent. 
+Integrates 
+directly 
+with 
+HearEase's 
+auto-retrain 
+trigger. 
+Scalability 
+improves with 
+larger 
+datasets. 
+ 
+Capability Comparison 
+ 
+92 
+ 
+The following table summarizes the technical capabilities of each model relevant 
+to the HearEase system requirements: 
+Table 19: Comparison of Model Capabilities Against HearEase System 
+Requirements 
+Capability 
+Ridge 
+Regression 
+Random 
+Forest 
+XGBoost 
+MLP 
+(DNN) 
+(This Study) 
+Non-linear 
+pattern 
+recognition 
+Cannot 
+Can 
+Can 
+Can 
+Feature 
+interaction 
+learning 
+Cannot 
+Can 
+Can 
+Can 
+Incremental 
+fine-tuning 
+Cannot 
+Cannot 
+Cannot 
+Can 
+Multi-output 
+joint learning 
+Cannot 
+Cannot 
+Cannot 
+Can 
+Interpretability 
+Full 
+(coefficients) 
+Partial (feature 
+importance) 
+Partial (SHAP 
+values) 
+None 
+(black 
+box) 
+Training speed 
+(1,199 
+samples) 
+0.01s (fastest) 
+0.24s (fast) 
+1.09s 
+(moderate) 
+12.34s 
+(slowest) 
+Overall 
+accuracy 
+80.29% 
+79.06% 
+78.92% 
+78.92% 
+ 
+ 
+93 
+ 
+ 
+Figure 7: Radar Chart Comparison of Model Performance Metrics 
+Table 20: Performance Metrics Comparison of Evaluated Machine Learning 
+Models 
+Model 
+Overall 
+Accura
+cy 
+Hearin
+sAccur
+acy 
+Days 
+Accura
+cy 
+Hearin
+gs 
+MAE 
+Days 
+MAE 
+Hearin
+gs R2 
+Days 
+R2 
+Time 
+Ridge 
+80.29% 81.62% 78.96% 0.625 
+5.0708 
+0.6524 
+0.7852 
+0.0092s 
+ 
+94 
+ 
+Rando
+m 
+Forest 
+79.06% 80.02% 78.11% 0.6792 
+5.275 
+0.5779 
+0.7475 
+0.2376s 
+XGBoo
+st 
+78.92% 80.27% 77.57% 0.6708 
+5.4042 
+0.5703 
+0.7448 
+1.093s 
+MLP 
+(DNN) 
+78.92% 79.78% 78.07% 0.6875 
+5.2833 
+0.5856 
+0.7546 
+12.3379
+s 
+ 
+The Model Health Radar confirms that all four models perform comparably 
+on static accuracy metrics, with Ridge Regression having the largest polygon 
+area due to its speed and slight accuracy advantage. The maximum accuracy 
+difference between the best model (Ridge, 80.29%) and worst model 
+(XGBoost/MLP, 78.92%) is only 1.37 percentage points within the margin of 
+statistical variation on a 240-sample test set. 
+The choice between these models cannot be made on accuracy alone. 
+The MLP was selected for HearEase not because it is the most accurate on 
+static data, but because it is the only model that supports all three operational 
+requirements simultaneously, incremental fine-tuning with new resolved cases, 
+shared multi-output learning that ensures logically consistent hearings-and-days 
+predictions, and scalability to larger datasets where neural networks are 
+expected to close the current 1.37% accuracy gap. Ridge Regression remains 
+the strongest choice for any deployment where interpretability and training speed 
+are prioritized over continuous learning. 
+ 
+95 
+ 
+4.4.3 Training Curves 
+The following graphs show model convergence over 50 epochs. Both training and 
+validation curves are plotted to assess overfitting. 
+ 
+Figure 7: Model Convergence Analysis and Performance Metrics Across 
+Training Epochs 
+ 
+The combined training curves graph confirms that the model trains 
+effectively and generalizes well across all four tracked metrics: 
+ 
+●​ Total Loss drops sharply from 650 to 35 within the first 20 epochs and 
+stabilizes without the validation loss ever increasing, no overfitting 
+detected. 
+ 
+96 
+ 
+●​ Hearings MAE converges to 0.73(validation), predictions are within ±1 
+hearing of the true value. 
+●​ Days MAE converges to 5.3(validation), predictions are within ±5 days of 
+actual resolution time. Given an average of  23 days per case. 
+●​ Accuracy rises from 30% to 78% by epoch 15 and plateaus. The small 4% 
+gap between training (80%) and validation (76%) indicates a healthy 
+generalization without memorization. 
+ 
+4.5 System Design and Implementation Features 
+ 
+4.5.1 The Centralized Administrative Dashboard 
+Figure 10: HearEase Administrative Dashboard 
+ 
+4.5.2 AI-Driven Case Filing and Prediction Interface 
+ 
+97 
+ 
+ 
+ 
+ 
+98 
+ 
+Figure 11: AI-Driven Case Filing and Prediction Results 
+Figure 11 shows the sequential process of filing a new case. First, the system 
+automatically retrieves the current date and generates a unique case number. 
+Once confirmed, the system redirects to the Party Information Form, where the 
+admin can add or search for Complainants and Respondents. In step 3, the 
+admin chooses the nature of the complaint, changes the default severity value, 
+selects the relationship status, provides a description, and optionally uploads 
+case evidence. Lastly, in step 4, the AI prediction analysis is displayed. This 
+shows the predicted number of hearings, estimated resolution time, and an 
+editable schedule. It also recommends a Lupon member based on workload and 
+shows available time slots for that day. 
+ 
+4.5.3 Intelligent Resource Allocation and Scheduling Recommendation 
+ 
+ 
+99 
+ 
+Figure 12: Lupon Member Recommendation and Date Selection 
+Figure 12 presents the AI-driven prediction analysis. This shows the predicted 
+number of hearings, estimated resolution time, and an editable schedule. It also 
+recommends a Lupon member based on workload and shows available time 
+slots for that day. 
+ 
+4.5.4 Digital Document Synthesis Engine 
+ 
+ 
+100 
+ 
+Figure 13: Automated Document Generation 
+Figure 13 displays the automated document generation feature. The system 
+includes a default list of essential templates such as the Summon Letter, Case 
+Monitoring Sheet, Notice of Cancellation, Certificate to File Action, and Notice of 
+Non-Appearance. To generate a document, the administrator is prompted to 
+select or search for the specific case, ensuring that the output is accurately linked 
+to the correct file. 
+4.5.6 Public-Facing Resident Portal 
+ 
+ 
+Figure 14: Resident Case Filing and Tracking Portal 
+ 
+4.6 Assessment of Usability and Efficiency 
+ 
+The terminal phase of this study involved a summative evaluation of 
+HearEase to determine its operational efficacy and usability relative to the legacy 
+manual procedures in Barangay Tetuan. The researchers utilized a quantitative 
+approach based on the ISO/IEC 25010 System and Software Quality Model, 
+specifically targeting the dimensions of Functional Suitability and Usability. 
+ 
+ 
+101 
+ 
+To statistically measure the system’s performance, a 5-point Likert scale 
+was utilized. The following scale defines the mean ranges and their 
+corresponding verbal interpretations used throughout the evaluation. 
+ 
+Evaluation Criteria 
+1 (Much 
+Worse) 
+2 
+(Worse) 
+3 
+(Neutral) 
+4 
+(Better) 
+5 (Much 
+Better) 
+1. Speed: How fast is it to 
+secure a hearing schedule 
+using 
+the 
+system 
+compared 
+to 
+manual 
+walk-ins? 
+  
+  
+  
+  
+  
+2. Ease of Use: How 
+simple 
+is 
+the system’s 
+interface 
+to 
+navigate 
+compared 
+to 
+traditional 
+paperwork? 
+  
+  
+  
+  
+  
+3. 
+Information 
+Clarity: 
+How 
+clear 
+is 
+the 
+AI-predicted 
+resolution 
+time compared to manual 
+estimates? 
+  
+  
+  
+  
+  
+ 
+102 
+ 
+4. Effort Required: To 
+what 
+extent 
+does 
+this 
+system reduce the "hassle" 
+of filing and tracking a 
+case? 
+  
+  
+  
+  
+  
+5. Overall Efficiency: How 
+would 
+you 
+rate 
+the 
+system’s ability to improve 
+justice 
+delivery 
+in 
+Barangay Tetuan? 
+  
+  
+  
+  
+  
+ 4.5.1 Expert User Evaluation Results 
+The Lupon Secretary evaluated the system’s administrative capabilities, 
+focusing on how the AI-driven backend and scheduling engine improved the 
+clerical workflow. 
+ 
+103 
+ 
+ 
+Figure 15: Expert User Evaluation Result 
+4.5.2 End-User Evaluation Results  
+A group of 25 citizen respondents evaluated the system. Since the AI logic 
+is hidden from the public portal, the evaluation focused on the User Interface 
+(UI), accessibility, and the transparency of case status updates. 
+ 
+Figure 16: End User Evaluation Results 
+ 
+104 
+ 
+Table 16. Frequency Distribution of Citizen Evaluation Results 
+Evaluation 
+Criteria 
+5 (Much 
+Better) 
+4 
+(Better) 
+3 
+(Neutral) 
+2 
+(Worst) 
+1 (Much 
+Worst) 
+Weighted 
+Mean 
+1. Speed: How 
+fast is it to secure 
+a 
+hearing 
+schedule 
+using 
+the 
+system 
+compared 
+to 
+manual walk-ins? 
+16 
+6 
+2 
+1 
+0 
+4.48 
+2. Ease of Use: 
+How simple is the 
+system’s interface 
+to 
+navigate 
+compared 
+to 
+traditional 
+paperwork? 
+11 
+9 
+4 
+1 
+0 
+4.20 
+3. 
+Information 
+Clarity: 
+How 
+clear 
+is 
+the 
+AI-predicted 
+10 
+11 
+3 
+1 
+0 
+4.20 
+ 
+105 
+ 
+resolution 
+time 
+compared 
+to 
+manual 
+estimates? 
+4. 
+Effort 
+Required: 
+To 
+what extent does 
+this 
+system 
+reduce 
+the 
+"hassle" of filing 
+and 
+tracking 
+a 
+case? 
+19 
+4 
+2 
+0 
+0 
+4.68 
+5. 
+Overall 
+Efficiency: How 
+would 
+you rate 
+the 
+system’s 
+ability to improve 
+justice delivery in 
+Barangay Tetuan? 
+14 
+8 
+3 
+0 
+0 
+4.44 
+General 
+Weighted 
+Mean 
+ 
+ 
+ 
+ 
+ 
+4.40 
+ 
+106 
+ 
+ 
+As shown in Table 16, while the system received a General Weighted 
+Mean of 4.40 (Much Better), the distribution reveals specific areas where 
+traditional methods are still valued by some segments of the community. 
+●​ Effort Required (WM = 4.68): This remains the highest-rated category. 
+Even for respondents who were "Neutral" about the technology, they 
+strongly agreed that the reduction in physical travel to the Barangay Hall 
+for status updates was a significant benefit. 
+●​ Ease of Use and Information Clarity (WM = 4.20): These categories 
+received several "Neutral" and one "Worse" rating. Qualitative interviews 
+revealed that a small number of older residents found the digital forms and 
+navigation of the entire system slightly intimidating compared to verbal 
+reporting. Furthermore, one respondent noted that they preferred the 
+traditional physical summons because they "trusted the paper more than a 
+text message."  
+●​ Speed (WM = 4.48): The majority of users (88%) found the speed of 
+scheduling. However, the few lower scores were attributed to intermittent 
+mobile signal issues in certain parts of the barangay, which occasionally 
+delayed the receipt of the SMS Gateway alerts. 
+ 
+ 
+107 
+ 
+CHAPTER V​
+CONCLUSION AND RECOMMENDATIONS 
+ 
+Summary of Findings 
+This study successfully developed and implemented HearEase, an 
+AI-driven system utilizing Deep Neural Networks (DNN) to optimize barangay 
+hearing scheduling and predict case resolution times in Barangay Tetuan, 
+Zamboanga City. The research addressed critical inefficiencies in traditional 
+manual scheduling processes that often resulted in delays, scheduling conflicts, 
+and administrative burden on barangay officials and the Lupong Tagapamayapa. 
+Key findings from the study include: 
+System Development and Functionality 
+HearEase was successfully designed as a web-based platform with 
+role-based access for barangay officials and a transparent case-tracking portal 
+for residents. The system automates hearing scheduling based on established 
+barangay rules, predicts case resolution times, and provides data-driven insights 
+for operational optimization. 
+ 
+108 
+ 
+Predictive Accuracy 
+The Deep Neural Network model demonstrated strong predictive 
+capabilities in forecasting case resolution times and the number of hearings 
+required. Through comparative analysis of multiple neural network architectures, 
+the selected DNN model achieved optimal performance in terms of accuracy, 
+processing speed, and reliability when trained on historical case data from 
+Barangay Tetuan. 
+User Acceptance and Satisfaction 
+User Acceptance Testing (UAT) revealed positive feedback from both 
+barangay officials and the Lupong Tagapamayapa. Participants reported that the 
+system was user-friendly, intuitive, and significantly improved their workflow. The 
+centralized calendar and notification features were particularly valued for keeping 
+all stakeholders informed of upcoming hearings and deadlines. 
+Data-Driven Decision Making 
+The reporting and analytics features of HearEase enabled barangay 
+officials to monitor case resolution timelines, identify procedural bottlenecks, and 
+make evidence-based decisions to improve service delivery. Historical data 
+analysis revealed patterns in case types, resolution durations, and common 
+scheduling challenges. 
+ 
+109 
+ 
+Transparency and Accessibility 
+The public portal component of HearEase enhanced transparency by 
+allowing residents to file complaints digitally and track their case status in 
+real-time. This feature improved citizen engagement and trust in the barangay 
+justice system while maintaining compliance with legal requirements for 
+in-person document service and hearings. 
+Scalability Potential 
+The pilot implementation in Barangay Tetuan demonstrated that the 
+system architecture and methodology could be adapted and scaled to other 
+barangays with similar governance structures and caseloads, contributing to 
+broader improvements in local justice administration across the region. 
+Conclusions 
+Based on the findings of this research, the following conclusions are drawn: 
+AI Integration Enhances Barangay Justice Administration 
+The successful implementation of HearEase demonstrates that artificial 
+intelligence and Deep Neural Networks can be effectively integrated into 
+grassroots-level governance systems in the Philippines. The technology 
+addresses longstanding inefficiencies in manual processes while respecting 
+ 
+110 
+ 
+established legal frameworks and cultural practices inherent in the Katarungang 
+Pambarangay system. 
+Predictive Analytics Improves Resource Allocation 
+The ability to predict case resolution times and hearing requirements 
+enables barangay officials to allocate resources more effectively, plan schedules 
+proactively, and manage caseloads with greater precision. This predictive 
+capability transforms reactive case management into a proactive, data-informed 
+process. 
+Technology Adoption Requires User-Centric Design 
+The positive user acceptance results underscore the importance of 
+designing systems that prioritize usability and align with the actual workflows of 
+barangay officials. Success in technology adoption at the local government level 
+depends not only on technical sophistication but also on intuitive interfaces and 
+adequate training support. 
+Digital Transformation Enhances Transparency and Trust 
+By providing residents with direct access to case information and status 
+updates, HearEase strengthens transparency in the barangay justice system. 
+This transparency builds community trust and encourages greater civic 
+engagement, contributing to more responsive and accountable local governance. 
+ 
+111 
+ 
+Historical Data is Valuable for System Training 
+The quality and comprehensiveness of historical case records directly 
+impact the accuracy of AI predictions. Barangays that maintain detailed, 
+well-organized records are better positioned to benefit from AI-driven systems, 
+highlighting the importance of consistent documentation practices. 
+Hybrid Approach Balances Innovation and Tradition 
+HearEase successfully demonstrates that technological innovation can 
+complement rather than replace traditional dispute resolution practices. The 
+system enhances administrative efficiency while preserving the human-centered, 
+community-based nature of barangay hearings and the essential role of the 
+Lupong Tagapamayapa in mediation and conciliation. 
+Pilot Implementation Validates Broader Applicability 
+The success of the pilot study in Barangay Tetuan provides strong 
+evidence that similar AI-driven scheduling and prediction systems can be 
+implemented in other barangays throughout Zamboanga City and potentially 
+across the Philippines, contributing to nationwide improvements in local justice 
+administration. 
+ 
+112 
+ 
+Recommendations 
+Based on the conclusions of this study, the following recommendations are 
+proposed for various stakeholders: 
+For Barangay Tetuan: 
+●​ Continue using and refining HearEase, incorporating ongoing feedback 
+from users to enhance system features and address emerging needs. 
+●​ Invest in regular training sessions for barangay staff and Lupong 
+Tagapamayapa members to ensure sustained proficiency in system use 
+and maximize its benefits. 
+●​ Maintain rigorous data quality standards in case documentation to ensure 
+the continued accuracy of AI predictions and system reliability. 
+●​ Monitor system performance metrics regularly and conduct periodic 
+evaluations to assess long-term impact on case resolution efficiency and 
+community satisfaction. 
+For Other Barangays in Zamboanga City: 
+●​ Consider adopting HearEase or similar AI-driven scheduling systems, 
+adapting the platform to local governance structures, caseload 
+characteristics, and resource availability. 
+ 
+113 
+ 
+●​ Establish partnerships with academic institutions and technology providers 
+to facilitate knowledge transfer and technical support during 
+implementation. 
+●​ Prioritize the digitization of historical case records to build robust datasets 
+that can support effective AI model training. 
+●​ Engage in inter-barangay knowledge sharing to learn from Barangay 
+Tetuan's implementation experience and best practices. 
+For Local Government Units (LGUs) and the Department of the Interior and 
+Local Government (DILG): 
+●​ Develop policy frameworks and guidelines to support the adoption of 
+AI-driven systems in barangay justice administration across the 
+Philippines. 
+●​ Allocate funding and resources for technology infrastructure, training 
+programs, and ongoing technical support to enable widespread 
+implementation. 
+●​ Establish standards for data management, privacy protection, and ethical 
+AI use in local governance contexts. 
+●​ Create incentive programs to encourage barangays to modernize their 
+administrative processes and adopt evidence-based technologies. 
+●​ Facilitate regional and national forums for sharing successful case studies 
+and lessons learned from AI implementation in local governance. 
+ 
+114 
+ 
+For Future Researchers: 
+●​ Conduct longitudinal studies to assess the long-term impact of AI-driven 
+scheduling systems on case resolution outcomes, community satisfaction, 
+and barangay operational efficiency. 
+●​ Explore the integration of additional AI capabilities, such as natural 
+language processing for automated document generation or sentiment 
+analysis for assessing community feedback. 
+●​ Investigate the applicability of HearEase methodology to other aspects of 
+barangay governance beyond hearing scheduling, such as project 
+monitoring, resource allocation, or citizen service delivery. 
+●​ Examine the scalability of the system to barangays with different 
+demographic profiles, caseload volumes, and technological readiness 
+levels. 
+●​ Research the ethical implications of AI use in justice administration, 
+including issues of algorithmic bias, data privacy, and the balance 
+between automation and human judgment. 
+●​ Develop frameworks for evaluating the cost-effectiveness and return on 
+investment of AI implementations in local government settings. 
+For Technology Developers and Academic Institutions: 
+●​ Continue refining Deep Neural Network architectures and training 
+methodologies to improve prediction accuracy and system adaptability. 
+ 
+115 
+ 
+●​ Develop user-friendly interfaces and training materials that accommodate 
+varying levels of technological literacy among barangay officials. 
+●​ Create modular, customizable system designs that can be easily adapted 
+to the specific needs and contexts of different barangays. 
+●​ Establish partnerships with local government units to ensure that 
+technology development is grounded in real-world operational needs and 
+constraints. 
+●​ Contribute to the broader body of knowledge on AI applications in public 
+administration through publications, conferences, and open-source 
+initiatives. 
+For the Community and Residents: 
+●​ Actively engage with the HearEase public portal to file complaints, track 
+case status, and provide feedback on system performance. 
+●​ Participate in community consultations and feedback sessions to help 
+shape the ongoing development and refinement of the system. 
+●​ Advocate for transparency, accountability, and ethical use of technology in 
+local governance. 
+●​ Support barangay officials in their efforts to modernize administrative 
+processes and improve service delivery. 
+In conclusion, HearEase represents a significant advancement in the 
+application of artificial intelligence to grassroots governance in the Philippines. By 
+ 
+116 
+ 
+optimizing barangay hearing scheduling and predicting case resolution times, the 
+system enhances administrative efficiency, promotes transparency, and 
+contributes to more timely and accessible justice for local communities. The 
+success of this pilot implementation provides a strong foundation for broader 
+adoption and continued innovation in AI-driven local governance solutions. 
+ 
+ 
+ 
+ 
+117 
+ 
+References 
+ 
+[1] C. Distor, O. Khaltar, and M. J. Moon, "Adoption of Artificial Intelligence (AI) in 
+Local Governments: An Exploratory Study on the Attitudes and Perceptions of 
+Officials in a Municipal Government in the Philippines," J. Public Affairs Dev., vol. 
+8, 
+pp. 
+33–65, 
+2021. 
+Available: 
+https://ovcre.uplb.edu.ph/journals-uplb/index.php/JPAD/article/view/798. 
+[2] C. Balilia, L. Pagulayan, J. Acoba, and J.-E. Mebaña, "Information 
+Management System with Project Monitoring for Barangay," J. Eng. Archit. 
+Inform. 
+(JEAI), 
+vol. 
+3, 
+2023. 
+Available: 
+http://urdc.usl.edu.ph/journals/jeai/papers/vol3/vol%203%20series%202023-51-6
+0.pdf. 
+[3] M. Melnik and D. Nasonov, "Workflow scheduling using Neural Networks and 
+Reinforcement Learning," Procedia Comput. Sci., vol. 156, pp. 29–36, 2019. doi: 
+10.1016/j.procs.2019.08.126. 
+[4] E. P. Ermakova and E. E. Frolova, "Using Artificial Intelligence in Dispute 
+Resolution," Smart Innov. Syst. Technol., pp. 131–142, Oct. 2021. doi: 
+10.1007/978-981-16-4621-8_11. 
+ 
+118 
+ 
+[5] R. P. Bringula, M. A. D. Vale, J. A. Napolis, F. P. Oliva, and D. J. T. De La 
+Serna, "E-Barangay," Int. J. Electron. Gov. Res., vol. 18, no. 1, pp. 1–13, Jan. 
+2022. doi: 10.4018/ijegr.288071. 
+[6] Department of the Interior and Local Government (DILG), Katarungang 
+Pambarangay: A Handbook, Quezon City, Philippines: Bureau of Local 
+Government 
+Supervision, 
+2004. 
+[Online]. 
+Available: 
+https://dilg.gov.ph/PDF_File/reports_resources/dilg-reports-resources-2016120_6
+e2a2656d7.pdf 
+[7] R. S. Agustin and M. G. Medina, "Effectiveness of the Katarungang 
+Pambarangay (Barangay Justice System) in the Settlement of Disputes," Int. J. 
+Sci. Res. Publ. (IJSRP), vol. 10, no. 8, pp. 445–452, Aug. 2020. doi: 
+10.29322/IJSRP.10.08.2020.p10457. 
+[8] Philippine Information Agency (PIA), "Strengthening Peace and Governance: 
+Rollout of New BJS Modules in Mindanao," PIA Policy and Governance Reports, 
+Jan. 2025. [Online]. Available: https://pia.gov.ph/news 
+[9] K. Karren, M. Schmitz, and S. Schaffer, "Improving conversational user 
+interfaces for citizen complaint management through enhanced contextual 
+feedback," pp. 1–11, Jul. 2024. doi: 10.1145/3640794.3665562. 
+ 
+119 
+ 
+[10] C. Karthikeyan, "AI (Artificial Intelligence) for conflict resolution and 
+negotiation," in Advances in Business Strategy and Competitive Advantage Book 
+Series, pp. 21–50, 2024. doi: 10.4018/979-8-3693-8442-8.ch002. 
+[11] T. Ansari, H. S. Dhillon, and M. Singh, "Machine Learning Model to Predict 
+Results of Law Cases," in Proceedings of the IEEE International Conference on 
+Advances in Electrical, Computing, and Telecommunication Engineering 
+(ICAECT), pp. 1–8, Jan. 2024. doi: 10.1109/icaect60202.2024.10468789. 
+[12] S. Yadav and J. Kaur, "Caring for the Carers," in Advances in Medical 
+Technologies 
+and 
+Clinical 
+Practice, 
+pp. 
+137–152, 
+Sep. 
+2024. 
+doi: 
+10.4018/979-8-3693-4422-4.ch007. 
+[13] L. Ait Ounejjar et al., "SmartBlendEd: Enhancing blended learning through 
+AI-optimized scheduling and user-centric design," SoftwareX, vol. 27, pp. 
+101891, Sep. 2024. doi: 10.1016/j.softx.2024.101891. 
+[14] F. M. Quimba, N. I. Moreno, and A. M. Salazar, "Readiness for AI Adoption 
+of Philippine Business and Industry: The Government’s Role in Fostering 
+Innovation- 
+and 
+AI-Driven 
+Industrial 
+Development," 
+Dec. 
+2024. 
+doi: 
+10.62986/dp2024.35. 
+[15] R. L. B. Gella, Defining the Legal Role and Liability of Artificial Intelligence in 
+Digital Consent Towards Liberty and Prosperity in the Philippines. Foundation for 
+Liberty 
+and 
+Prosperity, 
+2023–2024. 
+ 
+120 
+ 
+https://libpros.com/wp-content/uploads/2024/09/GELLA-Rachel-Lois_Dissertation
+-Rachel-Lois-Gella.pdf. 
+[16] P. Bouška, P. Šůcha, and Z. Hanzálek, "Deep learning-based priority rules 
+for the parallel machine scheduling problem to minimize total tardiness," Comput. 
+Ind. Eng., vol. 162, p. 107703, Dec. 2021. doi: 10.1016/j.cie.2021.107703. 
+[17] N. M. Alexander, “Doing it online: Is mediation ready for the AI age?,” 
+Edward 
+Elgar 
+Publishing 
+eBooks, 
+pp. 
+188–214, 
+Jun. 
+2022, 
+doi: 
+10.4337/9781800880788.00016. 
+[18] C. Zabala, “Exploring the applicability of artificial intelligence in local 
+government units (LGUs) in Zamboanga Peninsula (Region IX), Philippines,” 
+Social 
+Science 
+Research 
+Network, 
+Jul. 
+7, 
+2023. 
+https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4506110. 
+[19] Medina and A. C. Agustin, "From elders to Lupon: Tracing the roots of 
+barangay conflict resolution mechanisms," J. Local Gov. Policy Stud., vol. 5, no. 
+1, pp. 56–73, 2021.  
+[20] J. Zeleznikow, “Using artificial intelligence to provide intelligent dispute 
+resolution support,” Group Decision and Negotiation, Apr. 2021, doi: 
+10.1007/s10726-021-09734-1. 
+ 
+121 
+ 
+[21] “View of solving the problem of delay in adjudication of cases in Nigeria 
+through 
+artificial 
+intelligence 
+(AI),” 
+Unizik.edu.ng, 
+2025. 
+Available: 
+https://journals.unizik.edu.ng/jocarl/article/view/5417/4497. 
+[22] A. B. Rjab, S. Mellouli, and J. Corbett, “Barriers to artificial intelligence 
+adoption in smart cities: A systematic literature review and research agenda,” 
+Government Information Quarterly, vol. 40, no. 3, p. 101814, Mar. 2023, doi: 
+10.1016/j.giq.2023.101814. 
+[23] E. Papagiannidis, I. M. Enholm, C. Dremel, P. Mikalef, and J. Krogstie, 
+“Toward AI governance: Identifying best practices and potential barriers and 
+outcomes,” 
+Information 
+Systems 
+Frontiers, 
+vol. 
+25, 
+Apr. 
+2022, 
+doi: 
+10.1007/s10796-022-10251-y. 
+[24] A. Sigfrids, M. Nieminen, J. Leikas, and P. Pikkuaho, “How should public 
+administrations foster the ethical development and use of artificial intelligence? A 
+review of proposals for developing governance of AI,” Frontiers in Human 
+Dynamics, vol. 4, May 2022, doi: 10.3389/fhumd.2022.858108. 
+[25] T. Kinder, J. Stenvall, E. Koskimies, H. Webb, and S. Janenova, “Local public 
+services and the ethical deployment of artificial intelligence,” Government 
+Information 
+Quarterly, 
+vol. 
+40, 
+no. 
+4, 
+p. 
+101865, 
+Oct. 
+2023, 
+doi: 
+10.1016/j.giq.2023.101865. 
+ 
+ 
+122 
+ 
+Appendix A: Sample Data Collected 
+ 
+Date of Consultation: February 28, 2025 
+Location: Barangay Tetuan Hall, Zamboanga City, Philippines, 7000 
+ 
+TOPIC 
+DETAILS/TAKEAWAYS 
+Hearing Scheduling Process 
+A hearing schedule is assigned to 
+each case, followed by a summon 
+letter personally delivered by the 
+Barangay Officials to the respondent’s 
+address. Delivering Summons 
+in-person is mandatory, despite the 
+use of any e-barangay systems. 
+Role of Lupon Members 
+The Lupon Member who receives the 
+complaint is responsible for facilitating 
+the hearing on its scheduled date.   
+Lupon Duty Schedule 
+If Lupon 1 is on duty on Monday, and 
+receives a case, Lupon 1 is 
+automatically obligated to handle the 
+hearing next Monday, and on the next 
+ 
+123 
+ 
+Monday if the hearing is not settled. 
+Types of Cases Handled 
+Minor disputes (e.g. property conflicts) 
+are resolved through barangay 
+mediation hearings. 
+Cases Immediately Forwarded to 
+Police Authority 
+Severe offenses (e.g., murder and 
+physical violence) are immediately 
+escalated to the police or higher 
+authorities, and not catered for 
+barangay hearings. 
+Identified Challenges 
+Manual scheduling and tracking often 
+leads to delays and inefficiency. 
+Suggested Improvements 
+The officials expressed interest in 
+implementing an automated 
+scheduling system to streamline 
+processes and reduce manual work. 
+ 
+ 
+124 
+ 
+Appendix B: System Design 
+Figure 10: HearEase Flow Chart 
+ 
+125 
+ 
+Appendix C: Evaluation Tool 
+ 
+Instructions: Please rate your experience with the HearEase System compared 
+to your past experiences with Traditional Barangay Methods by checking the 
+box that best matches your opinion. 
+ 
+Evaluation Criteria 
+1 (Much 
+Worse) 
+2 
+(Worse) 
+3 
+(Neutral) 
+4 
+(Better) 
+5 (Much 
+Better) 
+1. Speed: How fast is it to 
+secure a hearing schedule 
+using 
+the 
+system 
+compared 
+to 
+manual 
+walk-ins? 
+  
+  
+  
+  
+  
+2. Ease of Use: How 
+simple 
+is 
+the system’s 
+interface 
+to 
+navigate 
+compared 
+to 
+traditional 
+paperwork? 
+  
+  
+  
+  
+  
+3. 
+Information 
+Clarity: 
+How 
+clear 
+is 
+the 
+  
+  
+  
+  
+  
+ 
+126 
+ 
+AI-predicted 
+resolution 
+time compared to manual 
+estimates? 
+4. Effort Required: To 
+what 
+extent 
+does 
+this 
+system reduce the "hassle" 
+of filing and tracking a 
+case? 
+  
+  
+  
+  
+  
+5. Overall Efficiency: How 
+would 
+you 
+rate 
+the 
+system’s ability to improve 
+justice 
+delivery 
+in 
+Barangay Tetuan? 
+  
+  
+  
+  
+ 
+ 
+ 
+127 
+ 
+Appendix D: Relevant Source Code 
+ 
+ 
+ 
+128 
+ 
+Appendix E: Ethical Clearance 
+ 
+ 
+ 
+129 
+ 
+Appendix F: Plagiarism Report 
+ 
+ 
+ 
+130 
+ 
+Appendix G: Research Critique and Editing Certificate 
+ 
+ 
+131 
+ 
+Appendix H: Curriculum Vitae 
+ 
+ 
+132 
+ 
+ 
+133 
+ 
+ 
+ 
+134 

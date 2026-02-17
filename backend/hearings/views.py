@@ -12,14 +12,21 @@ from datetime import datetime, timedelta
 
 User = get_user_model()
 
-# Time slots available for hearings (09:00 is the default)
-TIME_SLOTS = ["09:00", "10:00", "11:00", "08:00", "13:00", "14:00", "15:00", "16:00"]
+# Regular work hours: 8AM-4PM with 12-1PM lunch break
+REGULAR_SLOTS = ["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00"]
+
+# Overtime slots: after 4PM dismissal (admin discretion only)
+OVERTIME_SLOTS = ["16:00", "17:00", "18:00"]
+
+# Combined for validation
+ALL_SLOTS = REGULAR_SLOTS + OVERTIME_SLOTS
 
 
-def get_available_slots(date, exclude_hearing_id=None):
+def get_available_slots(date, exclude_hearing_id=None, include_overtime=False):
     """
     Get available time slots for a given date.
     Returns list of available time slots and their load status.
+    If include_overtime is True, also returns overtime slots (admin only).
     """
     if isinstance(date, str):
         date = datetime.strptime(date, "%Y-%m-%d").date()
@@ -35,12 +42,15 @@ def get_available_slots(date, exclude_hearing_id=None):
     )
     occupied_times.discard(None)
     
+    slots_to_show = ALL_SLOTS if include_overtime else REGULAR_SLOTS
+    
     slots = []
-    for slot in TIME_SLOTS:
+    for slot in slots_to_show:
         slots.append({
             "time": slot,
             "available": slot not in occupied_times,
-            "occupied": slot in occupied_times
+            "occupied": slot in occupied_times,
+            "is_overtime": slot in OVERTIME_SLOTS
         })
     
     return slots
@@ -49,13 +59,13 @@ def get_available_slots(date, exclude_hearing_id=None):
 def get_optimal_time_slot(date):
     """
     Get the optimal (least busy) time slot for a given date.
-    Implements smart load balancing.
+    Only considers regular slots — never assigns overtime automatically.
     """
     if isinstance(date, str):
         date = datetime.strptime(date, "%Y-%m-%d").date()
     
-    # Count hearings per time slot
-    slot_counts = {slot: 0 for slot in TIME_SLOTS}
+    # Count hearings per regular time slot only
+    slot_counts = {slot: 0 for slot in REGULAR_SLOTS}
     
     hearings = Hearing.objects.filter(hearing_date=date)
     for h in hearings:
@@ -68,12 +78,12 @@ def get_optimal_time_slot(date):
     min_count = min(slot_counts.values())
     optimal_slots = [slot for slot, count in slot_counts.items() if count == min_count]
     
-    return optimal_slots[0] if optimal_slots else TIME_SLOTS[0]
+    return optimal_slots[0] if optimal_slots else REGULAR_SLOTS[0]
 
 
 def get_alternative_dates(start_date, num_alternatives=3):
     """
-    Get alternative dates (skipping Sundays and with least load).
+    Get alternative dates (skipping Sundays and non-working days, with least load).
     """
     if isinstance(start_date, str):
         start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
@@ -82,8 +92,8 @@ def get_alternative_dates(start_date, num_alternatives=3):
     current_date = start_date + timedelta(days=1)
     
     while len(alternatives) < num_alternatives:
-        # Skip Sundays
-        if current_date.weekday() != 6:
+        # Skip Sundays and non-working days
+        if current_date.weekday() != 6 and not NonWorkingDay.objects.filter(date=current_date).exists():
             # Count hearings on this date
             hearing_count = Hearing.objects.filter(hearing_date=current_date).count()
             optimal_slot = get_optimal_time_slot(current_date)
@@ -110,23 +120,30 @@ class HearingView(APIView):
         email = request.query_params.get("email")
 
         if role == "user":
-            try:
-                user_id = CasePerson.objects.filter(email=email).first().id
-                cases = Case.objects.filter(complainants=user_id)
-                # print(user_id, email)
-            except AttributeError:
-                cases = Case.objects.none()
+            # Direct ORM join — no need to load all Cases into memory
+            hearings = Hearing.objects.filter(
+                case__complainants__email=email
+            )
         else:
-            cases = Case.objects.all()
-        
-        case_ids = [case.id for case in cases]
-        hearings = Hearing.objects.filter(case_id__in=case_ids)
-        # print("my hearings", hearings)
-        # print("case ids", case_ids)
-        serializer = HearingSerializer(hearings, many=True)
+            hearings = Hearing.objects.all()
+
+        # Optional date-range filter (for calendar month views)
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
+        if start_date:
+            hearings = hearings.filter(hearing_date__gte=start_date)
+        if end_date:
+            hearings = hearings.filter(hearing_date__lte=end_date)
+
+        # Prefetch related objects to avoid N+1 in serializer
+        hearings = hearings.select_related(
+            'case__case_type', 'lupon_member'
+        )
 
         if not hearings.exists():
             return Response({"error": "No hearings found for this case."}, status=status.HTTP_200_OK)
+
+        serializer = HearingSerializer(hearings, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
 
@@ -237,6 +254,78 @@ class SetCaseHearingsView(APIView):
             print("Error saving hearing:", str(e)) 
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+
+class ScheduleOvertimeView(APIView):
+    """Create a single overtime hearing for an existing case (admin only)."""
+
+    def post(self, request):
+        case_id = request.data.get("case_id")
+        hearing_date = request.data.get("hearing_date")
+        time_slot = request.data.get("time")
+        lupon_id = request.data.get("lupon_member_id")
+        remarks = request.data.get("remarks", "Overtime hearing.")
+
+        # Validation
+        if not case_id or not hearing_date or not time_slot:
+            return Response(
+                {"error": "case_id, hearing_date, and time are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if time_slot not in OVERTIME_SLOTS:
+            return Response(
+                {"error": f"Time must be an overtime slot: {OVERTIME_SLOTS}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            case = Case.objects.get(id=case_id)
+        except Case.DoesNotExist:
+            return Response({"error": "Case not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Check for conflict
+        if isinstance(hearing_date, str) and "T" in hearing_date:
+            hearing_date = hearing_date.split("T")[0]
+
+        conflict = Hearing.objects.filter(
+            hearing_date=hearing_date, time=time_slot
+        ).exists()
+        if conflict:
+            return Response(
+                {"error": f"A hearing already exists at {time_slot} on {hearing_date}."},
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        # Determine hearing number (next in sequence for this case)
+        last_hearing = (
+            Hearing.objects.filter(case=case)
+            .order_by("-hearing_number")
+            .first()
+        )
+        next_number = (last_hearing.hearing_number or 0) + 1 if last_hearing else 1
+
+        hearing = Hearing.objects.create(
+            case=case,
+            hearing_number=next_number,
+            hearing_date=hearing_date,
+            time=time_slot,
+            lupon_member_id=lupon_id,
+            remarks=remarks,
+            hearing_status="scheduled",
+            is_overtime=True,
+        )
+
+        # Auto-sync to Google Calendar
+        try:
+            from google_calendar.views import sync_hearing_to_google
+            sync_hearing_to_google(hearing, action="create")
+        except Exception as sync_error:
+            print(f"[Auto-Sync] Error syncing overtime hearing: {sync_error}")
+
+        return Response(
+            {"success": "Overtime hearing created.", "hearing": HearingSerializer(hearing).data},
+            status=status.HTTP_201_CREATED,
+        )
 
 class UpdateHearingView(APIView):
     def put(self, request, pk):
