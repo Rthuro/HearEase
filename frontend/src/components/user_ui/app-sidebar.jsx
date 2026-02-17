@@ -33,7 +33,7 @@ export function AppSidebar() {
       icon: House,
     }, {
       title: "Drafts",
-      url: "Drafts",
+      url: `${userLinkName}/Drafts`,
       icon: File,
     },
     {
@@ -62,7 +62,7 @@ export function AppSidebar() {
     },
     {
       title: "Support",
-      url: "#",
+      url: `${userLinkName}/Support`,
       icon: Info,
     },
   ]
@@ -84,7 +84,7 @@ export function AppSidebar() {
                         item.title === "File New Case" ? (
                         <Link
                             key={item.title}
-                            to={`${item.url}`}
+                            to={`/${item.url}`}
                             className="bg-redBase text-white py-2 rounded-md flex items-center justify-center"
                         >
                             <span className="flex items-center gap-2">
@@ -95,7 +95,7 @@ export function AppSidebar() {
                         ) : (
                         <Link
                             key={item.title}
-                            to={`${item.url}`}
+                            to={`/${item.url}`}
                         >
                             <SidebarMenuItem className={currentPage === item.title ? " text-black" : " text-zinc-600"}>
                             <SidebarMenuButton asChild>
@@ -122,7 +122,7 @@ export function AppSidebar() {
                     <SidebarMenuButton asChild>
                         <Link 
                         key={item.title}
-                        to={item.url}>
+                        to={`/${item.url}`}>
                           <item.icon />
                           <span>{item.title}</span>
                         </Link>
@@ -142,7 +142,7 @@ export function AppSidebar() {
                     <SidebarMenuButton asChild>
                         <Link 
                         key={item.title}
-                        to={item.url}>
+                        to={`/${item.url}`}>
                           <item.icon />
                           <span>{item.title}</span>
                         </Link>

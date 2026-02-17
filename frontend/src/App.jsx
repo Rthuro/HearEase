@@ -30,6 +30,7 @@ import { Reports } from './routes/admin/pages/Reports';
 import { HearingScheduler } from './routes/admin/pages/Hearing-Scheduler';
 import { CasePerson } from './routes/admin/pages/CasePerson';
 import { Draft } from './routes/Draft';
+import { Support } from './routes/Support';
 
 function App() {
   const { initializeAuth } = useAuthenticationStore();
@@ -61,10 +62,12 @@ function App() {
               <Route path="u/:user/Hearings"  element={<Hearings />} />
               <Route path="u/:user/CaseRecords" element={<CaseRecords />} />
               <Route path="u/:user/Calendar" element={<Calendar />} />
+              <Route path="u/:user/File-Case/:caseNum" element={<FileCase />} />
               <Route path="u/:user/File-Case" element={<FileCase />} />
               <Route path="u/:user/File-Case/Case-Form" element={<CaseForm />} />
               <Route path="u/:user/Case/:case_number" element={<Case />} />
               <Route path="u/:user/Settings" element={<Settings />} />
+              <Route path="u/:user/Support" element={<Support />} />
               <Route path="u/:user/Hearing/:hearing_id" element={<Hearing />} />
             </Route>
 
