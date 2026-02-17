@@ -211,10 +211,11 @@ export function Calendar() {
         const caseIdShort = typeof caseId === 'string' && caseId.length > 12
           ? caseId.substring(0, 12) + "..."
           : caseId;
+        const otTag = hearing.is_overtime ? " ⏰OT" : "";
 
         return {
           id: hearing.id,
-          title: `#${caseIdShort} - Hearing #${hearing.hearing_number || "?"}`,
+          title: `#${caseIdShort} - Hearing #${hearing.hearing_number || "?"}${otTag}`,
           start: hearing.hearing_date + (hearing.time ? `T${hearing.time}` : ""),
           backgroundColor,
           borderColor,

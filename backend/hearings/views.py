@@ -12,14 +12,21 @@ from datetime import datetime, timedelta
 
 User = get_user_model()
 
-# Time slots available for hearings (09:00 is the default)
-TIME_SLOTS = ["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00"]
+# Regular work hours: 8AM-4PM with 12-1PM lunch break
+REGULAR_SLOTS = ["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00"]
+
+# Overtime slots: after 4PM dismissal (admin discretion only)
+OVERTIME_SLOTS = ["16:00", "17:00", "18:00"]
+
+# Combined for validation
+ALL_SLOTS = REGULAR_SLOTS + OVERTIME_SLOTS
 
 
-def get_available_slots(date, exclude_hearing_id=None):
+def get_available_slots(date, exclude_hearing_id=None, include_overtime=False):
     """
     Get available time slots for a given date.
     Returns list of available time slots and their load status.
+    If include_overtime is True, also returns overtime slots (admin only).
     """
     if isinstance(date, str):
         date = datetime.strptime(date, "%Y-%m-%d").date()
@@ -35,12 +42,15 @@ def get_available_slots(date, exclude_hearing_id=None):
     )
     occupied_times.discard(None)
     
+    slots_to_show = ALL_SLOTS if include_overtime else REGULAR_SLOTS
+    
     slots = []
-    for slot in TIME_SLOTS:
+    for slot in slots_to_show:
         slots.append({
             "time": slot,
             "available": slot not in occupied_times,
-            "occupied": slot in occupied_times
+            "occupied": slot in occupied_times,
+            "is_overtime": slot in OVERTIME_SLOTS
         })
     
     return slots
@@ -49,13 +59,13 @@ def get_available_slots(date, exclude_hearing_id=None):
 def get_optimal_time_slot(date):
     """
     Get the optimal (least busy) time slot for a given date.
-    Implements smart load balancing.
+    Only considers regular slots — never assigns overtime automatically.
     """
     if isinstance(date, str):
         date = datetime.strptime(date, "%Y-%m-%d").date()
     
-    # Count hearings per time slot
-    slot_counts = {slot: 0 for slot in TIME_SLOTS}
+    # Count hearings per regular time slot only
+    slot_counts = {slot: 0 for slot in REGULAR_SLOTS}
     
     hearings = Hearing.objects.filter(hearing_date=date)
     for h in hearings:
@@ -68,7 +78,7 @@ def get_optimal_time_slot(date):
     min_count = min(slot_counts.values())
     optimal_slots = [slot for slot, count in slot_counts.items() if count == min_count]
     
-    return optimal_slots[0] if optimal_slots else TIME_SLOTS[0]
+    return optimal_slots[0] if optimal_slots else REGULAR_SLOTS[0]
 
 
 def get_alternative_dates(start_date, num_alternatives=3):

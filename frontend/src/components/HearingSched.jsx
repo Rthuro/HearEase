@@ -33,11 +33,16 @@ import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
 
-// Available time slots for hearings
-const TIME_SLOTS = [
+// Regular work hours (8AM-4PM, lunch 12-1PM)
+const REGULAR_SLOTS = [
   "08:00", "09:00", "10:00", "11:00",
-  "13:00", "14:00", "15:00", "16:00"
+  "13:00", "14:00", "15:00"
 ];
+
+// Overtime slots (after 4PM dismissal, admin only)
+const OVERTIME_SLOTS = ["16:00", "17:00", "18:00"];
+
+const LOCAL_STORAGE_KEY = "authData";
 
 // Workload level badge colors
 const LOAD_COLORS = {
@@ -659,8 +664,8 @@ export function HearingSched({ predicted, luponMembers }) {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
-                          <SelectLabel>Available Slots</SelectLabel>
-                          {TIME_SLOTS.map((time) => {
+                          <SelectLabel>Regular Hours</SelectLabel>
+                          {REGULAR_SLOTS.map((time) => {
                             const isBusy = occupied.has(time);
                             return (
                               <SelectItem
@@ -674,6 +679,29 @@ export function HearingSched({ predicted, luponMembers }) {
                             );
                           })}
                         </SelectGroup>
+                        {(() => {
+                          const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+                          const authData = stored ? JSON.parse(stored) : {};
+                          if (authData.userRole !== "admin") return null;
+                          return (
+                            <SelectGroup>
+                              <SelectLabel className="text-amber-600">⏰ Overtime (After 4 PM)</SelectLabel>
+                              {OVERTIME_SLOTS.map((time) => {
+                                const isBusy = occupied.has(time);
+                                return (
+                                  <SelectItem
+                                    key={time}
+                                    value={time}
+                                    disabled={isBusy}
+                                    className={isBusy ? "text-zinc-400 opacity-50" : "text-amber-700"}
+                                  >
+                                    {time} {isBusy ? "(Occupied)" : "(OT)"}
+                                  </SelectItem>
+                                );
+                              })}
+                            </SelectGroup>
+                          );
+                        })()}
                       </SelectContent>
                     </Select>
                   );
