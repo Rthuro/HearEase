@@ -187,7 +187,8 @@ class CaseView(APIView):
                     "remarks": data.get("remarks"),
                     "predicted_hearings": data.get("predicted_hearings"),
                     "case_status": data.get("case_status"),
-                    "relationship_id": rel_instance.id
+                    "relationship_id": rel_instance.id,
+                    "create_by": data.get("create_by"),
                 }
 
                 # Handle case_type - check if it's "other" (custom case type)
@@ -259,7 +260,8 @@ class CaseView(APIView):
                             hearing_status=current_status,
                         )
 
-                send_notification(ids=[p.id for p in new_case.complainants.all()], case_id=new_case.id, case_status=new_case.case_status, remarks=request.data.get("remarks"), type=1)
+                if new_case.case_status != "filed":
+                    send_notification(ids=[p.id for p in new_case.complainants.all()], case_id=new_case.id, case_status=new_case.case_status, remarks=request.data.get("remarks"), type=1)
 
                 # Serialize and return
                 serializer = CaseSerializer(new_case)
