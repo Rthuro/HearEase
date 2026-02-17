@@ -2,15 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { ChevronLeft, Pencil, Loader2, File, Download, Info, MessageSquareText } from "lucide-react";
+import { ChevronLeft, Pencil, Loader2, Info, MessageSquareText } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import useHearingStore from "@/store/useHearingStore";
 import { updateSingleHearing } from "@/store/useHearingStore";
@@ -305,7 +297,7 @@ export default function Hearing() {
                     <SummonConfirmationDisplay hearing={hearing} caseInfo={caseInfo} />
                 )}   
 
-                { caseInfo?.summon_status == 'served' && hearing?.hearing_status == 'scheduled' && (
+                { caseInfo?.summon_status == 'served' && (hearing?.hearing_status == 'scheduled' || hearing?.hearing_status == 'rescheduled') && (
                     <HearingProgressDisplay hearing={hearing} case_complainants={caseInfo?.complainants} case_respondents={caseInfo?.respondents} case_organization_complainants={caseInfo?.organization_complainants} case_organization_respondents={caseInfo?.organization_respondents} case_hearings={caseHearings}/>
                 )}          
             </div>

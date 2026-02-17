@@ -29,7 +29,7 @@ import { getStreets } from "@/lib/helpers";
 import { useEffect } from "react";
 import { cn } from "@/lib/utils";
 
-export function EditCaseInfo({section, caseInfo, forResubmission}){
+export function EditCaseInfo({section, caseInfo}){
     const { barangays } = useAddressesStore();
     const [openCalendar, setOpenCalendar] = useState(false);
     const { updateCaseInfo } = useCaseStore();
@@ -86,10 +86,9 @@ export function EditCaseInfo({section, caseInfo, forResubmission}){
              updateCaseInfo({
                 ...info,
                 birth_date: info.birth_date ? info.birth_date.toISOString().split('T')[0] : null,
-            }, section, info.id, forResubmission);
+            }, section, info.id);
         } else {
-             updateCaseInfo(info, section, info.id, forResubmission);
-             console.log(forResubmission);
+             updateCaseInfo(info, section, info.id);
         }
        
     }
@@ -102,16 +101,10 @@ export function EditCaseInfo({section, caseInfo, forResubmission}){
             }
         }}>
             <DialogTrigger asChild>     
-                {forResubmission ? (
-                    <Button variant="outline" className="w-fit self-end">Resubmit <ArrowRight /></Button>
-                ): (
-                    
-                    <Button variant="outline">
-                        <Pencil className="h-4 w-4" />
-                        Edit
-                    </Button>
-
-                )}
+                <Button variant="outline">
+                    <Pencil className="h-4 w-4" />
+                    Edit
+                </Button>
             </DialogTrigger>
         <DialogContent className={cn('w-2/3')}>
                 <DialogHeader>
@@ -354,7 +347,7 @@ export function EditCaseInfo({section, caseInfo, forResubmission}){
                     <DialogClose asChild>
                     <Button variant="outline">Cancel</Button>
                     </DialogClose>
-                    <Button type="submit" onClick={handleSubmit}>{forResubmission ? "Resubmit" : "Save Changes"}</Button>
+                    <Button type="submit" onClick={handleSubmit}>Save Changes</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

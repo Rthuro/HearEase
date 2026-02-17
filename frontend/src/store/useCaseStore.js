@@ -118,8 +118,6 @@ export const useCaseStore = create((set, get) => ({
     case: {
         case_number: "",
         date: "",
-        case_status: "pending_approval",
-        hearing_status: "pending_schedule",
     },
     setCaseInfo: (info) => {
         set({ case: { ...get().case, ...info } });
@@ -144,7 +142,6 @@ export const useCaseStore = create((set, get) => ({
             contact_number: { value: "", required: false },
             barangay: { value: "Tetuan", required: true },
             street: { value: "", required: true },
-            relationship: { value: "Neighbor", required: true },
             additional_info: { value: "", required: false },
         },
         respondent: {
@@ -252,7 +249,7 @@ export const useCaseStore = create((set, get) => ({
 
         const { formData, complainantList, respondentList, set_complainants, set_respondents } = get();
 
-        const caseData = {
+        let caseData = {
             id: get().case.case_number,
             complainants: complainantList,
             respondents: respondentList,
@@ -262,8 +259,10 @@ export const useCaseStore = create((set, get) => ({
             description: formData.caseDetails.description.value,
             predicted_hearings: formData.caseDetails.predicted_number.value || 0,
             remarks: "",
-            case_status: data.userRole === 'admin' ? "approved" : "pending_approval",
+            relationship: formData.caseDetails.relationship.value,
             hearing_info: formData.hearingInfo,
+            case_status: data.userRole === 'admin' ? "approved" : "pending_approval",
+            create_by: data.userRole === 'admin' ? "admin" : "user",
         };
 
         if (data.userRole !== 'admin') {
@@ -321,6 +320,142 @@ export const useCaseStore = create((set, get) => ({
 
 
             // toast.success("Case filed successfully!");
+            get().resetFormData();
+            set_complainants([]);
+            set_respondents([]);
+            fetchHearings();
+            get().fetchCases();
+
+            return true;
+        } catch (error) {
+            console.error("Add case error:", error.response?.data || error.message);
+            return false;
+        }
+    },
+
+    draftCase: async () => {
+        const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+        const data = JSON.parse(stored);
+
+        const { cases, formData, complainantList, respondentList, set_complainants, set_respondents } = get();
+
+        let caseData = {
+            id: get().case.case_number,
+            complainants: complainantList,
+            respondents: respondentList,
+            case_type: formData.caseDetails.nature_of_complaint_code.value,
+            custom_case_type_name: formData.caseDetails.custom_case_type_name?.value || "",
+            custom_severity: formData.caseDetails.severity?.value || null, 
+            description: formData.caseDetails.description.value,
+            predicted_hearings: formData.caseDetails.predicted_number.value || 0,
+            remarks: "",
+            relationship: formData.caseDetails.relationship.value,
+            case_status: "filed",
+            create_by: data.userRole === 'admin' ? "admin" : "user",
+        };
+
+        if (data.userRole !== 'admin') {
+            const loggedInFirst = data.userInfo.first_name.trim().toLowerCase();
+            const loggedInLast = data.userInfo.last_name.trim().toLowerCase();
+
+            caseData.complainants = complainantList.map(person => {
+                if (
+                    person.first_name.trim().toLowerCase() === loggedInFirst &&
+                    person.last_name.trim().toLowerCase() === loggedInLast
+                ) {
+                    return {
+                        ...person,
+                        email: data.userInfo.email
+                    };
+                }
+                return person;
+            });
+        }
+
+        const case_documents = formData.caseDetails.documents.value;
+
+        try {
+            const check = cases.find(c => c.id == caseData.id);
+
+            let res = null;
+            if (check) {
+                res = await axios.put(`${API_URL}/update-case/${caseData.id}/`, caseData);
+
+                const checkDocuments = await axios.get(
+                    `${API_URL}/case-documents/?case_number=${caseData.id}`
+                );
+                const dbDocuments = checkDocuments.data; 
+
+                const docsToDelete = dbDocuments.filter(dbDoc => 
+                    !case_documents.some(uiDoc => uiDoc.name === dbDoc.title)
+                );
+
+                for (const doc of docsToDelete) {
+                    try {
+                        await axios.delete(`http://127.0.0.1:8000/api/case-documents/${doc.id}/`);
+                        console.log(`Deleted file and record for: ${doc.title}`);
+                    } catch (err) {
+                        console.error("Failed to delete document:", err);
+                    }
+                }
+
+                const existingDocNames = dbDocuments.map(doc => doc.title);
+                
+                if (case_documents && case_documents.length > 0) {
+                    for (const case_doc of case_documents) {
+                        if (!existingDocNames.includes(case_doc.name)) {
+                            const case_document_formData = new FormData();
+                            case_document_formData.append("case", caseData.id);
+                            case_document_formData.append("title", case_doc.name);
+                            case_document_formData.append("file", case_doc);
+
+                            try {
+                                await axios.post(
+                                    "http://127.0.0.1:8000/api/case-documents/",
+                                    case_document_formData,
+                                    { headers: { "Content-Type": "multipart/form-data" } }
+                                );
+                            } catch (error) {
+                                console.error("Upload failed:", error);
+                            }
+                        }
+                    }
+                }
+            } else {
+                res = await addCase(caseData);
+                set((state) => ({ cases: [...state.cases, res] }));
+
+                if (case_documents && case_documents.length > 0) {
+                    for (const case_doc of case_documents) {
+                        const case_document_formData = new FormData();
+                        case_document_formData.append("case", res.id);
+                        case_document_formData.append("title", case_doc.name);
+                        case_document_formData.append("file", case_doc);
+
+                        try {
+                            const res = await axios.post(
+                                "http://127.0.0.1:8000/api/case-documents/",
+                                case_document_formData,
+                                {
+                                    headers: {
+                                        "Content-Type": "multipart/form-data",
+                                    },
+                                }
+                            );
+                            console.log("Uploaded successfully:", res.data);
+                        } catch (error) {
+                            console.error("Upload failed:", error);
+                        }
+                    }
+                }
+
+            }
+            
+
+            if (res === null) {
+                return false;
+            }
+
             get().resetFormData();
             set_complainants([]);
             set_respondents([]);
@@ -468,7 +603,7 @@ export const useCaseStore = create((set, get) => ({
             toast.error("Case resubmission unsuccessful: " + (error?.response?.data || error.message));
         }
     },
-    updateCaseInfo: async (data, update, id, forResubmission) => {
+    updateCaseInfo: async (data, update, id) => {
 
         // Update user info if they have account
         // const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -479,15 +614,6 @@ export const useCaseStore = create((set, get) => ({
             case 'complainant': {
                 try {
                     const res = await axios.put(`${API_URL}/case-persons/${id}/`, data);
-
-                    if (forResubmission) {
-                        await axios.put(`${API_URL}/update-case/${id}/`, {
-                            case_status: "pending_approval",
-                            remarks: "",
-                            rejection_section: "none"
-                        });
-
-                    }
 
                     if (res.status === 200) {
                         fetchCases();
@@ -504,15 +630,6 @@ export const useCaseStore = create((set, get) => ({
                     try {
                         const res = await axios.put(`${API_URL}/case-persons/${id}/`, data);
 
-                        if (forResubmission) {
-                            await axios.put(`${API_URL}/update-case/${id}/`, {
-                                case_status: "pending_approval",
-                                remarks: "",
-                                rejection_section: "none"
-                            });
-
-                        }
-
                         if (res.status === 200) {
                             fetchCases();
                             toast.success("Respondent updated successfully.");
@@ -525,16 +642,7 @@ export const useCaseStore = create((set, get) => ({
                 }
             case "case":
                 try {
-                    const edited = forResubmission
-                        ? {
-                            ...data,
-                            case_status: "pending_approval",
-                            remarks: "",
-                            rejection_section: "none"
-                        }
-                        : data;
-
-                    const res = await axios.put(`${API_URL}/update-case/${id}/`, edited);
+                    const res = await axios.put(`${API_URL}/update-case/${id}/`, data);
 
                     console.log(res);
 

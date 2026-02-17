@@ -13,9 +13,17 @@ import { useCaseStore } from "@/store/useCaseStore";
 import { toast } from "react-hot-toast";
 import { invalidContactNumber } from "@/lib/helpers";
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 export function CaseForm() {
-    const { formData, addCaseData, complainantList, respondentList, jurisdictionWarning } = useCaseStore();
+    const { formData, addCaseData, complainantList, respondentList, jurisdictionWarning, draftCase } = useCaseStore();
 
     const { userRole, userLinkName } = useAuthenticationStore();
     const [loading, setLoading] = useState(false);
@@ -68,22 +76,40 @@ export function CaseForm() {
         setStepNumber((prev) => prev - 1);
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e, submission) => {
         e.preventDefault();
         // setLoading(true); 
+        if(submission == 'submit'){
+            toast.promise(addCaseData(), {
+                loading: 'Submitting Case Form...',
+                success: (data) => {
+                    setStepNumber(5); 
+                    setLoading(false);
 
-        toast.promise(addCaseData(), {
-            loading: 'Submitting Case Form...',
-            success: (data) => {
-                setStepNumber(5); 
-                setLoading(false);
                 return <b>Case form submitted successfully!</b>;
-            },
-            error: (err) => {
-                setLoading(false);
-                return <b>An error occurred: {err.message}</b>;
-            },
-        });
+                },
+                error: (err) => {
+                    setLoading(false);
+                    return <b>An error occurred: {err.message}</b>;
+                },
+            });
+        }
+        
+        if(submission == 'draft') {
+            toast.promise(draftCase(), {
+                loading: 'Saving case to draft...',
+                success: (data) => {
+                    setStepNumber(5); 
+                    setLoading(false);
+                    
+                    return <b>Case saved to draft!</b>;  
+                },
+                error: (err) => {
+                    setLoading(false);
+                    return <b>An error occurred: {err.message}</b>;
+                },
+            });
+        }
     };
 
 
@@ -214,20 +240,41 @@ export function CaseForm() {
 
             </form>
 
-            {submitModalOpen && (
-                <div className="flex fixed items-center justify-center bottom-0 top-0 left-0 right-0 bg-black/50 z-50">
-                    <div className="relative bg-white rounded-md p-6 flex flex-col items-center gap-3 w-[480px]">
-                        <X className=" absolute top-3 right-3 cursor-pointer"
-                            onClick={() => setSubmitModalOpen(false)} />
-                        <p className="font-medium mt-5 text-center">I hereby swear that the information and evidence I have provided are true, accurate, and based on facts. I understand that providing false information may result in penalties under the law.</p>
-                        <Button className={cn('!bg-redBase w-full mt-2')} onClick={(e) => {
-                            handleSubmit(e);
+            <Dialog open={submitModalOpen} onOpenChange={setSubmitModalOpen}>
+                <DialogContent className="sm:max-w-[480px] p-8">
+                    <DialogHeader className="flex flex-col items-center gap-2">
+                    <DialogTitle className="text-xl font-semibold">Confirm Submission</DialogTitle>
+                    <DialogDescription className="text-center text-zinc-800 font-medium leading-relaxed pt-2">
+                        I hereby swear that the information and evidence I have provided are true, 
+                        accurate, and based on facts. I understand that providing false information 
+                        may result in penalties under the law.
+                    </DialogDescription>
+                    </DialogHeader>
+
+                    <DialogFooter className="flex flex-col sm:flex-col gap-2 w-full mt-4">
+                    <Button 
+                        className={cn('bg-redBase hover:bg-red-700 w-full')} 
+                        onClick={(e) => {
+                        handleSubmit(e, "submit");
+                        setSubmitModalOpen(false);
+                        }}
+                    >
+                        Submit Case
+                    </Button>
+                    
+                    <Button 
+                        variant="outline" 
+                        className="w-full"
+                        onClick={(e) => {
+                            handleSubmit(e, "draft");
                             setSubmitModalOpen(false);
-                        }}>Submit Case</Button>
-                        <Button variant="outline" className="w-full">Save as Draft</Button>
-                    </div>
-                </div>
-            )}
+                        }}
+                    >
+                        Save as Draft
+                    </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
              {loading && (
                 <div className="flex justify-center items-center absolute bottom-0 top-0 left-0 right-0 z-50 ">

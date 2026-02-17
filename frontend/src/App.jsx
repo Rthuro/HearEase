@@ -29,6 +29,7 @@ import { Lupon } from './routes/admin/pages/Lupon';
 import { Reports } from './routes/admin/pages/Reports';
 import { HearingScheduler } from './routes/admin/pages/Hearing-Scheduler';
 import { CasePerson } from './routes/admin/pages/CasePerson';
+import { Draft } from './routes/Draft';
 
 function App() {
   const { initializeAuth } = useAuthenticationStore();
@@ -56,6 +57,7 @@ function App() {
             {/* User Routes */}
             <Route   element={<UserLayout />}>
               <Route path="u/:user/"  element={<UserDashboard />} />
+              <Route path="u/:user/Drafts"  element={<Draft />} />
               <Route path="u/:user/Hearings"  element={<Hearings />} />
               <Route path="u/:user/CaseRecords" element={<CaseRecords />} />
               <Route path="u/:user/Calendar" element={<Calendar />} />
@@ -74,6 +76,7 @@ function App() {
               <Route path="Admin/File-Case/Case-Form" element={<CaseForm />} />
               <Route path="Admin/Case/:case_number" element={<Case />} />
               <Route path="Admin/Hearings"  element={<Hearings />} />
+              <Route path="Admin/Drafts"  element={<Draft />} />
               <Route path="Admin/CaseRecords" element={<CaseRecords />} />
               <Route path="Admin/Generate-Documents" element={<GenerateDocument />} />
               <Route path="Admin/Lupon-Management" element={<LuponManagement />} />

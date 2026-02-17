@@ -5,7 +5,7 @@ export function CaseStatusDisplay({ caseStatus }) {
     const statusStyles = {
 
         // Case Status
-        draft: { text: "Draft", icon: <FileText className="text-blue-500" /> },
+        filed: { text: "Filed/Draft", icon: <FileText className="text-blue-500" /> },
         archived: { text: "Archived", icon: <FileArchive className="text-gray-500" /> },
         pending_approval: { text: "Pending Approval", icon: <ClockFadingIcon className="text-zinc-400" /> },
         approved: { text: "Approved", icon: <CheckCircle className="text-green-500" /> },

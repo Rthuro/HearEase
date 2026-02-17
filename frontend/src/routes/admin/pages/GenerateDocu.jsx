@@ -37,7 +37,7 @@ export function GenerateDocument() {
         fetchTemplates();
     }, []);
 
-    const filteredCase = cases.filter( c => c.case_type.case_name.toLowerCase().includes(searchTerm.toLowerCase()));
+    const filteredCase = cases?.filter( c => c?.case_type?.case_name.toLowerCase().includes(searchTerm.toLowerCase()));
 
     
 

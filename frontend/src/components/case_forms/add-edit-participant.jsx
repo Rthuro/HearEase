@@ -283,7 +283,7 @@ export function AddEditParticipant({action, type, open, onOpenChange, editUserDa
                                                 }}>
 
                                                 {barangays.map(b => (
-                                                    <DropdownMenuRadioItem key={b.name} value={b.id}>{b.name}
+                                                    <DropdownMenuRadioItem key={b.name} value={b.name}>{b.name}
                                                     </DropdownMenuRadioItem>
                                                 ))}
 

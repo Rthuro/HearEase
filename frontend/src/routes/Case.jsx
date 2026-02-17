@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useCaseStore } from "@/store/useCaseStore";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -13,7 +13,6 @@ import { CaseStatusDisplay } from "@/components/CaseStatusDisplay";
 import { ChevronLeft, X,Check, Edit, ArrowRight, ArrowUpRight, Loader2, FileText, CheckCircle2, PartyPopper, Loader2Icon, AlertCircle, RotateCw  } from "lucide-react";
 import { useEffect, useState } from "react";
 import useHearingStore from "@/store/useHearingStore";
-import { useRetrieveUsersStore } from "@/store/useRetrieveUsersStore";
 import {
     Table,
     TableBody,
@@ -22,7 +21,6 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-import { Link } from "react-router-dom";
 import useCaseDocumentsStore from "@/store/useCaseDocumentStore";
 import { useGenerateDocumentStore } from "@/store/useGenerateDocumentStore";
 import { EditCaseInfo } from "@/components/EditCaseInfo";
@@ -223,14 +221,36 @@ export function Case() {
 
     const userStatusDisplay = (status) => {
         switch (status) {
-            case "approved":
+            case "approved": {
+                const getTargetDate = () => {
+                    if (caseInfo?.summon_status === 'pending') {
+                        return findHearingCase?.find(h => h.hearing_number === 1)?.hearing_date || '-';
+                    }
+                    if (caseInfo?.summon_status === 'served') {
+                        return findHearingCase?.find(h => h.hearing_status === 'scheduled' || h.hearing_status === 'rescheduled')?.hearing_date || '-';
+                    }
+                    return null;
+                };
+
+                const targetDate = getTargetDate();
+
                 return (
                     <>
                         <p className="font-medium">Case Approved</p>
-                        <p className="text-zinc-700 text-sm">Your case is approved. A summon letter will be delivered to the respondent before: <strong>{findHearingCase?.find( h => h.hearing_number == 1)?.hearing_date || '-'}</strong>.</p>
+                        <p className="text-zinc-700 text-sm">
+                            Your case is approved.{" "}
+                            {targetDate ? (
+                                <>
+                                    A summon letter will be delivered to the respondent before:{" "}
+                                    <strong>{targetDate}</strong>.
+                                </>
+                            ) : (
+                                "Lupon Secretary will soon generate your case schedule."
+                            )}
+                        </p>
                     </>
                 );
-
+            }
             case "pending_approval":
                 return (
                     <>
@@ -268,6 +288,8 @@ export function Case() {
             toast.error("Failed to refresh case data. Please try again.");
         }
     }
+
+    // console.log(caseInfo)
     return (
         <div className="relative flex flex-col gap-4 p-6 ">
             <PageSync page="" />
@@ -549,7 +571,13 @@ export function Case() {
                             {caseInfo?.complainants?.map( c => (
                                 
                                 <TableRow key={c.id} className="border-t">
-                                    <TableCell className="px-4 py-2">{c.first_name} {c.middle_name ? c.middle_name + ' ' : ''}{c.last_name}
+                                    <TableCell className="px-4 py-2">
+                                        {userRole == 'admin' ? (
+                                            <Link className="underline text-redBase" to={`/Admin/Case-Person/${c.id}`}>
+                                                {c.first_name} {c.middle_name ? c.middle_name + ' ' : ''}{c.last_name}
+                                            </Link>
+                                        ) : `${c.first_name} ${c.middle_name ? c.middle_name + ' ' : ''}
+                                        ${c.last_name}`}
                                     </TableCell>
                                     <TableCell className="px-4 py-2">{c.contact_number || "-"}</TableCell>
                                     <TableCell>
@@ -588,7 +616,14 @@ export function Case() {
                             {caseInfo?.respondents?.map( c => (
                                 
                                 <TableRow key={c.id} className="border-t">
-                                    <TableCell className="px-4 py-2">{c.first_name} {c.middle_name ? c.middle_name + ' ' : ''}{c.last_name}</TableCell>
+                                    <TableCell className="px-4 py-2">
+                                        {userRole == 'admin' ? (
+                                            <Link className="underline text-redBase" to={`/Admin/Case-Person/${c.id}`}>
+                                                {c.first_name} {c.middle_name ? c.middle_name + ' ' : ''}{c.last_name}
+                                            </Link>
+                                        ) : `${c.first_name} ${c.middle_name ? c.middle_name + ' ' : ''}
+                                        ${c.last_name}`}
+                                    </TableCell>
                                     <TableCell className="px-4 py-2">{c.contact_number || "-"}</TableCell>
                                     <TableCell>
                                         <EditCoAttendee co_attendees={caseInfo.respondents} type="respondent"
@@ -611,7 +646,7 @@ export function Case() {
             </div>
 
             <div className="flex flex-col gap-4 bg-white p-4 rounded-md shadow-2xs border">
-                <h2 className="text-xl font-semibold">Hearing Attendance</h2>
+                <h2 className="text-xl font-semibold">Hearings</h2>
                 <div className="border rounded-lg overflow-hidden">
                     <Table>
                         <TableHeader>

@@ -61,6 +61,11 @@ class Case(models.Model):
         ("vawc", "VAWC"),
     ]
 
+    CREATED = [
+        ("user", "User"),
+        ("admin", "Admin"),
+    ]
+
     case_type = models.ForeignKey(
         CaseType, on_delete=models.SET_NULL, null=True, related_name="cases"
     )
@@ -111,6 +116,11 @@ class Case(models.Model):
     )
 
     case_completed_date = models.DateTimeField(blank=True, null=True)
+    create_by = models.CharField( max_length=20, choices=CREATED,
+        default="none",
+        blank=True,
+        null=True,
+    )
 
     def __str__(self):
         return f"Case #{self.id} - {self.case_type.case_name if self.case_type else 'Unknown'} ({self.get_case_status_display()})"

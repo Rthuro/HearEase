@@ -27,6 +27,7 @@ import { Link } from "react-router-dom";
 import folder_img from '@/assets/folder.png'
 import { useEffect, useMemo } from "react";
 import { useCaseStore } from "@/store/useCaseStore";
+import { formatedDateTimeToString } from "@/lib/helpers";
 
 
 export function CaseRecords(){
@@ -179,7 +180,7 @@ export function CaseRecords(){
                 </div>
                 <section className="flex flex-col gap-6">
                     {view == 1 && (
-                        <div className="border rounded-lg overflow-hiddens">
+                        <div className="border rounded-lg overflow-hidden">
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
@@ -204,7 +205,7 @@ export function CaseRecords(){
                                                     <TableCell>{c.id}</TableCell>
                                                     <TableCell>{c.case_type.case_name}</TableCell>
                                                     <TableCell>{c?.settlement_type?.settlement_name || "-"}</TableCell>
-                                                    <TableCell>{new Date(c.date_filed).toLocaleString()}</TableCell>
+                                                    <TableCell>{formatedDateTimeToString(c.date_filed)}</TableCell>
                                                     <TableCell>
                                                         <CaseStatusDisplay caseStatus={c.case_status} />
                                                     </TableCell>

@@ -51,6 +51,10 @@ export function CasePerson() {
         loadInitialData();
     }, [id]);
 
+    const casesOrder = [...(personData?.cases || [])].sort((a, b) => {
+      return new Date(b.date_filed) - new Date(a.date_filed);
+    });
+
 
     const handleRefresh = () => {
         try{
@@ -259,7 +263,7 @@ export function CasePerson() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {personData?.cases?.map((c) => (
+                      {casesOrder?.map((c) => (
                         <TableRow key={c?.id}>
                           <TableCell className="font-medium">
                             <Link to={`/Admin/Case/${c?.id}`} className="text-blue-600 hover:underline">

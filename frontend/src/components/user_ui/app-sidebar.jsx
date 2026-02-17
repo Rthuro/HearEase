@@ -31,6 +31,10 @@ export function AppSidebar() {
       title: "Home",
       url: `${userLinkName}`,
       icon: House,
+    }, {
+      title: "Drafts",
+      url: "Drafts",
+      icon: File,
     },
     {
       title: "Hearings",

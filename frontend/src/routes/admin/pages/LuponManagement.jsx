@@ -26,15 +26,20 @@ import { CustomTable } from "@/components/CustomTable"
 import { toast } from "react-hot-toast"
 import { invalidContactNumber } from "@/lib/helpers";
 import { useRetrieveUsersStore } from "@/store/useRetrieveUsersStore"
-import { Link } from "react-router-dom"
+import { Separator } from "@/components/ui/separator"
+import useAuthenticationStore from "@/store/useAuthenticationStore"
+import { signInWithPopup } from "firebase/auth"
+import { auth, googleProvider } from "@/firebase"
 
 export function LuponManagement() {
     const { barangays, fetchBarangays, streets } = useAddressesStore();
     const { formData, setFormData, members, fetchMembers, addMember } = useLuponStore();
+    const {addAdminGoogleAccount} = useAuthenticationStore();
     const { admin_list, fetchAdmins } = useRetrieveUsersStore();
     const [openCalendar, setOpenCalendar] = useState(false);
     const minDate = new Date("1900-01-01");
     const maxDate = new Date();
+    const [adminList, setAdminList] = useState(admin_list);
 
     useEffect(() => {
         fetchBarangays();
@@ -93,6 +98,34 @@ export function LuponManagement() {
     };
 
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+    const [addAdminLoader, setAddAdminLoader] = useState(false);
+    console.log(adminList)
+    const handleGoogle = async () => {
+            try {
+
+                const result = await signInWithPopup(auth, googleProvider);
+                const user = result.user;
+
+                const token = await user.getIdToken();
+
+                setAddAdminLoader(true);
+                toast.promise(addAdminGoogleAccount(token),{ 
+                    loading: "Adding admin account",
+                    success: () => {
+                        fetchAdmins().then((data) => setAdminList(data));
+                        return "Succefully Added New Admin."
+                    } ,
+                    error: "Failed to add admin account. Please try again."
+                })
+
+            } catch (error) {
+                console.error("Google Auth Error:", error);
+                toast.error("Failed to add account with Google");
+            } finally {
+                setAddAdminLoader(false);
+            }
+        };
     return (
         <div className="p-6 flex flex-col gap-2">
             <PageSync page="Lupon Management" />
@@ -385,7 +418,7 @@ export function LuponManagement() {
                                 <DialogTitle>Add New Admin</DialogTitle>
                                 <DialogDescription>Add email and password.</DialogDescription>
                             </DialogHeader>
-                            <div className="grid grid-cols-2 gap-4  max-h-[350px] px-3 py-2 mb-4 ">
+                            <div className="grid grid-cols-2 gap-4  max-h-[350px] px-3 py-2 ">
                                 <div className="grid grid-cols-1 gap-2">
                                     <Label htmlFor="email">Email
                                     </Label>
@@ -399,11 +432,23 @@ export function LuponManagement() {
                                         required />
                                 </div>
                             </div>
+                            <div className="flex items-center">
+                                <Separator className="shrink" />
+                                <span className=" px-2 text-muted-foreground text-xs uppercase text-center">
+                                    or
+                                </span>
+                                <Separator className="shrink" />
+                            </div>
+                            <Button variant="outline" type="button"
+                                onClick={handleGoogle}>
+                                Continue with Google
+                            </Button>
+                            
                             <DialogFooter>
                                 <DialogClose asChild>
                                     <Button variant="outline">Cancel</Button>
                                 </DialogClose>
-                                <Button type="button">Add Admin</Button>
+                                <Button type="button" disabled={addAdminLoader}>Add Admin</Button>
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>
@@ -418,7 +463,7 @@ export function LuponManagement() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {admin_list?.map(a => (
+                            {adminList?.map(a => (
                                 <TableRow>
                                     <TableCell>
                                         {a.email}
