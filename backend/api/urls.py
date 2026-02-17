@@ -8,6 +8,7 @@ from documents import views as DocumentViews
 from AIModel import views as AIModelViews
 from case_persons import views as CasePersonViews
 from case_organizations import views as CaseOrganizationViews
+from tickets import views as TicketViews
 
 urlpatterns = [
     # path("test-email/", CaseViews.TestEmailView.as_view(), name="test-email"),  # View not implemented
@@ -101,6 +102,11 @@ urlpatterns = [
 
     # Google Calendar Integration
     path('google-calendar/', include('google_calendar.urls')),
+
+    # Support Tickets
+    path('tickets/', TicketViews.UserTicketView.as_view(), name='user-tickets'),
+    path('tickets/all/', TicketViews.AdminTicketListView.as_view(), name='admin-tickets'),
+    path('tickets/<int:pk>/action/', TicketViews.AdminTicketActionView.as_view(), name='ticket-action'),
 
 ]
 

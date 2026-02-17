@@ -80,6 +80,7 @@ INSTALLED_APPS = [
     'api',
     'AIModel',
     'google_calendar',
+    'tickets',
     
 ] 
 
