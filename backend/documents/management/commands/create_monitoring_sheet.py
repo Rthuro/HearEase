@@ -22,7 +22,6 @@ class Command(BaseCommand):
                       <p><strong>Case Number:</strong> <span class="down-border">{{ case_number }}</span></p>
                       <p><strong>Complainant/s:</strong> <span class="down-border">{{ complainants }}</span></p>
                       <p><strong>Respondent/s:</strong> <span class="down-border">{{ respondents }}</span></p>
-                      <p><strong>Lupon Member Assigned:</strong> <span class="down-border">{{ lupon_member }}</span></p>
                       <p><strong>Predicted Hearings:</strong><span class="down-border">{{ predicted_hearings }}</span></p>
                     </div>
                     
