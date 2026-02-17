@@ -27,6 +27,9 @@ class Command(BaseCommand):
             call_command("create_summon_letter")
             self.stdout.write(self.style.SUCCESS("✅ Summon letter template created."))
 
+            call_command("create_case_report")
+            self.stdout.write(self.style.SUCCESS("✅ Case report template created."))
+
 
             self.stdout.write(self.style.SUCCESS("\n🎉 All default templates created successfully!"))
 
