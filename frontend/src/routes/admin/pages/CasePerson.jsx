@@ -2,13 +2,13 @@ import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { 
   Mail, Phone, MapPin, Calendar, User, 
-  ShieldCheck, ShieldAlert, Gavel, FileText , Loader2, Trash2
+  ShieldCheck, ShieldAlert, Gavel, FileText , Loader2, Info,
+  Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CaseStatusDisplay } from "@/components/CaseStatusDisplay";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow
 } from "@/components/ui/table";
@@ -21,6 +21,7 @@ import { SendEmailDialog } from "@/components/SendEmailDialog";
 import { EditCasePerson } from "@/components/EditCasePerson";
 import { nanoid } from 'nanoid'
 import { SendSmsDialog } from "@/components/SendSmsDialog";
+import { DeleteCaseModal } from "@/components/DeleteCaseModal";
 
 export function CasePerson() {
   const { id } = useParams();
@@ -122,194 +123,189 @@ export function CasePerson() {
                 <span className="ml-2 text-zinc-500">Retrieving case person data...</span>
             </div>
         )}
+        
+        <Card className="overflow-hidden border-zinc-200 shadow-sm ">
+          <CardHeader className="pb-0 border-b flex justify-between ">
+                <div className="flex items-center gap-4">
+                  <div>
+                    <h1 className="text-2xl font-bold flex items-center gap-2">
+                      {personData?.first_name} {personData?.middle_name} {personData?.last_name}
+                    </h1>
+                    <div className="flex gap-2 mt-1">
+                      {personData?.email ? (
+                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Registered User</Badge>
+                      ) : (
+                        <Badge variant="secondary">Unregistered / Walk-in</Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  
+                  <Button variant="outline"
+                  onClick={() => {
+                      navigate(`/Admin/File-Case/${caseNumber}`);
+                      complainantList.push({
+                          first_name: personData.first_name,
+                          middle_name: personData.middle_name,
+                          last_name: personData.last_name,
+                          email: personData.email,
+                          contact_number: personData.contact_number,
+                          birth_date: personData.birth_date,
+                          sex: personData.sex,
+                      });
+                  }}>
+                    File Case
+                  </Button>
+                  <Button className="bg-redBase text-white hover:bg-red-700"
+                  onClick={() => {
+                      navigate(`/Admin/File-Case/${caseNumber}`);
+                      respondentList.push({
+                          first_name: personData.first_name,
+                          middle_name: personData.middle_name,
+                          last_name: personData.last_name,
+                          email: personData.email,
+                          contact_number: personData.contact_number,
+                          birth_date: personData.birth_date,
+                          sex: personData.sex,
+                      });
+                  }}>File Case Against
+                  </Button>
+                  <EditCasePerson 
+                    person_info={personData}
+                    refresh={handleRefresh} />
+              </div>
+          </CardHeader>
 
-      {/* --- HEADER --- */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              {personData?.first_name} {personData?.middle_name} {personData?.last_name}
-            </h1>
-            <div className="flex gap-2 mt-1">
-              {personData?.email ? (
-                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Registered User</Badge>
-              ) : (
-                <Badge variant="secondary">Unregistered / Walk-in</Badge>
-              )}
-              <span className="text-sm text-gray-500 flex items-center gap-1">
-                <MapPin className="h-3 w-3" /> {barangays.find(b => b.id.toString() === personData?.barangay)?.name || "N/A"}
-              </span>
+          <CardContent className="p-0">
+            <div className="grid grid-cols-1 md:grid-cols-2">
+              
+              {/* Left Section: Contact Info */}
+              <div className="px-6 space-y-5">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 mb-4">
+                  Contact Details
+                </h3>
+                
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-1 p-2 bg-blue-50 text-blue-600 rounded-full">
+                      <Mail className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-zinc-500 text-xs font-medium">Email Address</p>
+                      <p className="text-sm font-semibold text-zinc-700">{personData?.email || "Not provided"}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="mt-1 p-2 bg-emerald-50 text-emerald-600 rounded-full">
+                      <Phone className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-zinc-500 text-xs font-medium">Phone Number</p>
+                      <p className="text-sm font-semibold text-zinc-700">{personData?.contact_number || "Not provided"}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="mt-1 p-2 bg-amber-50 text-amber-600 rounded-full">
+                      <MapPin className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-zinc-500 text-xs font-medium">Residential Address</p>
+                      <p className="text-sm font-semibold text-zinc-700 leading-snug">
+                        {personData?.street}, {barangays.find(b => b.name === personData?.barangay)?.name || "N/A"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Section: Basic Info */}
+              <div className="px-6 bg-zinc-50/30 md:border-l border-t md:border-t-0 border-zinc-100">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 mb-6">
+                  Demographics
+                </h3>
+                
+                <div className="grid grid-cols-1 gap-6">
+                  <div className="flex items-center justify-between group">
+                    <div className="flex items-center gap-3">
+                      <Calendar className="h-4 w-4 text-zinc-400" />
+                      <span className="text-sm text-zinc-600">Age</span>
+                    </div>
+                    <span className="text-sm font-bold text-zinc-700 bg-white px-2 py-1 rounded border shadow-sm">
+                        {getAge(personData?.birth_date)} years
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Calendar className="h-4 w-4 text-zinc-400" />
+                      <span className="text-sm text-zinc-600">Birth Date</span>
+                    </div>
+                    <span className="text-sm font-semibold text-zinc-700">{personData?.birth_date || "-"}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <User className="h-4 w-4 text-zinc-400" />
+                      <span className="text-sm text-zinc-600">Sex</span>
+                    </div>
+                    <span className="text-sm font-semibold text-zinc-700 capitalize">{personData?.sex || "-"}</span>
+                  </div>
+                </div>
+              </div>
+
             </div>
-          </div>
-        </div>
-        
-        <div className="flex gap-2">
-            { personData?.cases?.length > 0 && (
-              <EditCasePerson 
-              person_info={personData}
-              refresh={handleRefresh} />
-            )}
-            <Button variant="outline"
-            onClick={() => {
-                navigate(`/Admin/File-Case/${caseNumber}`);
-                complainantList.push({
-                    first_name: personData.first_name,
-                    middle_name: personData.middle_name,
-                    last_name: personData.last_name,
-                    email: personData.email,
-                    contact_number: personData.contact_number,
-                    birth_date: personData.birth_date,
-                    sex: personData.sex,
-                });
-            }}>
-               File Case
-            </Button>
-            <Button className="bg-redBase text-white hover:bg-red-700"
-            onClick={() => {
-                navigate(`/Admin/File-Case/${caseNumber}`);
-                respondentList.push({
-                    first_name: personData.first_name,
-                    middle_name: personData.middle_name,
-                    last_name: personData.last_name,
-                    email: personData.email,
-                    contact_number: personData.contact_number,
-                    birth_date: personData.birth_date,
-                    sex: personData.sex,
-                });
-            }}>File Case Against</Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
-        {/* --- LEFT COLUMN: PERSONAL DETAILS --- */}
-        <div className="space-y-3">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Contact Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 text-sm">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-50 text-blue-600 rounded-md">
-                  <Mail className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="text-gray-500 text-xs">Email Address</p>
-                  <p className="font-medium">{personData?.email || "Not provided"}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-50 text-green-600 rounded-md">
-                  <Phone className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="text-gray-500 text-xs">Phone Number</p>
-                  <p className="font-medium">{personData?.contact_number || "Not provided"}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-orange-50 text-orange-600 rounded-md">
-                  <MapPin className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="text-gray-500 text-xs">Address</p>
-                  <p className="font-medium">{personData?.street}, {barangays.find(b => b.id.toString() === personData?.barangay)?.name || "N/A"}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Basic Info</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <div className="flex justify-between border-b pb-2">
-                <span className="text-gray-500">Age</span>
-                <span className="font-medium">{getAge(personData?.birth_date)} years old</span>
-              </div>
-              <div className="flex justify-between border-b pb-2">
-                <span className="text-gray-500">Birth Date</span>
-                <span className="font-medium">{personData?.birth_date || "-"}</span>
-              </div>
-              <div className="flex justify-between border-b pb-2">
-                <span className="text-gray-500">Sex</span>
-                <span className="font-medium">{personData?.sex || "-"}</span>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* --- RIGHT COLUMN: CASE HISTORY --- */}
-        <div className="md:col-span-2">
-          <Tabs defaultValue="cases" className="w-full">
-            <TabsList className="w-full justify-start bg-transparent p-0 border-b rounded-none h-auto">
-              <TabsTrigger 
-                value="cases" 
-                className="data-[state=active]:border-b-2 data-[state=active]:border-redBase data-[state=active]:shadow-none rounded-none px-4 py-3"
-              >
-                Case History ({personData?.cases?.length})
-              </TabsTrigger>
-              <TabsTrigger 
-                value="notes"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-redBase data-[state=active]:shadow-none rounded-none px-4 py-3"
-              >
-                Notes & Remarks
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="cases" className="mt-6">
-              <Card>
-                <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Case ID</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Date Filed</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {casesOrder?.map((c) => (
-                        <TableRow key={c?.id}>
-                          <TableCell className="font-medium">
-                            <Link to={`/Admin/Case/${c?.id}`} className="text-blue-600 hover:underline">
-                                {c?.id}
-                            </Link>
-                          </TableCell>
-                          <TableCell>
-                            {c?.complainants?.find(comp => comp.id === personData?.id) ? (
-                                <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-none shadow-none">Complainant</Badge>
-                            ) : (
-                                <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100 border-none shadow-none">Respondent</Badge>
-                            )}
-                          </TableCell>
-                          <TableCell>{c?.case_type?.case_name}</TableCell>
-                          <TableCell>
-                            <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset ring-gray-500/10 bg-gray-50 text-gray-600">
-                                {c?.case_status}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-right text-gray-500">{new Date(c?.date_filed).toLocaleDateString()}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="notes">
-                <div className="p-4 text-gray-500 text-center border rounded-lg bg-gray-50">
-                    No additional notes for this person.
-                </div>
-            </TabsContent>
-          </Tabs>
-        </div>
+        <section className="flex flex-col gap-3 mt-3 bg-white border border-zinc-200 rounded-lg p-6">
+          <p> Case History ({personData?.cases?.length})</p>
+          <div className="border rounded-lg overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Case ID</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-center">Date Filed</TableHead>
+                  <TableHead ></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {casesOrder?.map((c) => (
+                  <TableRow key={c?.id}>
+                    <TableCell className="font-medium">
+                      <Link to={`/Admin/Case/${c?.id}`} className="text-blue-600 hover:underline">
+                          {c?.id}
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      {c?.complainants?.find(comp => comp.id === personData?.id) ? (
+                          <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-none shadow-none">Complainant</Badge>
+                      ) : (
+                          <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100 border-none shadow-none">Respondent</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>{c?.case_type?.case_name}</TableCell>
+                    <TableCell>
+                      <CaseStatusDisplay caseStatus={c?.case_status} />
+                    </TableCell>
+                    <TableCell className="text-center text-gray-500">{new Date(c?.date_filed).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                       <DeleteCaseModal case_id={c.id} />    
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </section>
 
       </div>
-    </div>
   );
 }
