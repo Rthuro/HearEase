@@ -9,5 +9,6 @@ urlpatterns = [
     path('sync-all/', views.SyncAllHearingsView.as_view(), name='google-sync-all'),
     path('holidays/', views.HolidaysView.as_view(), name='google-holidays'),
     path('sync-settings/', views.CalendarSyncSettingsView.as_view(), name='google-sync-settings'),
+    path('sync-preferences/', views.UserSyncPreferencesView.as_view(), name='google-sync-preferences'),
+    path('my-hearings/', views.UserHearingsListView.as_view(), name='google-my-hearings'),
 ]
-
