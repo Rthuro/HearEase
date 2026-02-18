@@ -10,7 +10,7 @@ import cancellation_notice from "@/assets/imgs/cancellation_notice.png"
 import { cn } from "@/lib/utils";
 import { PageSync } from "@/components/PageSync";
 import { CaseStatusDisplay } from "@/components/CaseStatusDisplay";
-import { ChevronLeft, X,Check, Scale, ArrowRight, ArrowUpRight, Loader2, FileText, CheckCircle2, PartyPopper, Loader2Icon, AlertCircle, RotateCw, CalendarIcon  } from "lucide-react";
+import { ChevronLeft, X,Check, Scale, ArrowRight, ArrowUpRight, Loader2, FileText, CheckCircle2, PartyPopper, Loader2Icon, AlertCircle, RotateCw, CalendarIcon, Users2  } from "lucide-react";
 import { useEffect, useState } from "react";
 import useHearingStore from "@/store/useHearingStore";
 import {
@@ -516,7 +516,7 @@ export function Case() {
                 </CardHeader>
 
                 <CardContent className="px-4 py-2">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
                     
                     {/* Column 1: Hearing Progress */}
                     <div className="space-y-4">
@@ -539,6 +539,19 @@ export function Case() {
                     {/* Column 2: Settlement Details */}
                     <div className="space-y-4">
                         <div className="flex items-center gap-2 text-zinc-500">
+                            <Users2 className="w-4 h-4" />
+                            <span className="text-sm font-medium">Relationship</span>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-xs text-zinc-400">Parties Relationship</p>
+                            <p className="font-medium text-zinc-800">
+                                {caseInfo?.relationship?.relationship }
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-2 text-zinc-500">
                             <Scale className="w-4 h-4" />
                             <span className="text-sm font-medium">Resolution Status</span>
                         </div>
@@ -558,11 +571,11 @@ export function Case() {
                             <AlertCircle className="w-4 h-4" />
                             <span className="text-sm font-medium">Severity Level</span>
                         </div>
-                        <div>
+                        <div className="space-y-1">
+                            <p className="text-xs text-zinc-400">Based on Nature of Complaint</p>
                             <p className={cn("text-lg uppercase tracking-tight")}>
                                 {caseInfo?.case_type?.severity || '-'}
                             </p>
-                            <p className="text-[10px] text-zinc-400">Priority based on nature of complaint</p>
                         </div>
                     </div>
                     </div>
