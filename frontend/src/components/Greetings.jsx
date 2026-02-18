@@ -34,17 +34,7 @@ export function Greetings() {
       <img src={welcome_img} alt="Welcome" className='w-[200px] absolute right-6 bottom-4.5' />
     </div>
     <div className="grid grid-cols-2 gap-3 w-full mt-3 text-black text-sm">
-                { userRole == 'admin' ? (
-                    actions.admin.map((action, index) => (
-                        <div key={index} className='flex items-center justify-between bg-white p-4 rounded-md w-full shadow-sm hover:shadow-md hover:scale-[1.02] transition-all '>
-                            <div className="flex items-center">
-                                <action.icon className={`${action.iconClr} size-4`} />
-                                <p className="ml-2">{action.name}</p>
-                            </div>
-                            <ArrowRight className={`${action.iconClr} `} size={16} />
-                        </div>
-                    ))
-                ) : (
+                { userRole !== 'admin' &&  (
                     actions.user.map((action, index) => (
                         <Link to={action.link} key={index} className='flex items-center justify-between bg-white p-4 rounded-md w-full shadow-sm hover:shadow-md hover:scale-[1.02] transition-all '>
                             <div className="flex items-center">

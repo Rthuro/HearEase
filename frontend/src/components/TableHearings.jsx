@@ -19,6 +19,7 @@ import { Link } from "react-router-dom";
 import { CaseStatusDisplay } from "./CaseStatusDisplay";
 import { cn } from "@/lib/utils";
 import { formatedBday } from "@/lib/helpers";
+import { CountdownSpan } from "./CountdownSpan";
 
 export function TableHearings({ hearingsList, showPagination, navigateTo }) {
     let hearings = [];
@@ -60,6 +61,8 @@ export function TableHearings({ hearingsList, showPagination, navigateTo }) {
                                     </TableCell>
                                     <TableCell>
                                         {formatedBday(hearing?.hearing_date) ?? '-'}
+                                        {' '} 
+                                        <CountdownSpan dateString={hearing?.hearing_date} />
                                     </TableCell>
                                     <TableCell>
                                         {hearing?.hearing_number ?? '-'}

@@ -31,6 +31,7 @@ import { EditCoAttendee } from "@/components/EditCoAttendee";
 import { CaseSettingsModal } from "@/components/CaseSettingsModal";
 import { fetchCase } from "@/store/useCaseStore";
 import toast from "react-hot-toast";
+import { formatedDateToString } from "@/lib/helpers";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
@@ -481,7 +482,7 @@ export function Case() {
                             </span>
                         </div>
                         <p className="text-redBase text-sm mt-1">
-                            This case has been escalated for further review.
+                            This case has been escalated to {caseInfo?.cfa_destination == 'court' ? 'Municipal Court' : caseInfo?.cfa_destination == 'pnp' ? 'Philippine National Police' : caseInfo?.cfa_destination == 'vawc' ? 'Violence Against Women and Children' : 'further review'}.
                         </p>
                         
                         <div className="mt-4 p-3 bg-white/50 rounded-lg border border-red-100 italic text-sm text-redBase">
@@ -743,8 +744,13 @@ export function Case() {
                             {findHearingCase.length > 0 ? (
                                 findHearingCase.map((hearing, index) => (
                                     <TableRow key={hearing.id} className="border-t">
-                                        <TableCell className="px-4 py-2">{hearing?.hearing_number}</TableCell>
-                                        <TableCell className="px-4 py-2">{hearing.hearing_date}</TableCell>
+                                        <TableCell className="px-4 py-2">
+                                            {hearing?.hearing_number}
+
+                                        </TableCell>
+                                        <TableCell className="px-4 py-2">
+                                            {formatedDateToString(hearing.hearing_date)}
+                                        </TableCell>
                                         <TableCell className="px-4 py-2">{hearing.time}</TableCell>
                                         <TableCell className="px-4 py-2"> <CaseStatusDisplay caseStatus={hearing.hearing_status} /></TableCell>
                                         <TableCell className={cn("py-4")}>
