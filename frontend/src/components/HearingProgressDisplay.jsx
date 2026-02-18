@@ -44,7 +44,7 @@ export function HearingProgressDisplay({ hearing, case_complainants, case_respon
     const { members } = useLuponStore();
     const [outcome, setSelectedOutcome] = useState(null);
     const [completedOutcome, setCompletedOutcome] = useState(false);
-    const [reason, setReason] = useState("respondent_noShow");
+    const [reason, setReason] = useState("Some Parties failed to appear.");
     const [type, setType] = useState(1);
     const [resolved_remarks, setResolvedRemarks] = useState("Case settled.");
     const [court_remarks, setCourtRemarks] = useState("Case has been escalated to court.");
@@ -420,7 +420,7 @@ export function HearingProgressDisplay({ hearing, case_complainants, case_respon
                                     <Separator />
                                     <div className="grid grid-cols-2 gap-3 items-center">
                                         <div className="flex flex-col gap-3">
-                                            <Label className="font-medium text-gray-600 text-sm ">DATE (AI SUGGESTED)
+                                            <Label className="font-medium text-gray-600 text-sm ">DATE
                                             </Label>
                                             <Popover>
                                                 <PopoverTrigger asChild>
@@ -621,25 +621,12 @@ export function HearingProgressDisplay({ hearing, case_complainants, case_respon
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="flex flex-col gap-3">
                                     <Label className="font-medium text-gray-600 text-sm leading-0.5">REASON</Label>
-                                    <Select
+                                    <Textarea placeholder="Add reason for rescheduling..."
                                         value={reason}
-                                        onValueChange={(value) => setReason(value)}
-                                    >
-                                        <SelectTrigger className={"w-full"}>
-                                            <SelectValue placeholder="Select a reason" />
-                                        </SelectTrigger>
-
-                                        <SelectContent>
-                                            <SelectGroup>
-                                                <SelectItem value="respondent_noShow">Respondent No-Show</SelectItem>
-                                                <SelectItem value="complainant_noShow">Complainant No-show</SelectItem>
-                                                <SelectItem value="both_absent">Both Parties Absent</SelectItem>
-                                            </SelectGroup>
-                                        </SelectContent>
-                                    </Select>
+                                        onChange={(e) => setReason(e.target.value)} />
                                 </div>
                                 <div className="flex flex-col gap-3">
-                                    <Label className="font-medium text-gray-600 text-sm leading-0.5">New Date (AI SUGGESTED)</Label>
+                                    <Label className="font-medium text-gray-600 text-sm leading-0.5">New Date</Label>
                                     <Popover>
                                         <PopoverTrigger asChild>
                                             <Button
@@ -670,6 +657,7 @@ export function HearingProgressDisplay({ hearing, case_complainants, case_respon
                                     ...payload,
                                     outcome: "rescheduled",
                                     rescheduled_hearing_date: newDate.toISOString().split('T')[0],
+                                    reason: reason
                                 })} >Save Hearing</Button>
                         </div>
                     )}
@@ -726,7 +714,7 @@ export function HearingProgressDisplay({ hearing, case_complainants, case_respon
                                     <SelectContent>
                                         <SelectGroup>
                                             <SelectItem value="court">Municipal Trial Court</SelectItem>
-                                            <SelectItem value="prosecutor">PNP / Prosecutor</SelectItem>
+                                            <SelectItem value="pnp">PNP / Prosecutor</SelectItem>
                                             <SelectItem value="vawc">VAWC Desk</SelectItem>
                                         </SelectGroup>
                                     </SelectContent>

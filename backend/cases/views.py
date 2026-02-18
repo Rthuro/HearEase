@@ -492,28 +492,29 @@ class UpdateHearingProgressView(APIView):
 
         # Start a transaction so that if one part fails, nothing is saved
         with transaction.atomic():
-            for a in attendance:
-                role = a.get("participant_role")
-                attendee_id = a.get("id")
-                attendance_status = a.get("attendance_status")
-
-                if role == "lupon":
-                    HearingAttendance.objects.update_or_create(
-                        hearing_id=hearing_id,
-                        lupon_member_id=attendee_id,
-                        participant_role=role,
-                        defaults={"attendance_status": attendance_status}
-                    )
-                
-                elif role in ["complainant", "respondent"]:
-                    HearingAttendance.objects.update_or_create(
-                        hearing_id=hearing_id,
-                        case_person_id=attendee_id,
-                        participant_role=role,
-                        defaults={"attendance_status": attendance_status}
-                    )
 
             if outcome == "completed":
+                for a in attendance:
+                    role = a.get("participant_role")
+                    attendee_id = a.get("id")
+                    attendance_status = a.get("attendance_status")
+
+                    if role == "lupon":
+                        HearingAttendance.objects.update_or_create(
+                            hearing_id=hearing_id,
+                            lupon_member_id=attendee_id,
+                            participant_role=role,
+                            defaults={"attendance_status": attendance_status}
+                        )
+                    
+                    elif role in ["complainant", "respondent"]:
+                        HearingAttendance.objects.update_or_create(
+                            hearing_id=hearing_id,
+                            case_person_id=attendee_id,
+                            participant_role=role,
+                            defaults={"attendance_status": attendance_status}
+                        )
+
                 Hearing.objects.filter(id=hearing_id).update(
                     hearing_status="completed",                        
                     hearing_completed_date=datetime.now(),
@@ -525,6 +526,27 @@ class UpdateHearingProgressView(APIView):
                 )
 
             elif outcome == "new_hearing":
+                for a in attendance:
+                    role = a.get("participant_role")
+                    attendee_id = a.get("id")
+                    attendance_status = a.get("attendance_status")
+
+                    if role == "lupon":
+                        HearingAttendance.objects.update_or_create(
+                            hearing_id=hearing_id,
+                            lupon_member_id=attendee_id,
+                            participant_role=role,
+                            defaults={"attendance_status": attendance_status}
+                        )
+                    
+                    elif role in ["complainant", "respondent"]:
+                        HearingAttendance.objects.update_or_create(
+                            hearing_id=hearing_id,
+                            case_person_id=attendee_id,
+                            participant_role=role,
+                            defaults={"attendance_status": attendance_status}
+                        )
+                        
                 Hearing.objects.filter(id=hearing_id).update(
                     hearing_status="completed",
                     hearing_completed_date=datetime.now(),
@@ -549,10 +571,30 @@ class UpdateHearingProgressView(APIView):
                 Hearing.objects.filter(id=hearing_id).update(
                     hearing_date=resched_date,
                     hearing_status="rescheduled",
-                    remarks="Hearing rescheduled."
+                    remarks=request.data.get("reason")
                 )
 
             elif outcome in ["settled", "court"]:
+                for a in attendance:
+                    role = a.get("participant_role")
+                    attendee_id = a.get("id")
+                    attendance_status = a.get("attendance_status")
+
+                    if role == "lupon":
+                        HearingAttendance.objects.update_or_create(
+                            hearing_id=hearing_id,
+                            lupon_member_id=attendee_id,
+                            participant_role=role,
+                            defaults={"attendance_status": attendance_status}
+                        )
+                    
+                    elif role in ["complainant", "respondent"]:
+                        HearingAttendance.objects.update_or_create(
+                            hearing_id=hearing_id,
+                            case_person_id=attendee_id,
+                            participant_role=role,
+                            defaults={"attendance_status": attendance_status}
+                        )
 
                 if outcome == "settled":                    
                     case.settlement_type_id = request.data.get("settlement_type_id")
@@ -572,6 +614,27 @@ class UpdateHearingProgressView(APIView):
                     send_notification(ids=[p.id for p in case.complainants.all()], case_id=case.id, case_status="resolved", remarks=request.data.get("remarks"), type=2)
 
                 else: # court
+                    for a in attendance:
+                        role = a.get("participant_role")
+                        attendee_id = a.get("id")
+                        attendance_status = a.get("attendance_status")
+
+                        if role == "lupon":
+                            HearingAttendance.objects.update_or_create(
+                                hearing_id=hearing_id,
+                                lupon_member_id=attendee_id,
+                                participant_role=role,
+                                defaults={"attendance_status": attendance_status}
+                            )
+                        
+                        elif role in ["complainant", "respondent"]:
+                            HearingAttendance.objects.update_or_create(
+                                hearing_id=hearing_id,
+                                case_person_id=attendee_id,
+                                participant_role=role,
+                                defaults={"attendance_status": attendance_status}
+                            )
+
                     case.case_status = "escalated"
                     case.cfa_destination = request.data.get("cfa_destination")
                     case.remarks = request.data.get("remarks")
