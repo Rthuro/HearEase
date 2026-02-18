@@ -56,7 +56,7 @@ class Case(models.Model):
     ]
 
     CFA = [
-        ("municipal", "Municipal"),
+        ("court", "Municipal"),
         ("pnp", "PNP"),
         ("vawc", "VAWC"),
     ]
