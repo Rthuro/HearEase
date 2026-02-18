@@ -20,17 +20,25 @@ import {
 } from "@/components/ui/dialog"
 import IdentitySync from "@/components/IdentitySync"
 import { RefreshCw } from "lucide-react"
+import { useUserStore } from "@/store/useUserStore"
 
 export function UserDashboard() {
   const { userInfo, userLinkName } = useAuthenticationStore();
   const { cases, fetchUserRelatedCase, relatedCases,testEmail , fetchCases} = useCaseStore();
   const { hearings } = useHearingStore();
   const { userInformation } = useRetrieveUsersStore();
-
+  const { fetchUser } = useUserStore();
   const [completion, setCompletion] = useState(0);
   const [missingFields, setMissingFields] = useState([]);
   const [refreshLoader, setRefreshLoader] = useState(false);
   const [res, fetchRelatedCase, loader] = useActionState(fetchUserRelatedCase);
+  
+  useEffect(() => {
+        const fetchData = async () => {
+            await fetchUser();
+        };
+        fetchData();
+    }, []);
   
   useEffect(() => {
     startTransition(() => {
@@ -96,7 +104,7 @@ export function UserDashboard() {
       
         <Greetings />
 
-        <div className="flex flex-col gap-3 w-full bg-white rounded-lg border p-6">
+        <div className="flex flex-col gap-3 w-full h-fit bg-white rounded-lg border p-6">
           { completion !== 100 && (
             <div className="flex items-center justify-between gap-10">
               <div className="flex flex-col w-full">

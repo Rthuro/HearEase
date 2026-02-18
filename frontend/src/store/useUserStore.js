@@ -59,12 +59,16 @@ export const useUserStore = create((set, get) => ({
         }
     },
 
+    fetched_user_info: null,
+
     fetchUser: async () => {
         const stored = localStorage.getItem("authData");
         const data = JSON.parse(stored);
         const response = await axios.post(`${API_URL}/find-user/`, {
             email: data.userInfo.email
         });
+        
+        set({ fetched_user_info: response.data.user });
         return response.data.user;
     },
 
