@@ -14,9 +14,13 @@ import HearEaseLogo from '@/assets/hearease_logo_s.png'
 import { Link } from "react-router-dom";
 import usePageStore from "@/store/usePageStore";
 import useAuthenticationStore from "@/store/useAuthenticationStore";
- 
+import { useUserStore } from "@/store/useUserStore";
+
 export function AppSidebar() {
   const { userLinkName } = useAuthenticationStore();
+  const { fetched_user_info } = useUserStore();
+  const disableButton = fetched_user_info?.is_account_verified === false;
+
   // Menu items.
   const first_row = [
     {
@@ -68,6 +72,7 @@ export function AppSidebar() {
   ]
   const {currentPage } = usePageStore();
 
+
   return (
     <Sidebar>
       <SidebarContent>
@@ -82,16 +87,27 @@ export function AppSidebar() {
                      
                     {first_row.map((item) =>
                         item.title === "File New Case" ? (
-                        <Link
-                            key={item.title}
-                            to={`/${item.url}`}
-                            className="bg-redBase text-white py-2 rounded-md flex items-center justify-center"
-                        >
-                            <span className="flex items-center gap-2">
-                                <item.icon size="16" />
-                                <span>{item.title}</span>
-                            </span>
-                        </Link>
+                          disableButton ? (
+                            <div
+                                key={item.title}
+                                className={`bg-redBase text-white py-2 rounded-md flex items-center justify-center opacity-50 cursor-not-allowed`}
+                            >
+                                <span className="flex items-center gap-2">
+                                    <item.icon size="16" />
+                                    <span>{item.title}</span>
+                                </span>
+                            </div>
+                          ) : (
+                        < Link
+                              key={item.title}
+                              to={`/${item.url}`} 
+                              className={`bg-redBase text-white py-2 rounded-md flex items-center justify-center`}
+                          >
+                              <span className="flex items-center gap-2">
+                                  <item.icon size="16" />
+                                  <span>{item.title}</span>
+                              </span>
+                          </Link> )
                         ) : (
                         <Link
                             key={item.title}
