@@ -44,7 +44,7 @@ export function HearingProgressDisplay({ hearing, case_complainants, case_respon
     const { members } = useLuponStore();
     const [outcome, setSelectedOutcome] = useState(null);
     const [completedOutcome, setCompletedOutcome] = useState(false);
-    const [reason, setReason] = useState("respondent_noShow");
+    const [reason, setReason] = useState("Some Parties failed to appear.");
     const [type, setType] = useState(1);
     const [resolved_remarks, setResolvedRemarks] = useState("Case settled.");
     const [court_remarks, setCourtRemarks] = useState("Case has been escalated to court.");
