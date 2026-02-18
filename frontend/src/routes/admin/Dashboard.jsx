@@ -20,7 +20,7 @@ export function Dashboard() {
   }, [fetchCases, fetchHearings]);
 
   const filterHearings = Array.isArray(hearings) 
-    ? hearings.filter(h => h.hearing_status === "scheduled") 
+    ? hearings.filter(h => h.hearing_status === "scheduled" || h.hearing_status === "rescheduled") 
     : [];
   
   const user = userInfo?.role === 'user' ? userLinkName : 'Admin';

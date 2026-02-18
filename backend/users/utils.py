@@ -221,6 +221,19 @@ class EmailNotification:
 
 class PhoneNotification:
     @staticmethod
+    def custom_sms(contact_number, message):
+        message_text = message
+
+        message = domain.Message(
+            phone_numbers=[contact_number],
+            text_message=domain.TextMessage(text=message_text)
+        )
+
+        try:
+            with client.APIClient(login, password) as c:
+                c.send(message)
+        except Exception as e:
+            print(f"SMS Error: {e}")
     def created_case_notification(user_email, contact_number, name, case_number, case_status):
         message_text = (
             f"Hello {name}, You are receiving this notification because a new case has been created under your name. Please wait for further updates. The HearEase admin will process the case shortly. "

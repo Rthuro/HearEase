@@ -48,7 +48,8 @@ export function CaseCancellationModal({caseInfo, refresh}){
                 id: caseInfo.id,
                 case_status: "rejected",
                 remarks: caseRemarks,
-                rejection_section: rejectionType
+                rejection_section: rejectionType,
+                rejected_case_date: new Date()
             },"rejected"), {
                 loading: "Rejecting case...",
                 success: () => {

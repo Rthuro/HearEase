@@ -144,7 +144,8 @@ const useHearingStore = create((set, get) => ({
           ...hearing,
           hearing_date: localDateString,
           time: hearing.time || null,
-          lupon_member: hearing.lupon_member
+          lupon_member: hearing.lupon_member,
+          hearing_status: hearings.find( h => h.id === hearing.id)?.hearing_status == 'scheduled' ? 'rescheduled' : hearing.hearing_status,
         };
 
         return withRetry(() =>

@@ -92,3 +92,37 @@ export const checkOrg = (list, check) => {
         return normalizedListImg === normalizedInputName && u?.type === check?.type;
     });
 }
+
+export const getHearingCountdown = (dateString) => {
+    if (!dateString) return { label: '-', status: 'none' };
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to midnight for accurate day comparison
+
+    const hearingDate = new Date(dateString);
+    hearingDate.setHours(0, 0, 0, 0);
+
+    // Calculate difference in milliseconds and convert to days
+    const diffTime = hearingDate - today;
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
+        return { label: "Today", status: "today" };
+    } 
+    
+    if (diffDays === 1) {
+        return { label: "Tomorrow", status: "near" };
+    }
+
+    if (diffDays > 1) {
+        return { 
+            label: `${diffDays} days left`, 
+            status: diffDays <= 3 ? "near" : "future" 
+        };
+    }
+
+    return { 
+        label: `${Math.abs(diffDays)} ${Math.abs(diffDays) === 1 ? 'day' : 'days'} ago`, 
+        status: "past" 
+    };
+};

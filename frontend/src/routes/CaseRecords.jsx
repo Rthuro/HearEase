@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/table"
 import { AppPagination } from "@/components/Pagination";
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Trash2 } from "lucide-react";
 import { PageSync } from "@/components/PageSync";
 import { cn } from "@/lib/utils";
 import useAuthenticationStore from "@/store/useAuthenticationStore";
@@ -28,6 +28,7 @@ import folder_img from '@/assets/folder.png'
 import { useEffect, useMemo } from "react";
 import { useCaseStore } from "@/store/useCaseStore";
 import { formatedDateTimeToString } from "@/lib/helpers";
+import { DeleteCaseModal } from "@/components/DeleteCaseModal";
 
 
 export function CaseRecords(){
@@ -202,17 +203,19 @@ export function CaseRecords(){
                                         ) : (
                                             displayedCases.map((c) => (
                                                 <TableRow key={c.id} className={cn("text-zinc-700")}>
-                                                    <TableCell>{c.id}</TableCell>
+                                                    <TableCell>
+                                                        <Link to={`/${navigateTo}/Case/${c.id}`} className="text-redBase underline font-medium">
+                                                        {c.id}
+                                                        </Link>
+                                                    </TableCell>
                                                     <TableCell>{c.case_type.case_name}</TableCell>
                                                     <TableCell>{c?.settlement_type?.settlement_name || "-"}</TableCell>
                                                     <TableCell>{formatedDateTimeToString(c.date_filed)}</TableCell>
                                                     <TableCell>
                                                         <CaseStatusDisplay caseStatus={c.case_status} />
                                                     </TableCell>
-                                                    <TableCell className={cn("py-4")}>
-                                                        <Link to={`/${navigateTo}/Case/${c.id}`} className="text-redBase bg-red-50 px-3 py-2 rounded-lg text-xs">
-                                                            Details 
-                                                        </Link>
+                                                    <TableCell>
+                                                        <DeleteCaseModal case_id={c.id} />
                                                     </TableCell>
                                                 </TableRow>
                                             ))

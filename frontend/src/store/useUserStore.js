@@ -24,6 +24,21 @@ export const custom_email = async (email, subject, message) => {
     }
 };
 
+export const custom_text = async (contact_number, message) => {
+    const stored = localStorage.getItem("authData");
+    const data = JSON.parse(stored);
+    
+    try {
+        const response = await axios.post(`${API_URL}/custom-text/`, {
+            contact_number: contact_number,
+            message: message
+        }, { headers: { Authorization: `Token ${data?.userInfo.token}` } });
+        return response;
+    } catch (error) {
+        console.error("Failed to send text:", error);
+    }
+};
+
 export const useUserStore = create((set, get) => ({
     loading: false,
     showSync: true,
