@@ -127,11 +127,56 @@ class SettlementTypeDetailView(APIView):
             return Response({"error": "Settlement type not found."}, status=status.HTTP_404_NOT_FOUND)
     
 class RelationshipListView(APIView):
+    def post(self, request):
+        relationship = request.data.get("relationship")
+
+        if not relationship:
+            return Response({"error": "Relationship is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            relationship_obj = Relationship.objects.create(
+                relationship=relationship
+            )
+            serializer = RelationshipSerializer(relationship_obj)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     def get(self, request):
         relationships = Relationship.objects.all().order_by("id")
         serializer = RelationshipSerializer(relationships, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
- 
+
+class RelationshipListDetailView(APIView):
+    def put(self, request, pk):
+        try:
+            relationship = Relationship.objects.get(pk=pk)
+        except Relationship.DoesNotExist:
+            return Response({"error": "Relationship not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        name = request.data.get("relationship")
+
+        if name:
+            relationship.relationship = name
+
+        relationship.save()
+        serializer = RelationshipSerializer(relationship)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    def delete(self, request, pk):
+        try:
+            relationship = Relationship.objects.get(pk=pk)
+            relationship.delete()
+            return Response({"message": "Relationship deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+        except Relationship.DoesNotExist:
+            return Response({"error": "Relationship not found."}, status=status.HTTP_404_NOT_FOUND)
+    def delete(self, request, pk):
+        try:
+            relationship = Relationship.objects.get(pk=pk)
+            relationship.delete()
+            return Response({"message": "Relationship deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+        except Relationship.DoesNotExist:
+            return Response({"error": "Relationship not found."}, status=status.HTTP_404_NOT_FOUND)
+        
+
 class CaseView(APIView):
     permission_classes = [AllowAny] 
     def post(self, request):

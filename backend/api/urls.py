@@ -58,7 +58,8 @@ urlpatterns = [
     path('case-priority/', CaseViews.CasePriorityView.as_view(), name='case-priority'),
 
     path('relationship-list/', CaseViews.RelationshipListView.as_view(), name='relationship-list'),
-    
+    path('relationship/<int:pk>/', CaseViews.RelationshipListDetailView.as_view(), name='relationship-detail'),
+
     path('settlement-types/', CaseViews.SettlementTypeListView.as_view(), name='settlement-type-list'),
     path('settlement-types/<int:pk>/', CaseViews.SettlementTypeDetailView.as_view(), name='settlement-type-detail'),
 
