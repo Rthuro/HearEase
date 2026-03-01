@@ -105,7 +105,6 @@ export const useCaseStore = create((set, get) => ({
     cases: [],
     caseTypes: [],
     settlementTypes: [],
-    relationshipTypes: [],
     relationshipList: [],
     loading: false,
 
@@ -884,30 +883,12 @@ export const useCaseStore = create((set, get) => ({
     clearPredictions: () => {
         set({ predictions: null, predictionsLoading: false });
     },
-
-    // Fetch relationship types from the AI model
-    fetchRelationshipTypes: async () => {
-        try {
-            const response = await axios.get(`${API_URL}/model-info/`);
-            if (response.data.success && response.data.relationship_types) {
-                set({ relationshipTypes: response.data.relationship_types });
-            }
-        } catch (error) {
-            console.error("Error fetching relationship types:", error);
-            // Default relationship types if API fails
-            set({
-                relationshipTypes: [
-                    "Neighbor", "Family", "Coworker", "Stranger",
-                    "Ex-Partner", "Tenant/Landlord"
-                ]
-            });
-        }
-    },
-
+    
     fetchRelationshipList: async () => {
         try {
             const relationshipList = await getRelationshipList();
             set({ relationshipList: relationshipList });
+            return relationshipList;
         } catch (error) {
             console.error("Fetch relationship types error:", error);
         }
