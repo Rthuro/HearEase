@@ -23,6 +23,15 @@ export const useSystemConfigStore = create((set, get) => ({
             throw error;
         }
     },
+    updateRelationship: async (relationshipId, updatedData) => {
+        try {
+            const response = await axios.put(`${API_URL}/relationship/${relationshipId}/`, updatedData);
+            return response.data;
+        } catch (error) {
+            console.error("Failed to update relationship:", error);
+            throw error;
+        }
+    },
     addCaseType: async (newCaseTypeData) => {
         try {
             const response = await axios.post(`${API_URL}/case-types/`, newCaseTypeData);
@@ -41,9 +50,19 @@ export const useSystemConfigStore = create((set, get) => ({
             throw error;
         }
     },
+    addRelationship: async (newRelationshipData) => {
+        try {
+            const response = await axios.post(`${API_URL}/relationship-list/`, newRelationshipData);
+            return response.data;
+        } catch (error) {
+            console.error("Failed to add relationship:", error);
+            throw error;
+        }
+    },
+
     deleteSystemConfig: async (configType, configId) => {
         try {
-            const endpoint = configType === "caseType" ? "case-types" : "settlement-types";
+            const endpoint = configType === "caseType" ? "case-types" : configType === "settlementType" ? "settlement-types" : "relationship";
             await axios.delete(`${API_URL}/${endpoint}/${configId}/`);
             return { success: true };
         } catch (error) {
