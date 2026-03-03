@@ -134,11 +134,12 @@ class Command(BaseCommand):
         '''
         
         DocumentTemplate.objects.update_or_create(
-            template_type='case_report',
             defaults={
                 'name': 'Case Report Summary',
                 'html_content': html_content,
-                'css_styles': css_styles
+                'css_styles': css_styles,
+                'template_type': 'case_report',
+                'placeholders': ['case_number', 'date_filed', 'case_type', 'severity', 'complainants', 'respondents', 'description', 'status', 'settlement_type', 'resolution_date', 'remarks', 'secretary_name', 'punong_barangay']
             }
         )
 

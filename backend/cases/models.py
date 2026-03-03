@@ -1,6 +1,5 @@
 from django.db import models
 from users.models import User
-from lupon_members.models import LuponMember
 from case_persons.models import CasePerson
 
 
@@ -27,6 +26,13 @@ class Relationship(models.Model):
 
     def __str__(self):
         return self.relationship
+
+class CFA(models.Model):
+    cfa = models.CharField(max_length=100)
+    description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.cfa
 
 class Case(models.Model):
 
@@ -55,12 +61,6 @@ class Case(models.Model):
         ("pending", "Pending"),
     ]
 
-    CFA = [
-        ("court", "Municipal"),
-        ("pnp", "PNP"),
-        ("vawc", "VAWC"),
-    ]
-
     CREATED = [
         ("user", "User"),
         ("admin", "Admin"),
@@ -76,6 +76,9 @@ class Case(models.Model):
     relationship = models.ForeignKey(
         Relationship, on_delete=models.SET_NULL, null=True, related_name="cases"
     )
+
+    cfa = models.ForeignKey(CFA, on_delete=models.SET_NULL,
+    blank=True,  null=True, related_name="cases")
 
     complainants = models.ManyToManyField(CasePerson, related_name="cases_as_complainant")
     respondents = models.ManyToManyField(CasePerson, related_name="cases_as_respondent")
@@ -109,11 +112,6 @@ class Case(models.Model):
         default="pending",
     )
 
-    cfa_destination = models.CharField( max_length=20, choices=CFA,
-        default="none",
-        blank=True,
-        null=True,
-    )
 
     case_completed_date = models.DateTimeField(blank=True, null=True)
     approved_case_date = models.DateTimeField(blank=True, null=True)

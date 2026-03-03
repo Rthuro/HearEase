@@ -63,6 +63,9 @@ urlpatterns = [
     path('settlement-types/', CaseViews.SettlementTypeListView.as_view(), name='settlement-type-list'),
     path('settlement-types/<int:pk>/', CaseViews.SettlementTypeDetailView.as_view(), name='settlement-type-detail'),
 
+    path('cfa-list/', CaseViews.CFAView.as_view(), name='cfa-list'),
+    path('cfa/<int:pk>/', CaseViews.CFADetailView.as_view(), name='cfa-detail'),
+
     path('hearings/', HearingViews.HearingView.as_view(), name='all-hearing-list'),
     path('hearing-cases/', HearingViews.HearingCaseView.as_view(), name='hearing-case-list'),
     path('update-hearings/<str:pk>/', HearingViews.SetCaseHearingsView.as_view(), name='update-hearings'),
@@ -89,8 +92,11 @@ urlpatterns = [
     path('non-working-day/<str:date>/', HearingViews.RemoveNonWorkingDayView.as_view(), name='remove-non-working-day'),
 
     path('document-templates/', DocumentViews.DocumentTemplateListCreateView.as_view(), name='document-template-list-create'),
+    path('templates/<int:pk>/', DocumentViews.DocumentTemplateDetailView.as_view(), name='template-detail'),
     path('templates/<int:pk>/generate/', DocumentViews.GenerateDocumentView.as_view(), name='generate-document'),
     path('generated-documents/', DocumentViews.GeneratedDocumentListView.as_view(), name='generated-documents'),
+
+    path('template-info/<int:pk>/', DocumentViews.TemplateInfoView.as_view(), name='template-info'),
 
     path('reports/', CaseViews.ReportView.as_view(), name='reports'),
 

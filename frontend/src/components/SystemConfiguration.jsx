@@ -30,13 +30,15 @@ import { ChevronDown, Trash2 } from "lucide-react";
 import { AppPagination } from "./Pagination";
 
 export function SystemConfiguration() {
-  const { fetchCaseTypes, fetchSettlementTypes, fetchRelationshipList } = useCaseStore();
-  const { updateCaseType, updateSettlementType, addCaseType, addSettlementType, deleteSystemConfig, updateRelationship, addRelationship } = useSystemConfigStore();
+  const { fetchCaseTypes, fetchSettlementTypes, fetchRelationshipList,  } = useCaseStore();
+  const { updateCaseType, updateSettlementType, addCaseType, addSettlementType, deleteSystemConfig, updateRelationship, addRelationship, fetchCFA, updateCFA, addCFA } = useSystemConfigStore();
   
   const [caseTypes, callCaseTypes, isPending] = useActionState(fetchCaseTypes, []);
 
   const [settlementTypes, callSettlementTypes, isPendingSettlement] = useActionState(fetchSettlementTypes, []);
   const [relationshipList, callRelationshipList, isPendingRelationship] = useActionState(fetchRelationshipList, []);
+
+  const [cfaTypes, callCFATypes, isPendingCFA] = useActionState(fetchCFA, []);
 
   const [searchQuery_CaseType, setSearchQuery_CaseType] = useState("");
   const [searchQuery_SettlementType, setSearchQuery_SettlementType] = useState("");
@@ -54,8 +56,9 @@ export function SystemConfiguration() {
       callCaseTypes();
       callSettlementTypes();
       callRelationshipList();
+      callCFATypes();
     });
-  }, [callCaseTypes, callSettlementTypes, callRelationshipList]);
+  }, [callCaseTypes, callSettlementTypes, callRelationshipList, callCFATypes]);
 
 
 
@@ -99,6 +102,10 @@ export function SystemConfiguration() {
   const [s_descrip, setSDescrip] = useState("");
   const [s_name, setSName] = useState("");
 
+  const [cfa_open, setCFAOpen] = useState(false);
+  const [cfa_description, setCFA_Description] = useState("");
+  const [cfa_name, setCFAName] = useState("");
+
   const [r_open, setROpen] = useState(false);
   const [r_name, setRName] = useState("");
 
@@ -114,24 +121,26 @@ export function SystemConfiguration() {
         addCaseType({ case_name: c_name, description: c_descrip, severity: c_severity }) : 
       type === "settlement" ? 
         addSettlementType({ settlement_name: s_name, description: s_descrip }) : 
-      addRelationship({ relationship: r_name });
+      type === "relationship" ?
+      addRelationship({ relationship: r_name }) :
+      addCFA({ cfa: cfa_name, description: cfa_description });
 
-      const callFunction = type === "case" ? callCaseTypes : type === "settlement" ? callSettlementTypes : callRelationshipList;
+      const callFunction = type === "case" ? callCaseTypes : type === "settlement" ? callSettlementTypes : type === "cfa" ? callCFATypes : callRelationshipList;
 
-      const openFunction = type === "case" ? setCOpen : type === "settlement" ? setSOpen : setROpen;
+      const openFunction = type === "case" ? setCOpen : type === "settlement" ? setSOpen : type === "cfa" ? setCFAOpen : setROpen;
 
       toast.promise(
         promiseFunction,
         {
-          loading: `Adding ${type === "case" ? "case type" : type === "settlement" ? "settlement type" : "relationship"}...`,
+          loading: `Adding ${type === "case" ? "case type" : type === "settlement" ? "settlement type" : type === "cfa" ? "CFA type" : "relationship"}...`,
           success: () => {
               openFunction(false);
               startTransition(() => {
                   callFunction();
               });
-              return `${type === "case" ? "Case type" : type === "settlement" ? "Settlement type" : "Relationship"} added successfully!`;
+              return `${type === "case" ? "Case type" : type === "settlement" ? "Settlement type" : type === "cfa" ? "CFA type" : "Relationship"} added successfully!`;
           },
-          error: `Failed to add ${type === "case" ? "case type" : type === "settlement" ? "settlement type" : "relationship"}.`,
+          error: `Failed to add ${type === "case" ? "case type" : type === "settlement" ? "settlement type" : type === "cfa" ? "CFA type" : "relationship"}.`,
         }
       );
 
@@ -146,28 +155,29 @@ export function SystemConfiguration() {
     toast.promise(
       deleteSystemConfig(configType, configId),
       {
-        loading: `Deleting ${configType === "caseType" ? "case type" : configType === "settlementType" ? "settlement type" : "relationship"}...`,
+        loading: `Deleting ${configType === "caseType" ? "case type" : configType === "settlementType" ? "settlement type" : configType === "cfaType" ? "CFA type" : "relationship"}...`,
         success: () => {
             startTransition(() => {
                 callCaseTypes();
                 callSettlementTypes();
                 callRelationshipList();
+                callCFATypes();
             });
-            return `${configType === "caseType" ? "Case type" : configType === "settlementType" ? "Settlement type" : "Relationship"} deleted successfully!`;
+            return `${configType === "caseType" ? "Case type" : configType === "settlementType" ? "Settlement type" : configType === "cfaType" ? "CFA type" : "Relationship"} deleted successfully!`;
         },
-        error: `Failed to delete ${configType === "caseType" ? "case type" : configType === "settlementType" ? "settlement type" : "relationship"}.`,
+        error: `Failed to delete ${configType === "caseType" ? "case type" : configType === "settlementType" ? "settlement type" : configType === "cfaType" ? "CFA type" : "relationship"}.`,
       }
     );
   }
 
   const handleEditSubmit = async (type) => {
-        const promiseFunction = type === "case" ? updateCaseType(editData.id, editData) : type === "settlement" ? updateSettlementType(editData.id, editData) : updateRelationship(editData.id, editData);
-        const callFunction = type === "case" ? callCaseTypes : type === "settlement" ? callSettlementTypes : callRelationshipList;
+        const promiseFunction = type === "case" ? updateCaseType(editData.id, editData) : type === "settlement" ? updateSettlementType(editData.id, editData) : type === "cfa" ? updateCFA(editData.id, editData) : updateRelationship(editData.id, editData);
+        const callFunction = type === "case" ? callCaseTypes : type === "settlement" ? callSettlementTypes : type === "cfa" ? callCFATypes : callRelationshipList;
 
         toast.promise(
           promiseFunction,
           {
-              loading: `Updating ${type === "case" ? "case type" : type === "settlement" ? "settlement type" : "relationship"}...`,
+              loading: `Updating ${type === "case" ? "case type" : type === "settlement" ? "settlement type" : type == "cfa" ? "CFA" : "relationship"}...`,
               success: () => {
                   setEditOpen(false);
                   startTransition(() => {
@@ -175,9 +185,9 @@ export function SystemConfiguration() {
                   }
                   );
                   setEditData({});
-                  return `${type === "case" ? "Case type" : type === "settlement" ? "Settlement type" : "Relationship"} updated successfully!`;
+                  return `${type === "case" ? "case type" : type === "settlement" ? "settlement type" : type == "cfa" ? "CFA" : "relationship"} updated successfully!`;
               },
-              error: `Failed to update ${type === "case" ? "case type" : type === "settlement" ? "settlement type" : "relationship"}.`,
+              error: `Failed to update ${type === "case" ? "case type" : type === "settlement" ? "settlement type" : type == "cfa" ? "CFA" : "relationship"}.`,
           }
         );
     }
@@ -192,11 +202,11 @@ export function SystemConfiguration() {
       <section className="flex flex-col gap-3 bg-white rounded-lg p-4 border shadow-sm">
         <p className="font-bold flex items-center">
             Case Types
-            {/* {(isPending) && (
+            {(isPending) && (
               <span className="flex items-center justify-center ml-1">
                 <Loader2 className="animate-spin h-4 w-4 text-red-600" />
               </span>
-            )} */}
+            )}
         </p>
         <div className="flex items-center justify-between gap-4">
           <Input
@@ -472,6 +482,81 @@ export function SystemConfiguration() {
         setPagedItems={setCurrentPage_Relationship} />
       </section>
 
+      <section className="flex flex-col gap-3 bg-white rounded-lg p-4 border shadow-sm">
+        <p className="font-bold flex items-center">
+            Certificate to File Action Types
+            {(isPendingCFA) && (
+              <span className="flex items-center justify-center ml-1">
+                <Loader2 className="animate-spin h-4 w-4 text-red-600" />
+              </span>
+            )}
+          </p>
+          <Dialog open={cfa_open} onOpenChange={setCFAOpen}>
+              <DialogTrigger asChild>     
+                  <Button className="bg-redBase place-self-end">
+                      <Plus className="w-4 h-4 mr-1" /> Add CFA Type
+                  </Button>
+              </DialogTrigger>
+              <DialogContent className={cn('max-w-[100vw] min-w-fit')}>
+                  <DialogHeader>
+                      <DialogTitle>Add CFA Type</DialogTitle>
+                      <DialogDescription>Add a new CFA type. These CFA types will be available for selection in the system configuration.</DialogDescription>
+                  </DialogHeader>
+                      <div className=" overflow-y-auto max-h-[70vh] min-w-fit p-3">
+                          <Input type="text" id="cfa_name" className="w-full" placeholder="CFA Name" value={cfa_name} onChange={(e) => setCFAName(e.target.value)} />
+                          <Textarea id="description" className="w-full mt-2" rows={4} placeholder="Description" value={cfa_description} onChange={(e) => setCFA_Description(e.target.value)} />
+                      </div>
+                  <DialogFooter>
+                      <Button variant="outline" onClick={() => setCFAOpen(false)}>Close</Button>
+                      <Button className="bg-redBase"  
+                        onClick={() => handleAddSubmit("cfa")}
+                        disabled={submitLoader}
+                      >Add CFA Type</Button>
+                  </DialogFooter>
+              </DialogContent>
+          </Dialog>
+
+        <div className="border rounded-lg overflow-hidden">
+          <Table>
+            <TableHeader className="bg-zinc-50">
+              <TableRow>
+                <TableHead>Certificate to File Action Type</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead className="text-right">Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {cfaTypes.map((cfa) => (
+                  <TableRow key={cfa.id} className="text-zinc-700">
+                    <TableCell className="font-medium">{cfa.cfa}</TableCell>
+                    <TableCell className="max-w-xs truncate">
+                      {cfa.description}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="outline" size="sm"
+                      onClick={() => {
+                        setEditType("cfa");
+                        setEditData({
+                            id: cfa.id,
+                            cfa: cfa.cfa,
+                            description: cfa.description
+                        });
+                        setEditOpen(true);
+                      }}>
+                        Edit
+                      </Button>
+                      <Button size="sm" className="ml-2 bg-redBase" onClick={() => handleDelete("cfa", cfa.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+            </TableBody>
+          </Table>
+        </div>
+
+      </section>
+
       <Dialog open={editOpen} onOpenChange={setEditOpen}>  
           <DialogContent className={cn('max-w-[100vw] min-w-fit')}>
               <DialogHeader>
@@ -481,9 +566,9 @@ export function SystemConfiguration() {
                   <div className=" overflow-y-auto max-h-[70vh] min-w-fit p-3">
                       <Input type="text" id="" className="w-full" placeholder={editType}
 
-                        value={editType == "case" ? editData.case_name : editType == "settlement" ? editData.settlement_name : editData.relationship} 
+                        value={editType == "case" ? editData.case_name : editType == "settlement" ? editData.settlement_name : editType == "relationship" ? editData.relationship : editData.cfa} 
                         onChange={(e) => 
-                        editType == "case" ? setEditData({ ...editData, case_name: e.target.value }) : editType == "settlement" ? setEditData({ ...editData, settlement_name: e.target.value }) : setEditData({ ...editData, relationship: e.target.value })} />
+                        editType == "case" ? setEditData({ ...editData, case_name: e.target.value }) : editType == "settlement" ? setEditData({ ...editData, settlement_name: e.target.value }) : editType == "relationship" ? setEditData({ ...editData, relationship: e.target.value }) : setEditData({ ...editData, cfa: e.target.value })} />
                       
                       {editType == "case" && (
                       <DropdownMenu>
@@ -508,7 +593,7 @@ export function SystemConfiguration() {
                       </DropdownMenu>
                       )}
 
-                      { (editType == "case" || editType == "settlement") && (
+                      { (editType == "case" || editType == "settlement" || editType == "cfa") && (
                         <Textarea id="description" className="w-full mt-2" rows={4} placeholder="Description" value={editData?.description || ""} onChange={(e) => setEditData({ ...editData, description: e.target.value })} />
                       )}
                   </div>

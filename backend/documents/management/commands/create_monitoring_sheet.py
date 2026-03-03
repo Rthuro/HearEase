@@ -75,7 +75,7 @@ class Command(BaseCommand):
                       <label for="rejected">Case Rejected</label>
                     </div>
                     
-                    <p>Remarks:<span class="down-border">{{remarks}}</span></p>
+                    <p>Remarks:<span class="down-border">{{ remarks }}</span></p>
                 </div>
             </div>
         '''
@@ -150,11 +150,12 @@ class Command(BaseCommand):
         '''
         
         DocumentTemplate.objects.update_or_create(
-            template_type='monitoring',
             defaults={
                 'name': 'Monitoring Sheet',
                 'html_content': html_content,
-                'css_styles': css_styles
+                'css_styles': css_styles,
+                'template_type': 'monitoring',
+                'placeholders': ['case_number', 'complainants', 'respondents', 'predicted_hearings', 'hearings', 'resolved', 'escalated', 'cancelled', 'rejected', 'remarks']
             }
         )
 

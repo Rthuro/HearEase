@@ -7,10 +7,10 @@ from rest_framework import status
 from django.db import transaction
 from case_persons.serializers import CasePersonSerializer
 from case_persons.models import CasePerson
-from .models import Case, SettlementType, CaseType, Relationship
+from .models import Case, SettlementType, CaseType, Relationship, CFA
 from users.models import NotificationPreference
 from users.utils import EmailNotification, PhoneNotification
-from .serializers import CaseSerializer, CaseTypeSerializer, SettlementTypeSerializer, RelationshipSerializer
+from .serializers import CaseSerializer, CaseTypeSerializer, SettlementTypeSerializer, RelationshipSerializer, CFASerializer
 from hearings.models import Hearing, HearingAttendance
 from django.contrib.auth import get_user_model
 from django.db.models.functions import TruncMonth
@@ -175,7 +175,52 @@ class RelationshipListDetailView(APIView):
             return Response({"message": "Relationship deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
         except Relationship.DoesNotExist:
             return Response({"error": "Relationship not found."}, status=status.HTTP_404_NOT_FOUND)
-        
+
+class CFAView(APIView):
+    def post(self, request):
+        cfa = request.data.get("cfa")
+
+        if not cfa:
+            return Response({"error": "CFA is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            cfa_obj = CFA.objects.create(
+                cfa=cfa
+            )
+            serializer = CFASerializer(cfa_obj)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    def get(self, request):
+        cfas = CFA.objects.all().order_by("id")
+        serializer = CFASerializer(cfas, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class CFADetailView(APIView):
+    def put(self, request, pk):
+        try:
+            cfa = CFA.objects.get(pk=pk)
+        except CFA.DoesNotExist:
+            return Response({"error": "CFA not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        name = request.data.get("cfa")
+        description = request.data.get("description")
+
+        if name:
+            cfa.cfa = name
+            cfa.description = description
+
+        cfa.save()
+        serializer = CFASerializer(cfa)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    def delete(self, request, pk):
+        try:
+            cfa = CFA.objects.get(pk=pk)
+            cfa.delete()
+            return Response({"message": "CFA deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+        except CFA.DoesNotExist:
+            return Response({"error": "CFA not found."}, status=status.HTTP_404_NOT_FOUND)
+    
 
 class CaseView(APIView):
     permission_classes = [AllowAny] 
@@ -681,7 +726,7 @@ class UpdateHearingProgressView(APIView):
                             )
 
                     case.case_status = "escalated"
-                    case.cfa_destination = request.data.get("cfa_destination")
+                    case.cfa_id = request.data.get("cfa_destination")
                     case.remarks = request.data.get("remarks")
 
                     Hearing.objects.filter(id=hearing_id).update(

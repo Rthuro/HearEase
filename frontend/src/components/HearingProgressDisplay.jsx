@@ -25,6 +25,9 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
+import { useSystemConfigStore } from "@/store/useSystemConfigStore";
+import { useNavigate } from "react-router-dom";
+import { useGenerateDocumentStore } from "@/store/useGenerateDocumentStore";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
 
@@ -41,6 +44,8 @@ const LOCAL_STORAGE_KEY = "authData";
 
 export function HearingProgressDisplay({ hearing, case_complainants, case_respondents, case_hearings }) {
     const { hearings, fetchHearings } = useHearingStore();
+    const { cfa_types, fetchCFA } = useSystemConfigStore();
+    const { templates, fetchTemplates } = useGenerateDocumentStore();
     const { members } = useLuponStore();
     const [outcome, setSelectedOutcome] = useState(null);
     const [completedOutcome, setCompletedOutcome] = useState(false);
@@ -48,6 +53,7 @@ export function HearingProgressDisplay({ hearing, case_complainants, case_respon
     const [type, setType] = useState(1);
     const [resolved_remarks, setResolvedRemarks] = useState("Case settled.");
     const [court_remarks, setCourtRemarks] = useState("Case has been escalated to court.");
+    const navigate = useNavigate();
 
     const getCurrentTime = () => {
         const now = new Date();
@@ -93,12 +99,19 @@ export function HearingProgressDisplay({ hearing, case_complainants, case_respon
     }, [newHearingDate]);
 
     useEffect(() => {
+        fetchCFA();
+        if (templates.length === 0) {
+            fetchTemplates();
+        }
+    }, []);
+
+    useEffect(() => {
         if (outcome === 1) {
             setCompletedTime(getCurrentTime());
         }
     }, [outcome]);
 
-    const [destination, setDestination] = useState("court");
+    const [destination, setDestination] = useState(null);
     const [loader, setLoader] = useState(false);
     const { settlementTypes, fetchSettlementTypes } = useCaseStore();
     const { updateCaseHearingProgress } = useHearingStore();
@@ -713,9 +726,9 @@ export function HearingProgressDisplay({ hearing, case_complainants, case_respon
 
                                     <SelectContent>
                                         <SelectGroup>
-                                            <SelectItem value="court">Municipal Trial Court</SelectItem>
-                                            <SelectItem value="pnp">PNP / Prosecutor</SelectItem>
-                                            <SelectItem value="vawc">VAWC Desk</SelectItem>
+                                            {cfa_types?.map((cfa) => (
+                                                <SelectItem key={cfa.id} value={cfa.id}>{cfa.cfa}</SelectItem>
+                                            ))}
                                         </SelectGroup>
                                     </SelectContent>
                                 </Select>
@@ -726,14 +739,21 @@ export function HearingProgressDisplay({ hearing, case_complainants, case_respon
                                     value={court_remarks}
                                     onChange={(e) => setCourtRemarks(e.target.value)} />
                             </div>
+                            
                             <Button className=" bg-redBase hover:bg-redBase/90"
                                 onClick={() => handleSubmit({
                                     ...payload,
                                     cfa_destination: destination,
                                     outcome: "court",
                                     remarks: court_remarks,
-                                })}>Generate CFA</Button>
-
+                                })}>Mark as Escalated
+                            </Button>
+                            
+                            {/* <p className="text-sm text-gray-800 text-center -mb-2">Mark case as escalated first before generating document</p>
+                            <Button variant={"outline"} 
+                                onClick={() => navigate(`/Admin/Generate-Docx/${hearing.case_number}?template_id=${templates.find(t => t.template_type === "court")?.id}`)}>
+                                    Generate Document
+                            </Button> */}
                         </div>
                     )}
                 </div>

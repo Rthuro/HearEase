@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Case, CaseType, SettlementType, Relationship
+from .models import Case, CaseType, SettlementType, Relationship, CFA
 from case_persons.serializers import CasePersonSerializer
 from case_organizations.serializers import CaseOrganizationSerializer
 
@@ -19,12 +19,18 @@ class RelationshipSerializer(serializers.ModelSerializer):
         model = Relationship
         fields = '__all__'
 
+class CFASerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CFA
+        fields = '__all__'
+
 class CaseSerializer(serializers.ModelSerializer):
     case_type = CaseTypeSerializer(read_only=True)
     settlement_type = SettlementTypeSerializer(read_only=True)
     relationship = RelationshipSerializer(read_only=True)
     complainants = CasePersonSerializer(many=True, read_only=True)
     respondents = CasePersonSerializer(many=True, read_only=True)
+    cfa = CFASerializer(read_only=True)
 
     class Meta:
         model = Case

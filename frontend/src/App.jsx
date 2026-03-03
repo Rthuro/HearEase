@@ -31,6 +31,8 @@ import { HearingScheduler } from './routes/admin/pages/Hearing-Scheduler';
 import { CasePerson } from './routes/admin/pages/CasePerson';
 import { Draft } from './routes/Draft';
 import { Support } from './routes/Support';
+import { TemplateEditor } from './routes/admin/pages/TemplateEditor';
+import { GenerateDocx } from './routes/admin/pages/GenerateDocx';
 
 function App() {
   const { initializeAuth } = useAuthenticationStore();
@@ -83,6 +85,9 @@ function App() {
               <Route path="Admin/Drafts"  element={<Draft />} />
               <Route path="Admin/CaseRecords" element={<CaseRecords />} />
               <Route path="Admin/Generate-Documents" element={<GenerateDocument />} />
+              <Route path="Admin/Generate-Docx/:case_id" element={<GenerateDocx />} />
+              <Route path="Admin/Template-Editor/:templateId" element={<TemplateEditor />} />
+              <Route path="Admin/Template-Editor/" element={<TemplateEditor />} />
               <Route path="Admin/Lupon-Management" element={<LuponManagement />} />
               <Route path="Admin/Case-Person-Management" element={<CasePersonManagement />} />
               <Route path="Admin/Case-Person/:id" element={<CasePerson />} />

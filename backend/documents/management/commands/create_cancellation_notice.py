@@ -85,7 +85,6 @@ class Command(BaseCommand):
                       Barangay Tetuan, Zamboanga City
                     </p>
                     
-                    
                     <div style="border-top: 1px solid #000; width: 100%; margin: 20px 0;"></div>
                     
                     <p style="margin-top:20px"><strong>Approved / Disapproved by:</strong></p>
@@ -159,7 +158,9 @@ class Command(BaseCommand):
             defaults={
                 'name': 'Cancellation Notice',
                 'html_content': html_content,
-                'css_styles': css_styles
+                'css_styles': css_styles,
+                'template_type': 'cancellation',
+                'placeholders': ['date', 'case_number', 'punong_barangay', 'lupon_secretary', 'complainants', 'respondents', 'cancellation_reason', 'cancellation_number', 'next_hearing_date']
             }
         )
 
