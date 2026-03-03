@@ -3,10 +3,11 @@ import case_monitoring from "@/assets/imgs/case_monitoring.png"
 import file_court from "@/assets/imgs/case_monitoring.png"
 import no_show_notice from "@/assets/imgs/no_show_notice.png"
 import cancellation_notice from "@/assets/imgs/cancellation_notice.png"
+import docs from "@/assets/google-docs.png"
 import { PageSync } from "@/components/PageSync"
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button"
-import { X } from "lucide-react"
+import { BadgeQuestionMark, FileText, X } from "lucide-react"
 import {
   Dialog,
   DialogClose,
@@ -23,6 +24,7 @@ import { CaseStatusDisplay } from "@/components/CaseStatusDisplay"
 import { Badge } from "@/components/ui/badge"
 import { useGenerateDocumentStore } from "@/store/useGenerateDocumentStore"
 import useHearingStore from "@/store/useHearingStore"
+import { useNavigate } from "react-router-dom";
 
 export function GenerateDocument() {
     const { cases } = useCaseStore();
@@ -32,6 +34,7 @@ export function GenerateDocument() {
     const [ noShowModal, setNoShowModal ] = useState(false);
     const { templates, fetchTemplates, generateDocument} = useGenerateDocumentStore();
     const [loader, setLoader] = useState(false);
+    const navigate = useNavigate();
 
     useEffect(() => {
         if(templates.length === 0){
@@ -55,41 +58,15 @@ export function GenerateDocument() {
             console.log(error);
         }
     }
-    const generate = [
-        {
-            code: 'summon',
-            title: "Summon Letter",
-            img: summon_letter,
-            template_id: templates.find( t => t.template_type === 'summon')?.id,
-        },{
-            code: 'monitoring',
-            title: "Case Monitoring Sheet",
-            img: case_monitoring,
-            template_id: templates.find( t => t.template_type === 'monitoring')?.id,
-        },{
-            code: 'cancellation',
-            title: "Cancellation Notice",
-            img: cancellation_notice,
-            template_id: templates.find( t => t.template_type === 'cancellation')?.id,
-        },{
-            code: 'court',
-            title: "File Court Certification",
-            img: file_court,
-            template_id: templates.find( t => t.template_type === 'court')?.id,
-        },{
-            code: 'no-show',
-            title: "No Show Notice",
-            img: no_show_notice,
-            template_id: templates.find( t => t.template_type === 'no-show')?.id,
-        }
-    ]
 
+    const default_templates = [ "summon", "monitoring", "cancellation", "court", "no-show", "case_report" ];
+    
     const [term, setTerm] = useState("all");
 
     const filterCases = (term) => {
         switch(term) {
             case 'summon':
-                return cases.filter( c => c.summon_status === "pending" && c.case_status !== "filed" && c.case_status !== "rejected" && c.case_status !== "archived" );
+                return cases.filter( c => c.summon_status === "pending" );
             case 'monitoring':
                 return cases.filter( c => c.case_status !== "filed" && c.case_status !== "pending_approval" && c.case_status !== "rejected" );
             case 'cancellation':
@@ -109,29 +86,38 @@ export function GenerateDocument() {
     return(
         <div className="flex flex-col gap-2 p-4 relative">
             <PageSync page="Generate Documents" />
-           <h1 className="text-2xl font-medium">Generate Documents</h1>
-           <p className="text-zinc-700">Quickly produce official documents for any case.</p>
-           
-           { loader && (<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-redBase">
-                    
+
+            
+           <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-2">
+                    <h1 className="text-2xl font-medium">Generate Documents</h1>
+                    <p className="text-zinc-700">Quickly produce official documents for any case.</p>
                 </div>
-            </div>)}
+                <Button variant="outline" className="bg-white" onClick={ () => navigate("/Admin/Template-Editor")}>
+                    <FileText />
+                    Template Editor
+                </Button>
+           </div>
 
             <div className="flex flex-wrap gap-4 mt-2 ">
-                {generate.map( (doc) =>
-                    <Dialog key={doc.code}>
+                {templates.map( (doc) =>
+                    <Dialog key={doc.template_type}>
                         <form>
-                            {doc.code === 'appointment' ? (
-                                <button type="button" key={doc.title} className="shadow-sm bg-white rounded-xl flex flex-col gap-6 items-center justify-center p-6 w-[250px] " onClick={() => handleTemplateSelect( "", doc.code, doc.template_id) }>
-                                    <img src={doc.img} className="h-[150px]" />
-                                    <p className="text-redBase">{doc.title}</p>
+                            {doc.template_type === 'appointment' ? (
+                                <button type="button" key={doc.name} className="shadow-sm bg-white rounded-xl flex flex-col gap-6 items-center justify-center p-6 w-[250px] " onClick={() => handleTemplateSelect( "", doc.code, doc.id) }>
+                                    <img src={docs} className="h-[150px]" />
+                                    <p className="text-redBase">{doc.name}</p>
                                 </button>
                             ) : (
                             <DialogTrigger asChild>
-                                <button type="button" key={doc.title} className="shadow-sm bg-white rounded-xl flex flex-col gap-6 items-center justify-center p-6 w-[250px] " onClick={ () => setTerm(doc.code)}>
-                                    <img src={doc.img} className="h-[150px]" />
-                                    <p className="text-redBase">{doc.title}</p>
+                                <button type="button" key={doc.name} className="shadow-sm bg-white rounded-xl flex flex-col gap-6 items-center justify-center p-6 w-[250px] " onClick={ () => setTerm(doc.template_type)}>
+                                    { default_templates.includes(doc.template_type) ? ( 
+                                        <p className="text-gray-500 text-xs self-start tracking-wide bg-gray-100/80 rounded-full py-1 px-2 font-medium -mt-2 ">Default</p>
+                                     ) : (
+                                        <p className="text-redBase/70 text-xs self-start tracking-wide bg-red-100/80 rounded-full py-1 px-2 font-medium -mt-2 ">Custom</p>
+                                     )}
+                                    <img src={docs} className="h-[150px]" />
+                                    <p className="text-redBase">{doc.name}</p>
                                 </button>
                             </DialogTrigger>
                             )}
@@ -140,7 +126,7 @@ export function GenerateDocument() {
                             <DialogHeader>
                                 <DialogTitle>Find case</DialogTitle>
                                 <DialogDescription>
-                                Search for case and filter through the list to select the appropriate case for generating the {doc.title}.
+                                Search for case and filter through the list to select the appropriate case for generating the {doc.name}.
                                 </DialogDescription>
                             </DialogHeader>
                             <div className="flex flex-col">
@@ -153,13 +139,13 @@ export function GenerateDocument() {
                                         {filteredCase.map( (c) =>
                                             <button type="button" key={c.id} className="p-3 flex item justify-between border rounded-lg hover:bg-zinc-50 text-left" 
                                             onClick={ () => {
-                                                if (doc.code === 'no-show'){
+                                                if (doc.template_type === 'no-show'){
                                                     setNoShowModal(true);
                                                     setNoShowUserData(c);
                                                     return;
                                                 }
                                             
-                                                handleTemplateSelect(c, doc.code, doc.template_id)
+                                                navigate(`/Admin/Generate-Docx/${c.id}?template_id=${doc.id}`);
                                             }}>
                                                 <div className="flex flex-col">
                                                     <div className="flex gap-2">
@@ -221,6 +207,20 @@ export function GenerateDocument() {
                         </form>
                     </Dialog>
                     )}
+                
+                { templates.length === 0 && (
+                    <div className="flex flex-col gap-2 items-center justify-center p-6 w-full mt-5">
+                        <BadgeQuestionMark size={32} className=" text-gray-500" />
+                        <p className="text-gray-500">No templates available.</p>
+                    </div>
+                )}
+                {/* {templates.filter(t => !generate.some(tt => tt.code === t.template_type)).map( t =>
+                    <button type="button" key={t.id} className="shadow-sm bg-white rounded-xl flex flex-col gap-6 items-center justify-center p-6 w-[250px] " onClick={() => handleTemplateSelect( "", t.template_type, t.id) }>
+                        <p className="text-redBase/70 text-xs self-start tracking-wide bg-red-100/80 rounded-full py-1 px-2 font-medium -mt-2 ">Custom</p>
+                        <FileText className="h-[150px] text-gray-300" />
+                        <p className="text-redBase">{t.name}</p>
+                    </button>
+                )} */}
             </div> 
         </div>
         

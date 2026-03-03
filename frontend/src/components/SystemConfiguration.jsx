@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useActionState, startTransition } from "react";
+import React, { useState, useEffect, useActionState, startTransition, useMemo } from "react";
 import { Loader2, Plus } from "lucide-react";
 import {
   Table,
@@ -11,14 +11,6 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
 import { useCaseStore } from "@/store/useCaseStore"; 
 import { cn } from "@/lib/utils";
 import { useSystemConfigStore } from "@/store/useSystemConfigStore";
@@ -35,28 +27,58 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ChevronDown, Trash2 } from "lucide-react";
+import { AppPagination } from "./Pagination";
 
 export function SystemConfiguration() {
-  const { fetchCaseTypes, fetchSettlementTypes } = useCaseStore();
-  const { updateCaseType, updateSettlementType, addCaseType, addSettlementType, deleteSystemConfig } = useSystemConfigStore();
+  const { fetchCaseTypes, fetchSettlementTypes, fetchRelationshipList,  } = useCaseStore();
+  const { updateCaseType, updateSettlementType, addCaseType, addSettlementType, deleteSystemConfig, updateRelationship, addRelationship, fetchCFA, updateCFA, addCFA } = useSystemConfigStore();
   
-  const [res, callCaseTypes, isPending] = useActionState(fetchCaseTypes, []);
+  const [caseTypes, callCaseTypes, isPending] = useActionState(fetchCaseTypes, []);
+
   const [settlementTypes, callSettlementTypes, isPendingSettlement] = useActionState(fetchSettlementTypes, []);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 10; // Adjust this number as needed
+  const [relationshipList, callRelationshipList, isPendingRelationship] = useActionState(fetchRelationshipList, []);
+
+  const [cfaTypes, callCFATypes, isPendingCFA] = useActionState(fetchCFA, []);
+
+  const [searchQuery_CaseType, setSearchQuery_CaseType] = useState("");
+  const [searchQuery_SettlementType, setSearchQuery_SettlementType] = useState("");
+  const [searchQuery_Relationship, setSearchQuery_Relationship] = useState("");
+
+  const [currentPage_CaseType, setCurrentPage_CaseType] = useState([]);
+  const [currentPage_SettlementType, setCurrentPage_SettlementType] = useState([]);
+  const [currentPage_Relationship, setCurrentPage_Relationship] = useState([]);
+
+  const [submitLoader, setSubmitLoader] = useState(false);
 
   // 4. Initial Data Fetch
   useEffect(() => {
     startTransition(() => {
       callCaseTypes();
       callSettlementTypes();
+      callRelationshipList();
+      callCFATypes();
     });
-  }, []);
+  }, [callCaseTypes, callSettlementTypes, callRelationshipList, callCFATypes]);
 
-  const filteredCaseTypes = (res || []).filter((c) => {
-    return c.case_name.toLowerCase().includes(searchQuery.toLowerCase());
-  });
+
+
+  const filteredCaseTypes = useMemo(() => {
+    return caseTypes.filter((c) =>
+      c.case_name.toLowerCase().includes(searchQuery_CaseType.toLowerCase())
+    );
+  }, [caseTypes, searchQuery_CaseType]);
+
+  const filteredSettlementTypes = useMemo(() => {
+    return settlementTypes.filter((s) => {
+      return s.settlement_name.toLowerCase().includes(searchQuery_SettlementType.toLowerCase());
+    });
+  }, [settlementTypes, searchQuery_SettlementType]);
+
+  const filteredRelationships = useMemo(() => {
+    return relationshipList?.filter((r) => {
+      return r.relationship.toLowerCase().includes(searchQuery_Relationship.toLowerCase());
+    }) || [];
+  }, [relationshipList, searchQuery_Relationship]);
 
   const getSeverityStyle = (severity) => {
     switch (severity) {
@@ -71,25 +93,6 @@ export function SystemConfiguration() {
     }
   };
 
-    // Case Types
-  const totalPages = Math.ceil(filteredCaseTypes?.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentData = filteredCaseTypes?.slice(startIndex, endIndex) || [];
-
-//   Settlement Types
-  const [s_currentPage, setSCurrentPage] = useState(1);
-  
-  const s_totalPages = Math.ceil(settlementTypes?.length / ITEMS_PER_PAGE);
-  const s_startIndex = (s_currentPage - 1) * ITEMS_PER_PAGE;
-  const s_endIndex = s_startIndex + ITEMS_PER_PAGE;
-  const s_currentData = settlementTypes?.slice(s_startIndex, s_endIndex) || [];
-
-  useEffect(() => {
-    setCurrentPage(1);
-    setSCurrentPage(1);
-  }, [searchQuery]);
-
   const [c_open, setCOpen] = useState(false);
   const [c_descrip, setCDescrip] = useState("");
   const [c_name, setCName] = useState("");
@@ -99,41 +102,52 @@ export function SystemConfiguration() {
   const [s_descrip, setSDescrip] = useState("");
   const [s_name, setSName] = useState("");
 
+  const [cfa_open, setCFAOpen] = useState(false);
+  const [cfa_description, setCFA_Description] = useState("");
+  const [cfa_name, setCFAName] = useState("");
+
+  const [r_open, setROpen] = useState(false);
+  const [r_name, setRName] = useState("");
+
+
   const [editType, setEditType] = useState("case");
   const [editOpen, setEditOpen] = useState(false);
   const [editData, setEditData] = useState({});
 
   const handleAddSubmit = async (type) => {
-    if (type === "case") {
-        toast.promise(
-          addCaseType({ case_name: c_name, description: c_descrip, severity: c_severity }),
-          {
-            loading: "Adding case type...",
-            success: () => {
-                setCOpen(false);
-                startTransition(() => {
-                    callCaseTypes();
-                });
-                return "Case type added successfully!";
-            },
-            error: "Failed to add case type.",
-          }
-        );
-    } else if (type === "settlement") {
-        toast.promise(
-          addSettlementType({ settlement_name: s_name, description: s_descrip }),
-          {
-            loading: "Adding settlement type...",
-            success: () => {
-                setSOpen(false);
-                startTransition(() => {
-                    callSettlementTypes();
-                });
-                return "Settlement type added successfully!";
-            },
-            error: "Failed to add settlement type.",
-          }
-        );
+    try {
+      setSubmitLoader(true);
+      const promiseFunction = type === "case" ? 
+        addCaseType({ case_name: c_name, description: c_descrip, severity: c_severity }) : 
+      type === "settlement" ? 
+        addSettlementType({ settlement_name: s_name, description: s_descrip }) : 
+      type === "relationship" ?
+      addRelationship({ relationship: r_name }) :
+      addCFA({ cfa: cfa_name, description: cfa_description });
+
+      const callFunction = type === "case" ? callCaseTypes : type === "settlement" ? callSettlementTypes : type === "cfa" ? callCFATypes : callRelationshipList;
+
+      const openFunction = type === "case" ? setCOpen : type === "settlement" ? setSOpen : type === "cfa" ? setCFAOpen : setROpen;
+
+      toast.promise(
+        promiseFunction,
+        {
+          loading: `Adding ${type === "case" ? "case type" : type === "settlement" ? "settlement type" : type === "cfa" ? "CFA type" : "relationship"}...`,
+          success: () => {
+              openFunction(false);
+              startTransition(() => {
+                  callFunction();
+              });
+              return `${type === "case" ? "Case type" : type === "settlement" ? "Settlement type" : type === "cfa" ? "CFA type" : "Relationship"} added successfully!`;
+          },
+          error: `Failed to add ${type === "case" ? "case type" : type === "settlement" ? "settlement type" : type === "cfa" ? "CFA type" : "relationship"}.`,
+        }
+      );
+
+    } catch (error) {
+      console.error("Add configuration error:", error);
+    } finally {
+      setSubmitLoader(false);
     }
   }
 
@@ -141,55 +155,41 @@ export function SystemConfiguration() {
     toast.promise(
       deleteSystemConfig(configType, configId),
       {
-        loading: `Deleting ${configType === "caseType" ? "case type" : "settlement type"}...`,
+        loading: `Deleting ${configType === "caseType" ? "case type" : configType === "settlementType" ? "settlement type" : configType === "cfaType" ? "CFA type" : "relationship"}...`,
         success: () => {
             startTransition(() => {
                 callCaseTypes();
                 callSettlementTypes();
+                callRelationshipList();
+                callCFATypes();
             });
-            return `${configType === "caseType" ? "Case type" : "Settlement type"} deleted successfully!`;
+            return `${configType === "caseType" ? "Case type" : configType === "settlementType" ? "Settlement type" : configType === "cfaType" ? "CFA type" : "Relationship"} deleted successfully!`;
         },
-        error: `Failed to delete ${configType === "caseType" ? "case type" : "settlement type"}.`,
+        error: `Failed to delete ${configType === "caseType" ? "case type" : configType === "settlementType" ? "settlement type" : configType === "cfaType" ? "CFA type" : "relationship"}.`,
       }
     );
   }
 
   const handleEditSubmit = async (type) => {
-        if (type === "case") {
-            toast.promise(
-            updateCaseType(editData.id, editData),
-            {
-                loading: "Updating case type...",
-                success: () => {
-                    setEditOpen(false);
-                    startTransition(() => {
-                        callCaseTypes();
-                    }
-                    );
-                    setEditData({});
-                    return "Case type updated successfully!";
-                },
-                error: "Failed to update case type.",
-            }
-            );
-        } else if (type === "settlement") {
-            toast.promise(
-            updateSettlementType(editData.id, editData),
-            {
-                loading: "Updating settlement type...",
-                success: () => {
-                    setEditOpen(false);
-                    startTransition(() => {
-                        callSettlementTypes();
-                    }
-                    );
-                    setEditData({});
-                    return "Settlement type updated successfully!";
-                },
-                error: "Failed to update settlement type.",
-            }
-            );
-        }
+        const promiseFunction = type === "case" ? updateCaseType(editData.id, editData) : type === "settlement" ? updateSettlementType(editData.id, editData) : type === "cfa" ? updateCFA(editData.id, editData) : updateRelationship(editData.id, editData);
+        const callFunction = type === "case" ? callCaseTypes : type === "settlement" ? callSettlementTypes : type === "cfa" ? callCFATypes : callRelationshipList;
+
+        toast.promise(
+          promiseFunction,
+          {
+              loading: `Updating ${type === "case" ? "case type" : type === "settlement" ? "settlement type" : type == "cfa" ? "CFA" : "relationship"}...`,
+              success: () => {
+                  setEditOpen(false);
+                  startTransition(() => {
+                      callFunction();
+                  }
+                  );
+                  setEditData({});
+                  return `${type === "case" ? "case type" : type === "settlement" ? "settlement type" : type == "cfa" ? "CFA" : "relationship"} updated successfully!`;
+              },
+              error: `Failed to update ${type === "case" ? "case type" : type === "settlement" ? "settlement type" : type == "cfa" ? "CFA" : "relationship"}.`,
+          }
+        );
     }
 
   return (
@@ -197,21 +197,24 @@ export function SystemConfiguration() {
       {/* Header Section */}
       <div className="flex items-center gap-2">
         <h2 className="text-lg font-medium">System Configuration</h2>
-        {(isPending || isPendingSettlement) && (
-          <div className="flex items-center justify-center">
-            <Loader2 className="animate-spin h-4 w-4 text-red-600" />
-          </div>
-        )}
       </div>
-
+        
       <section className="flex flex-col gap-3 bg-white rounded-lg p-4 border shadow-sm">
+        <p className="font-bold flex items-center">
+            Case Types
+            {(isPending) && (
+              <span className="flex items-center justify-center ml-1">
+                <Loader2 className="animate-spin h-4 w-4 text-red-600" />
+              </span>
+            )}
+        </p>
         <div className="flex items-center justify-between gap-4">
           <Input
             type="text"
-            placeholder="Search case names..."
+            placeholder="Search case type..."
             className="w-full max-w-sm"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={searchQuery_CaseType}
+            onChange={(e) => setSearchQuery_CaseType(e.target.value)}
           />
           <Dialog open={c_open} onOpenChange={setCOpen}>
                 <DialogTrigger asChild>     
@@ -250,7 +253,7 @@ export function SystemConfiguration() {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setCOpen(false)}>Close</Button>
                         <Button className="bg-redBase"  onClick={() => handleAddSubmit("case")}
-                        disabled={isPending}>Add Case</Button>
+                        disabled={submitLoader}>Add Case</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -268,7 +271,7 @@ export function SystemConfiguration() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {currentData.map((c) => (
+              {currentPage_CaseType.map((c) => (
                   <TableRow key={c.id} className="text-zinc-700">
                     <TableCell className="font-medium">{c.case_name}</TableCell>
                     <TableCell>
@@ -302,107 +305,57 @@ export function SystemConfiguration() {
             </TableBody>
           </Table>
         </div>
-
-        {/* Shadcn Pagination Component */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-end space-x-2 py-2">
-            <div className="text-sm text-zinc-500 mr-4">
-              Page {currentPage} of {totalPages}
-            </div>
-            <Pagination className="w-auto mx-0">
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (currentPage > 1) setCurrentPage(currentPage - 1);
-                    }}
-                    className={
-                      currentPage === 1
-                        ? "pointer-events-none opacity-50"
-                        : "cursor-pointer"
-                    }
-                  />
-                </PaginationItem>
-
-                {/* Generate Page Numbers */}
-                {[...Array(totalPages)].map((_, i) => {
-                  const pageNumber = i + 1;
-                  // Basic logic to show only nearby pages if totalPages is large
-                  if (
-                    pageNumber === 1 ||
-                    pageNumber === totalPages ||
-                    (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
-                  ) {
-                    return (
-                      <PaginationItem key={pageNumber}>
-                        <PaginationLink
-                          href="#"
-                          isActive={currentPage === pageNumber}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setCurrentPage(pageNumber);
-                          }}
-                        >
-                          {pageNumber}
-                        </PaginationLink>
-                      </PaginationItem>
-                    );
-                  }
-                  return null;
-                })}
-
-                <PaginationItem>
-                  <PaginationNext
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-                    }}
-                    className={
-                      currentPage === totalPages
-                        ? "pointer-events-none opacity-50"
-                        : "cursor-pointer"
-                    }
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
-        )}
+        
+        <AppPagination 
+        item_per_page={5} 
+        items={filteredCaseTypes} 
+        searchQuery={searchQuery_CaseType} 
+        setPagedItems={setCurrentPage_CaseType} />
       </section>
 
       <section className="flex flex-col gap-3 bg-white rounded-lg p-4 border shadow-sm">
-        <div className="flex items-center justify-between gap-4">
-          <p className="font-bold">
+        <p className="font-bold flex items-center">
             Settlement Types
+            {(isPendingSettlement) && (
+              <span className="flex items-center justify-center ml-1">
+                <Loader2 className="animate-spin h-4 w-4 text-red-600" />
+              </span>
+            )}
           </p>
-          <Dialog open={s_open} onOpenChange={setSOpen}>
-                <DialogTrigger asChild>     
-                    <Button className="bg-redBase">
-                        <Plus className="w-4 h-4 mr-1" /> Add Settlement Type
-                    </Button>
-                </DialogTrigger>
-                <DialogContent className={cn('max-w-[100vw] min-w-fit')}>
-                    <DialogHeader>
-                        <DialogTitle>Add Settlement Type</DialogTitle>
-                        <DialogDescription>Add a new settlement type. These settlement types will be available for selection in the system configuration.</DialogDescription>
-                    </DialogHeader>
-                        <div className=" overflow-y-auto max-h-[70vh] min-w-fit p-3">
-                            <Input type="text" id="settlement_name" className="w-full" placeholder="Settlement Name" value={s_name} onChange={(e) => setSName(e.target.value)} />
-                            <Textarea id="description" className="w-full mt-2" rows={4} placeholder="Description" value={s_descrip} onChange={(e) => setSDescrip(e.target.value)} />
-                        </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setSOpen(false)}>Close</Button>
-                        <Button className="bg-redBase"  onClick={() => handleAddSubmit("settlement")}
-                        disabled={isPendingSettlement}>Add Settlement</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-        </div>
+          <div className="flex items-center justify-between gap-4">
+              <Input
+                type="text"
+                placeholder="Search settlement type..."
+                className="w-full max-w-sm"
+                value={searchQuery_SettlementType}
+                onChange={(e) => setSearchQuery_SettlementType(e.target.value)}
+              />
+              <Dialog open={s_open} onOpenChange={setSOpen}>
+                  <DialogTrigger asChild>     
+                      <Button className="bg-redBase">
+                          <Plus className="w-4 h-4 mr-1" /> Add Settlement Type
+                      </Button>
+                  </DialogTrigger>
+                  <DialogContent className={cn('max-w-[100vw] min-w-fit')}>
+                      <DialogHeader>
+                          <DialogTitle>Add Settlement Type</DialogTitle>
+                          <DialogDescription>Add a new settlement type. These settlement types will be available for selection in the system configuration.</DialogDescription>
+                      </DialogHeader>
+                          <div className=" overflow-y-auto max-h-[70vh] min-w-fit p-3">
+                              <Input type="text" id="settlement_name" className="w-full" placeholder="Settlement Name" value={s_name} onChange={(e) => setSName(e.target.value)} />
+                              <Textarea id="description" className="w-full mt-2" rows={4} placeholder="Description" value={s_descrip} onChange={(e) => setSDescrip(e.target.value)} />
+                          </div>
+                      <DialogFooter>
+                          <Button variant="outline" onClick={() => setSOpen(false)}>Close</Button>
+                          <Button className="bg-redBase"  
+                            onClick={() => handleAddSubmit("settlement")}
+                            disabled={submitLoader}
+                          >Add Settlement</Button>
+                      </DialogFooter>
+                  </DialogContent>
+              </Dialog>
+          </div>
 
-        {/* Table Section */}
         <div className="border rounded-lg overflow-hidden">
           <Table>
             <TableHeader className="bg-zinc-50">
@@ -413,7 +366,7 @@ export function SystemConfiguration() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {s_currentData.map((s) => (
+              {currentPage_SettlementType.map((s) => (
                   <TableRow key={s.id} className="text-zinc-700">
                     <TableCell className="font-medium">{s.settlement_name}</TableCell>
                     <TableCell className="max-w-xs truncate">
@@ -442,116 +395,216 @@ export function SystemConfiguration() {
           </Table>
         </div>
 
-        {s_totalPages > 1 && (
-          <div className="flex items-center justify-end space-x-2 py-2">
-            <div className="text-sm text-zinc-500 mr-4">
-              Page {s_currentPage} of {s_totalPages}
-            </div>
-            <Pagination className="w-auto mx-0">
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (s_currentPage > 1) setSCurrentPage(s_currentPage - 1);
-                    }}
-                    className={
-                      s_currentPage === 1
-                        ? "pointer-events-none opacity-50"
-                        : "cursor-pointer"
-                    }
-                  />
-                </PaginationItem>
-
-                {/* Generate Page Numbers */}
-                {[...Array(s_totalPages)].map((_, i) => {
-                  const pageNumber = i + 1;
-                  // Basic logic to show only nearby pages if s_totalPages is large
-                  if (
-                    pageNumber === 1 ||
-                    pageNumber === totalPages ||
-                    (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
-                  ) {
-                    return (
-                      <PaginationItem key={pageNumber}>
-                        <PaginationLink
-                          href="#"
-                          isActive={currentPage === pageNumber}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setCurrentPage(pageNumber);
-                          }}
-                        >
-                          {pageNumber}
-                        </PaginationLink>
-                      </PaginationItem>
-                    );
-                  }
-                  return null;
-                })}
-
-                <PaginationItem>
-                  <PaginationNext
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-                    }}
-                    className={
-                      currentPage === totalPages
-                        ? "pointer-events-none opacity-50"
-                        : "cursor-pointer"
-                    }
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
-        )}
+        <AppPagination 
+        item_per_page={5} items={filteredSettlementTypes} searchQuery={searchQuery_SettlementType} 
+        setPagedItems={setCurrentPage_SettlementType} />
       </section>
-        <Dialog open={editOpen} onOpenChange={setEditOpen}>  
-            <DialogContent className={cn('max-w-[100vw] min-w-fit')}>
-                <DialogHeader>
-                    <DialogTitle>Edit {editType == "case" ? "Case Type" : "Settlement"}</DialogTitle>
-                    <DialogDescription>Adjust the details of the selected {editType == "case" ? "case type" : "settlement"} below.</DialogDescription>
-                </DialogHeader>
-                    <div className=" overflow-y-auto max-h-[70vh] min-w-fit p-3">
-                        <Input type="text" id="" className="w-full" placeholder={editType == "case" ? "Case Name" : "Settlement Name"}
-                         value={editType == "case" ? editData.case_name : editData.settlement_name} 
-                         onChange={(e) => editType == "case" ? setEditData({ ...editData, case_name: e.target.value }) : setEditData({ ...editData, settlement_name: e.target.value })} />
-                        {editType == "case" && (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="outline" className="w-full justify-between mt-1">
-                                { editData?.severity
-                                    || "Select severity level..."}
-                                <ChevronDown className="ml-2 h-4 w-4" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            
-                            <DropdownMenuContent className="w-full min-w-[300px]">
-                                <DropdownMenuRadioGroup
-                                value={editData?.severity?.toString() || ""}
-                                onValueChange={(value) => setEditData({ ...editData, severity: parseInt(value) })}
-                                >
-                                <DropdownMenuRadioItem value="1">Level 1 - Low (minor disputes)</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="2">Level 2 - Moderate (property issues, harassment)</DropdownMenuRadioItem>
-                                <DropdownMenuRadioItem value="3">Level 3 - High (threats, physical harm)</DropdownMenuRadioItem>
-                                </DropdownMenuRadioGroup>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                        )}
+
+      <section className="flex flex-col gap-3 bg-white rounded-lg p-4 border shadow-sm">
+        <p className="font-bold flex items-center">
+            Case Relationship Types
+            {(isPendingRelationship) && (
+              <span className="flex items-center justify-center ml-1">
+                <Loader2 className="animate-spin h-4 w-4 text-red-600" />
+              </span>
+            )}
+        </p>
+        <div className="flex items-center justify-between gap-4">
+          <Input
+            type="text"
+            placeholder="Search case relationship type..."
+            className="w-full max-w-sm"
+            value={searchQuery_Relationship}
+            onChange={(e) => setSearchQuery_Relationship(e.target.value)}
+          />
+          <Dialog open={r_open} onOpenChange={setROpen}>
+                <DialogTrigger asChild>     
+                    <Button className="bg-redBase">
+                        <Plus className="w-4 h-4 mr-1" /> Add Case Relationship Type
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className={cn('max-w-[100vw] min-w-fit')}>
+                    <DialogHeader>
+                        <DialogTitle>Add Case Relationship Type</DialogTitle>
+                        <DialogDescription>Add a new case relationship type. These case relationship types will be available for selection in the system configuration.
+                        </DialogDescription>
+                    </DialogHeader>
+                        <div className=" overflow-y-auto max-h-[70vh] min-w-fit p-3">
+                            <Input type="text" id="case_name" className="w-full" placeholder="Case Name" value={r_name} onChange={(e) => setRName(e.target.value)} />
+                        </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setROpen(false)}>Close</Button>
+                        <Button className="bg-redBase"  
+                        onClick={() => handleAddSubmit("relationship")}
+                        disabled={submitLoader}
+                        >Add Case Relationship Type</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </div>
+
+        <div className="border rounded-lg overflow-hidden">
+          <Table>
+            <TableHeader className="bg-zinc-50">
+              <TableRow>
+                <TableHead>Relationship</TableHead>
+                <TableHead className="text-right">Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {currentPage_Relationship.map((r) => (
+                  <TableRow key={r.id} className="text-zinc-700">
+                    <TableCell className="font-medium">{r.relationship}</TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="outline" size="sm"
+                      onClick={() => {
+                        setEditType("relationship");
+                        setEditData({
+                            id: r.id,
+                            relationship: r.relationship
+                        });
+                        setEditOpen(true);
+                      }}>
+                        Edit
+                      </Button>
+                      <Button size="sm" className="ml-2 bg-redBase" onClick={() => handleDelete("relationship", r.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+            </TableBody>
+          </Table>
+        </div>
+        
+        <AppPagination 
+        item_per_page={5} items={filteredRelationships} searchQuery={searchQuery_Relationship} 
+        setPagedItems={setCurrentPage_Relationship} />
+      </section>
+
+      <section className="flex flex-col gap-3 bg-white rounded-lg p-4 border shadow-sm">
+        <p className="font-bold flex items-center">
+            Certificate to File Action Types
+            {(isPendingCFA) && (
+              <span className="flex items-center justify-center ml-1">
+                <Loader2 className="animate-spin h-4 w-4 text-red-600" />
+              </span>
+            )}
+          </p>
+          <Dialog open={cfa_open} onOpenChange={setCFAOpen}>
+              <DialogTrigger asChild>     
+                  <Button className="bg-redBase place-self-end">
+                      <Plus className="w-4 h-4 mr-1" /> Add CFA Type
+                  </Button>
+              </DialogTrigger>
+              <DialogContent className={cn('max-w-[100vw] min-w-fit')}>
+                  <DialogHeader>
+                      <DialogTitle>Add CFA Type</DialogTitle>
+                      <DialogDescription>Add a new CFA type. These CFA types will be available for selection in the system configuration.</DialogDescription>
+                  </DialogHeader>
+                      <div className=" overflow-y-auto max-h-[70vh] min-w-fit p-3">
+                          <Input type="text" id="cfa_name" className="w-full" placeholder="CFA Name" value={cfa_name} onChange={(e) => setCFAName(e.target.value)} />
+                          <Textarea id="description" className="w-full mt-2" rows={4} placeholder="Description" value={cfa_description} onChange={(e) => setCFA_Description(e.target.value)} />
+                      </div>
+                  <DialogFooter>
+                      <Button variant="outline" onClick={() => setCFAOpen(false)}>Close</Button>
+                      <Button className="bg-redBase"  
+                        onClick={() => handleAddSubmit("cfa")}
+                        disabled={submitLoader}
+                      >Add CFA Type</Button>
+                  </DialogFooter>
+              </DialogContent>
+          </Dialog>
+
+        <div className="border rounded-lg overflow-hidden">
+          <Table>
+            <TableHeader className="bg-zinc-50">
+              <TableRow>
+                <TableHead>Certificate to File Action Type</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead className="text-right">Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {cfaTypes.map((cfa) => (
+                  <TableRow key={cfa.id} className="text-zinc-700">
+                    <TableCell className="font-medium">{cfa.cfa}</TableCell>
+                    <TableCell className="max-w-xs truncate">
+                      {cfa.description}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="outline" size="sm"
+                      onClick={() => {
+                        setEditType("cfa");
+                        setEditData({
+                            id: cfa.id,
+                            cfa: cfa.cfa,
+                            description: cfa.description
+                        });
+                        setEditOpen(true);
+                      }}>
+                        Edit
+                      </Button>
+                      <Button size="sm" className="ml-2 bg-redBase" onClick={() => handleDelete("cfa", cfa.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+            </TableBody>
+          </Table>
+        </div>
+
+      </section>
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>  
+          <DialogContent className={cn('max-w-[100vw] min-w-fit')}>
+              <DialogHeader>
+                  <DialogTitle>Edit {editType}</DialogTitle>
+                  <DialogDescription>Adjust the details of the selected {editType} below.</DialogDescription>
+              </DialogHeader>
+                  <div className=" overflow-y-auto max-h-[70vh] min-w-fit p-3">
+                      <Input type="text" id="" className="w-full" placeholder={editType}
+
+                        value={editType == "case" ? editData.case_name : editType == "settlement" ? editData.settlement_name : editType == "relationship" ? editData.relationship : editData.cfa} 
+                        onChange={(e) => 
+                        editType == "case" ? setEditData({ ...editData, case_name: e.target.value }) : editType == "settlement" ? setEditData({ ...editData, settlement_name: e.target.value }) : editType == "relationship" ? setEditData({ ...editData, relationship: e.target.value }) : setEditData({ ...editData, cfa: e.target.value })} />
+                      
+                      {editType == "case" && (
+                      <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                              <Button variant="outline" className="w-full justify-between mt-1">
+                              { editData?.severity
+                                  || "Select severity level..."}
+                              <ChevronDown className="ml-2 h-4 w-4" />
+                              </Button>
+                          </DropdownMenuTrigger>
+                          
+                          <DropdownMenuContent className="w-full min-w-[300px]">
+                              <DropdownMenuRadioGroup
+                              value={editData?.severity?.toString() || ""}
+                              onValueChange={(value) => setEditData({ ...editData, severity: parseInt(value) })}
+                              >
+                              <DropdownMenuRadioItem value="1">Level 1 - Low (minor disputes)</DropdownMenuRadioItem>
+                              <DropdownMenuRadioItem value="2">Level 2 - Moderate (property issues, harassment)</DropdownMenuRadioItem>
+                              <DropdownMenuRadioItem value="3">Level 3 - High (threats, physical harm)</DropdownMenuRadioItem>
+                              </DropdownMenuRadioGroup>
+                          </DropdownMenuContent>
+                      </DropdownMenu>
+                      )}
+
+                      { (editType == "case" || editType == "settlement" || editType == "cfa") && (
                         <Textarea id="description" className="w-full mt-2" rows={4} placeholder="Description" value={editData?.description || ""} onChange={(e) => setEditData({ ...editData, description: e.target.value })} />
-                    </div>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => setEditOpen(false)}>Close</Button>
-                    <Button className="bg-redBase"  onClick={() => 
-                    handleEditSubmit(editType)}
-                    disabled={isPending}>Edit {editType == "case" ? "Case Type" : "Settlement"}</Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+                      )}
+                  </div>
+              <DialogFooter>
+                  <Button variant="outline" onClick={() => setEditOpen(false)}>Close</Button>
+                  <Button className="bg-redBase"  onClick={() => 
+                  handleEditSubmit(editType)}
+                  disabled={submitLoader}>Edit {editType}</Button>
+              </DialogFooter>
+          </DialogContent>
+      </Dialog>
     </div>
     
   );

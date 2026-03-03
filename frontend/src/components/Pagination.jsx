@@ -9,9 +9,9 @@ import {
   PaginationEllipsis,
 } from "@/components/ui/pagination";
 
-export function AppPagination({ items, searchQuery, setPagedItems }) {
+export function AppPagination({item_per_page, items, searchQuery, setPagedItems }) {
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 10;
+  const ITEMS_PER_PAGE = item_per_page || 10;
 
   // 1. Calculate Pagination Math
   const totalPages = Math.ceil((items?.length || 0) / ITEMS_PER_PAGE);
@@ -20,7 +20,7 @@ export function AppPagination({ items, searchQuery, setPagedItems }) {
 
   useEffect(() => {
     setPagedItems(currentData);
-  }, [currentPage, items]);
+  }, [currentPage, items,setPagedItems]);
 
   useEffect(() => {
     setCurrentPage(1);

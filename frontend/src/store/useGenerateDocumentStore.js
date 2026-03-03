@@ -4,6 +4,7 @@ import useHearingStore from './useHearingStore';
 import { useLuponStore } from './useLuponStore';
 import toast from 'react-hot-toast';
 import { formatedDateTimeToString, formatedDateToString } from '@/lib/helpers';
+import { renderAsync } from 'docx-preview';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api"
 const { hearings } = useHearingStore.getState();
@@ -141,41 +142,96 @@ export const useGenerateDocumentStore = create((set) => ({
         }
 
             try {
+                const generatePromise = async () => {
                 const response = await axios.post(
-                `${API_URL}/templates/${formData.template_id}/generate/`,
-                {   
+                `${API_URL}/templates/${template_id}/generate/`,
+                {
                     template_id: template_id,
-                    data: formData 
-                }
+                    data: formData,
+                },
+                { responseType: 'blob' }
                 );
 
-                const printWindow = window.open('', '_blank');
-                printWindow.document.write(`
-                <!DOCTYPE html>
-                <html>
-                    <head>
-                    <title>Print Document</title>
-                    <style>
-                        ${response.data?.css}
-                        @media print {
-                        @page { margin: 0.5in; }
-                        }
-                    </style>
-                    </head>
-                    <body>
-                    ${response.data?.html}
-                    <script>
-                        window.onload = function() {
-                        window.print();
-                        }
-                    </script>
-                    </body>
-                </html>
-                `);
-                printWindow.document.close();
+                // 2. Handle the file download inside the success flow
+                const blob = new Blob([response.data], {
+                type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                });
+
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', `document_${template_id}.docx`);
+                document.body.appendChild(link);
+                link.click();
+
+                // Clean up
+                link.parentNode.removeChild(link);
+                window.URL.revokeObjectURL(url);
+
+                return response; // Resolve the promise for the toast
+            };
+
+            // 3. Trigger the toast
+            toast.promise(generatePromise(), {
+                loading: 'Generating your Word document...',
+                success: 'Document downloaded successfully! 🎉',
+                error: 'Could not generate document. Please try again.',
+            });
+
+                // const printWindow = window.open('', '_blank');
+                // printWindow.document.write(`
+                // <!DOCTYPE html>
+                // <html>
+                //     <head>
+                //     <title>Print Document</title>
+                //     <style>
+                //         ${response.data?.css}
+                //         @media print {
+                //         @page { margin: 0.5in; }
+                //         }
+                //     </style>
+                //     </head>
+                //     <body>
+                //     ${response.data?.html}
+                //     <script>
+                //         window.onload = function() {
+                //         window.print();
+                //         }
+                //     </script>
+                //     </body>
+                // </html>
+                // `);
+                // printWindow.document.close();
                 
             } catch (error) {
                 toast.error('Error generating document:', error)
             }
-    }
+    },
+
+    fetchTemplateInfo: async (template_id) => {
+        try {
+            const response = await axios.get(`${API_URL}/template-info/${template_id}/`);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching template info:', error);
+            return null;
+        }
+    },
+
+    createDocument: async (template_id, formData) => {
+        try {
+            const response = await axios.post(
+                `${API_URL}/templates/${template_id}/generate/`,
+                {
+                    template_id: template_id,
+                    data: formData,
+                },
+                { responseType: 'blob' }
+            );
+            return response.data; // Return the blob for preview
+        } catch (error) {
+            console.error('Error creating document:', error);
+            throw error;
+        }
+    },
 })) 

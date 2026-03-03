@@ -89,11 +89,12 @@ class Command(BaseCommand):
         '''
         
         DocumentTemplate.objects.update_or_create(
-            template_type='no-show',
             defaults={
                 'name': 'No-Show Notice',
                 'html_content': html_content,
-                'css_styles': css_styles
+                'css_styles': css_styles,
+                'template_type': 'no-show',
+                'placeholders': ['date', 'case_number', 'name', 'address', 'punong_barangay']
             }
         )
 

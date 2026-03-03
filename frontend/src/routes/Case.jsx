@@ -8,6 +8,7 @@ import file_court from "@/assets/imgs/case_monitoring.png"
 import no_show_notice from "@/assets/imgs/no_show_notice.png"
 import cancellation_notice from "@/assets/imgs/cancellation_notice.png"
 import { cn } from "@/lib/utils";
+import docs from "@/assets/google-docs.png"
 import { PageSync } from "@/components/PageSync";
 import { CaseStatusDisplay } from "@/components/CaseStatusDisplay";
 import { ChevronLeft, X,Check, Scale, ArrowRight, ArrowUpRight, Loader2, FileText, CheckCircle2, PartyPopper, Loader2Icon, AlertCircle, RotateCw, CalendarIcon, Users2  } from "lucide-react";
@@ -82,48 +83,6 @@ export function Case() {
         navigate(-1);
         return null;
     }
-
-    const caseDetails = 
-        {
-            section: "Case Information",
-            details: [
-                {
-                    label:"Case Number",
-                    value: caseInfo?.id, 
-                },
-                {
-                    label:"Status",
-                    value: caseInfo?.case_status, 
-                },
-                {
-                    label:"Actual Hearings",
-                    value: caseInfo?.actual_hearings || "Case not yet settled", 
-                },
-                {
-                    label:"Predicted Hearings",
-                    value: (caseInfo?.predicted_hearings ? caseInfo?.predicted_hearings + ' hearings' : '-') 
-                },
-                {
-                    label:"Nature of Complaint",
-                    value: caseInfo?.case_type.case_name || '-'
-                },{
-                    label:"Settlement",
-                    value: caseInfo?.settlement_type?.settlement_name || 'Case not yet settled'
-                },
-                {
-                    label:"Severity",
-                    value: caseInfo?.case_type.severity || '-'
-                },
-                {
-                    label:"Description",
-                    value: caseInfo?.description || '-'
-                },
-                {
-                    label:"Documents",
-                    value: case_documents || 'No documents submitted'
-                }
-            ]
-        }
 
     const generate = {
         user: [
@@ -482,7 +441,7 @@ export function Case() {
                             </span>
                         </div>
                         <p className="text-redBase text-sm mt-1">
-                            This case has been escalated to {caseInfo?.cfa_destination == 'court' ? 'Municipal Court' : caseInfo?.cfa_destination == 'pnp' ? 'Philippine National Police' : caseInfo?.cfa_destination == 'vawc' ? 'Violence Against Women and Children' : 'further review'}.
+                            This case has been escalated to {caseInfo?.cfa.cfa || 'further review'}.
                         </p>
                         
                         <div className="mt-4 p-3 bg-white/50 rounded-lg border border-red-100 italic text-sm text-redBase">
@@ -796,40 +755,22 @@ export function Case() {
                     </Table>
                 </div>
             </div>
-
+            
+            {userRole === 'admin' && (
             <div className="flex flex-col gap-3 bg-white p-4 rounded-md shadow-2xs border">
                 <h2 className="text-xl font-medium">Generate Documents</h2>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 ">
-                    {userRole === 'admin' ? (
-                        generate.admin.map(doc => (
-                            <button type="button" key={doc.title}
-                                className="shadow-sm border bg-white rounded-xl flex flex-col gap-6 items-center justify-center p-3  "
-                                onClick={() => {
-                                    if (doc.code === 'no-show') {
-                                        setNoShowModal(true);
-                                        setNoShowUserData(caseInfo);
-                                        setTemplate(doc);
-                                        return;
-                                    }
-
-                                    handleTemplateSelect(caseInfo, doc.code, doc.template_id)
-                                }}>
-                                <img src={doc.img} className="h-[50%] object-contain" />
-                                <p className="text-redBase text-sm">{doc.title}</p>
+                <div className="flex flex-wrap gap-3 ">
+                        {templates.map(doc => (
+                             <button type="button" key={doc.name} className="border bg-white rounded-xl flex flex-col gap-6 items-center justify-center p-6 w-[250px] " 
+                             onClick={() => navigate(`/Admin/Generate-Docx/${case_number}?template_id=${doc.id}`)}>
+                                <img src={docs} className="h-[150px]" />
+                                <p className="text-redBase">{doc.name}</p>
                             </button>
-                        ))
-                    ) : (
-                        generate.user.map(doc => (
-                            <button type="button" key={doc.title}
-                                className="shadow-sm border bg-white rounded-xl flex flex-col gap-6 items-center justify-center p-3 "
-                                onClick={() => handleTemplateSelect(caseInfo, doc.code, doc.template_id)}>
-                                <img src={doc.img} className="h-[50%] object-contain" />
-                                <p className="text-redBase text-sm">{doc.title}</p>
-                            </button>
-                        ))
-                    )}
+                        ))}
+                    
                 </div>
             </div>
+            ) }
 
             {noShowModal && (
                 <div className="fixed bg-black/80 z-10 top-0 right-0 bottom-0 left-0  flex flex-col items-center justify-center">

@@ -8,10 +8,6 @@ class Command(BaseCommand):
         try:
             self.stdout.write(self.style.NOTICE("Creating all default templates..."))
 
-            # Call each individual command
-            call_command("create_appointment_form")
-            self.stdout.write(self.style.SUCCESS("✅ Appointment form template created."))
-
             call_command("create_cancellation_notice")
             self.stdout.write(self.style.SUCCESS("✅ Cancellation notice template created."))
 

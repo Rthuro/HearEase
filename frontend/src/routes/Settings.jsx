@@ -112,7 +112,6 @@ export function Settings() {
         }
     }, [user, streets, barangays]);
 
-    console.log(user)
 
     const hasChanges =
         firstName !== (user?.first_name || "") ||

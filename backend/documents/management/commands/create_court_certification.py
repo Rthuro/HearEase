@@ -38,7 +38,7 @@ class Command(BaseCommand):
                       Pursuant to Section 412 of the Local Government Code, you are now allowed to file the case in court.
                     </p>
                     <p>
-                     Issued this <span class="down-border">{{month}}</span> day of <span class="down-border">{{day}}</span>, {{ year }} at Barangay Tetuan, Zamboanga City.
+                     Issued this <span class="down-border">{{ month }}</span> day of <span class="down-border">{{ day }}</span>, {{ year }} at Barangay Tetuan, Zamboanga City.
                     </p>
                     
                     <div style="border-top: 1px solid #000; width: 100%; margin-top: 40px;"></div>
@@ -112,11 +112,12 @@ class Command(BaseCommand):
         '''
         
         DocumentTemplate.objects.update_or_create(
-            template_type='court',
             defaults={
                 'name': 'Court Certification Template',
                 'html_content': html_content,
-                'css_styles': css_styles
+                'css_styles': css_styles,
+                'template_type': 'court',
+                'placeholders': ['complainants', 'respondents', 'nature', 'case_number', 'month', 'day', 'year']
             }
         )
 

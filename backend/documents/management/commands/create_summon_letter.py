@@ -111,11 +111,12 @@ class Command(BaseCommand):
         '''
         
         DocumentTemplate.objects.update_or_create(
-            template_type='summon',
             defaults={
                 'name': 'Summon Letter Template',
                 'html_content': html_content,
-                'css_styles': css_styles
+                'css_styles': css_styles,
+                'template_type': 'summon',
+                'placeholders': ['date_filed', 'respondents', 'respondent_address', 'complainants', 'nature_of_complaint', 'case_number', 'hearing_date', 'time', 'lupon_member', 'punong_barangay']
             }
         )
         
