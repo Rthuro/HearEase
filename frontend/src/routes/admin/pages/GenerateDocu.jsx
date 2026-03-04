@@ -135,7 +135,14 @@ export function GenerateDocument() {
 
                                 </div>
                                 <div className="overflow-hidden my-2">
-                                    <div className="flex flex-col gap-4 overflow-y-scroll max-h-[300px]">
+                                    <div className="flex flex-col gap-4 px-3 overflow-y-scroll max-h-[300px]">
+                                        <button type="button" className="p-3 my-2 flex items-center gap-2 border border-red-300 rounded-lg bg-red-50 text-left text-redBase font-medium" 
+                                            onClick={ () => {
+                                                navigate(`/Admin/Generate-Docx?template_id=${doc.id}`);
+                                            }}>
+                                            <FileText size={20} />
+                                            Generate Blank Template
+                                        </button>
                                         {filteredCase.map( (c) =>
                                             <button type="button" key={c.id} className="p-3 flex item justify-between border rounded-lg hover:bg-zinc-50 text-left" 
                                             onClick={ () => {

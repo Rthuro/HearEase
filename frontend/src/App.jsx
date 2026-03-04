@@ -85,6 +85,7 @@ function App() {
               <Route path="Admin/Drafts"  element={<Draft />} />
               <Route path="Admin/CaseRecords" element={<CaseRecords />} />
               <Route path="Admin/Generate-Documents" element={<GenerateDocument />} />
+              <Route path="Admin/Generate-Docx" element={<GenerateDocx />} />
               <Route path="Admin/Generate-Docx/:case_id" element={<GenerateDocx />} />
               <Route path="Admin/Template-Editor/:templateId" element={<TemplateEditor />} />
               <Route path="Admin/Template-Editor/" element={<TemplateEditor />} />

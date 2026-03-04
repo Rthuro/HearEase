@@ -312,7 +312,7 @@ export function TemplateEditor() {
             </div>
             
             <p className="text-sm text-amber-700 mb-4 leading-relaxed">
-              When creating your <strong>.docx</strong> file, you must use the exact tags below inside double curly braces. 
+              When creating your <strong>.docx</strong> file, you must use the tags with <strong>double brackets</strong>, check default placeholders below. 
               Formatting (Bold, Color, Font Size) applied to these tags in Word will be preserved.
             </p>
 
@@ -338,7 +338,7 @@ export function TemplateEditor() {
                 </div>
               ))}
 
-              <div className="bg-amber-100 p-3 rounded-lg border border-amber-200">
+              {/* <div className="bg-amber-100 p-3 rounded-lg border border-amber-200">
                 <h4 className="text-xs font-bold text-amber-900 mb-1">Advanced: Hearing Tables</h4>
                 <p className="text-[11px] text-amber-800">To list all hearings in a table, use this logic in a Word table row:</p>
                 <code className="block text-[10px] mt-1 bg-white p-1 rounded font-mono">
@@ -346,7 +346,8 @@ export function TemplateEditor() {
                   {`{{ h.date }} | {{ h.status }}`} <br/>
                   {`{% endfor %}`}
                 </code>
-              </div>
+              </div> */}
+
             </div>
         </div>
         
