@@ -14,8 +14,8 @@ import { useGenerateDocumentStore } from '@/store/useGenerateDocumentStore';
 import { toast } from 'react-hot-toast';
 import { PreviewDocx } from '@/components/PreviewDocx';
 
-const API_BASE = "http://localhost:8000/api/templates/";
-const API_BASE_CREATE = "http://localhost:8000/api/document-templates/";
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000/api/templates/";
+const API_BASE_CREATE = import.meta.env.VITE_API_URL || "http://localhost:8000/api/document-templates/";
 
 const PLACEHOLDER_GROUPS = [
   {
