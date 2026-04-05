@@ -69,7 +69,7 @@ export function CasePersonManagement() {
                 <div className="flex items-center justify-between flex-wrap-reverse md:flex-nowrap gap-3">
                     <div className="flex items-center w-full">
                         <Search className="text-zinc-400 ml-3" size={16} />
-                        <Input type="text" placeholder="Search for case..." className="w-full md:w-72 -ml-6 pl-8" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                        <Input type="text" placeholder="Search for case person..." className="w-full md:w-72 -ml-6 pl-8" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
                     </div>
                         
                     <DropdownMenu>

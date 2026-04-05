@@ -33,11 +33,13 @@ import { CaseSettingsModal } from "@/components/CaseSettingsModal";
 import { fetchCase } from "@/store/useCaseStore";
 import toast from "react-hot-toast";
 import { formatedDateToString } from "@/lib/helpers";
+import useAuthenticationStore from "@/store/useAuthenticationStore";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 export function Case() {
     const { case_number } = useParams();
+    const { userLinkName, userInfo } = useAuthenticationStore();
     const { cases, updateCaseStatus, setFormData, set_complainants, set_respondents, reSubmitCase } = useCaseStore();
     const { caseHearings, fetchHearingsByCase } = useHearingStore();
     const [template, setTemplate] = useState({});
@@ -251,7 +253,7 @@ export function Case() {
         }
     }
 
-    // console.log(caseInfo)
+    const checkIfComplainant = caseInfo?.complainants?.find(comp => comp.email === userInfo.email)
     return (
         <div className="relative flex flex-col gap-4 p-6 ">
             <PageSync page="" />
@@ -286,7 +288,7 @@ export function Case() {
 
             </div>
 
-            {caseInfo.case_status !== 'filed' && (
+            {caseInfo.case_status !== 'filed' && (checkIfComplainant || userRole == 'admin') && (
             <div className="flex flex-col gap-6 bg-white p-4 rounded-md shadow-2xs">
                 <div className={`grid grid-cols-2 md:grid-cols-4 items-center gap-3`}>
                     <div className="flex flex-col gap-2 items-center">
@@ -467,11 +469,14 @@ export function Case() {
                             <p className="text-xs text-zinc-400">Nature of Complaint</p>
                             <p className="font-semibold text-zinc-700">{caseInfo?.case_type?.case_name || '-'}</p>
                         </div>
-                        <EditCaseInfo section="case"
-                        caseInfo={{
-                            ...caseInfo,
-                            case_documents: case_documents
-                        }} refresh={refreshCaseData} />
+                        { (checkIfComplainant || userRole == 'admin' ) && (
+                            <EditCaseInfo section="case"
+                            caseInfo={{
+                                ...caseInfo,
+                                case_documents: case_documents
+                            }} refresh={refreshCaseData} />
+                         )}
+                        
                 </CardHeader>
 
                 <CardContent className="px-4 py-2">
@@ -634,10 +639,12 @@ export function Case() {
                                     </TableCell>
                                     <TableCell className="px-4 py-2">{c.contact_number || "-"}</TableCell>
                                     <TableCell>
-                                        <EditCoAttendee co_attendees={caseInfo.complainants} type="complainant"
-                                        attendeeInfo={c}
-                                        case_id={caseInfo.id}
-                                        update_caseInfo={refreshCaseData} />
+                                        { (userInfo.email === c.email || userRole == 'admin' ) && (
+                                            <EditCoAttendee co_attendees={caseInfo.complainants} type="complainant"
+                                            attendeeInfo={c}
+                                            case_id={caseInfo.id}
+                                            update_caseInfo={refreshCaseData} />
+                                        )}
                                     </TableCell>
                                 </TableRow>
                                           
@@ -727,7 +734,7 @@ export function Case() {
                                         <TableCell className="px-4 py-2"> <CaseStatusDisplay caseStatus={hearing.hearing_status} /></TableCell>
                                         <TableCell className={cn("py-4")}>
                                             <Link
-                                                to={userRole === 'admin' ? `/Admin/Hearing/${hearing.id}` : `/u/${data.id}/Hearing/${hearing.id}`}
+                                                to={userRole === 'admin' ? `/Admin/Hearing/${hearing.id}` : `/${userLinkName}/Hearing/${hearing.id}`}
                                                 className="text-redBase bg-red-100 px-3 py-2 rounded-lg text-sm">
                                                 Details
                                             </Link>

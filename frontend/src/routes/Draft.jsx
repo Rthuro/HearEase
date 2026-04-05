@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import useAuthenticationStore from "@/store/useAuthenticationStore";
 import useCaseDocumentsStore from "@/store/useCaseDocumentStore";
+import { DeleteCaseModal } from "@/components/DeleteCaseModal";
 
 export function Draft(){
     const { setCaseInfo, cases, setFormData, set_respondents, set_complainants } = useCaseStore();
@@ -57,7 +58,7 @@ export function Draft(){
                 <h1 className="text-2xl font-bold">Your Drafts</h1>
                 <p>You have <span className="font-medium text-redBase">{filedCases?.length || 0}</span> case drafts created.</p>
             </div>
-            <div className="border rounded-lg overflow-hidden max-w-5xl bg-white">
+            <div className="border rounded-lg overflow-hidden w-full bg-white">
                         <Table>
                             <TableHeader>
                                 <TableRow>
@@ -93,9 +94,13 @@ export function Draft(){
                                                 `${c.respondents[0].first_name} ${c.respondents[0].last_name}`}
                                             </TableCell>
                                             <TableCell>
-                                                <Button variant="outline" size="sm" onClick={() => handleEdit(c)}>
-                                                    Edit
-                                                </Button>
+                                                <div className="flex items-center gap-2">
+                                                    <Button variant="outline" size="sm" onClick={() => handleEdit(c)}>
+                                                        Edit
+                                                    </Button>
+                                                    <DeleteCaseModal case_id={c.id} />
+                                                </div>
+                                                
                                             </TableCell>
                                         </TableRow>
                                     ))

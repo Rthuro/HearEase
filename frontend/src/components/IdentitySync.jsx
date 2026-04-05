@@ -24,11 +24,9 @@ export default function IdentitySync({cases, match_persons}) {
 
   const handleSync = async () => {
     try {
-      setLoading(true);
-      await syncUserCases(match_persons, userInfo.email);
+      await syncUserCases(selected, userInfo.email);
       fetchUserRelatedCase();
       fetchCases();
-      setLoading(false)
     } catch (error) {
       console.error("Error syncing cases:", error);
     }
@@ -61,7 +59,7 @@ export default function IdentitySync({cases, match_persons}) {
         {match_persons.map((person) => (
           <Card 
             key={person.id} 
-            className={`transition-all border py-3 w-fit ${selected.includes(person.id) ? 'border-primary bg-primary/5' : ''}`}
+            className={`transition-all border py-3 w-full ${selected.includes(person.id) ? 'border-primary bg-primary/5' : ''}`}
             onClick={() => toggleCase(person.id)}
           >
             <CardContent className="flex items-start space-x-4" >

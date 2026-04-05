@@ -33,7 +33,7 @@ export function Hearings() {
     const navigateTo = userInfo?.role === 'user' ? userLinkName : 'Admin';
 
     const filteredHearings = useMemo(() => {
-            return hearings.filter((h) => {
+            return hearings?.filter((h) => { 
             const query = searchQuery.toLowerCase().trim();
             const id = String(h.case).toLowerCase();
         

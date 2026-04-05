@@ -29,7 +29,7 @@ import { useEffect, useMemo } from "react";
 import { useCaseStore } from "@/store/useCaseStore";
 import { formatedDateTimeToString } from "@/lib/helpers";
 import { DeleteCaseModal } from "@/components/DeleteCaseModal";
-
+import { Badge } from "@/components/ui/badge";
 
 export function CaseRecords(){
     const { cases, fetchCases, caseTypes, fetchCaseTypes } = useCaseStore();
@@ -46,6 +46,7 @@ export function CaseRecords(){
     useEffect( ()=>{
         fetchCaseTypes();
         fetchCases()
+        
     },[fetchCases, fetchCaseTypes])
 
      const filteredCases = useMemo(() => {
@@ -186,6 +187,7 @@ export function CaseRecords(){
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead>Case #</TableHead>
+                                            { userInfo?.role === 'user' && <TableHead>Role</TableHead>}
                                             <TableHead>Nature of Complaint</TableHead>
                                             <TableHead>Settlement</TableHead>
                                             <TableHead>Date Filed</TableHead>
@@ -208,6 +210,15 @@ export function CaseRecords(){
                                                         {c.id}
                                                         </Link>
                                                     </TableCell>
+                                                    {userInfo?.role === 'user' && (
+                                                    <TableCell>
+                                                    {c?.complainants?.find(comp => comp.email === userInfo.email) ? (
+                                                        <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-none shadow-none">Complainant</Badge>
+                                                    ) : (
+                                                        <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100 border-none shadow-none">Respondent</Badge>
+                                                    )}
+                                                    </TableCell>
+                                                    )}
                                                     <TableCell>{c.case_type.case_name}</TableCell>
                                                     <TableCell>{c?.settlement_type?.settlement_name || "-"}</TableCell>
                                                     <TableCell>{formatedDateTimeToString(c.date_filed)}</TableCell>
@@ -215,7 +226,11 @@ export function CaseRecords(){
                                                         <CaseStatusDisplay caseStatus={c.case_status} />
                                                     </TableCell>
                                                     <TableCell>
-                                                        <DeleteCaseModal case_id={c.id} />
+                                                        {userInfo?.role === 'admin' ? (
+                                                            <DeleteCaseModal case_id={c.id} />
+                                                        ) : c?.complainants?.find(comp => comp.email === userInfo.email) ? (
+                                                            <DeleteCaseModal case_id={c.id} />
+                                                        ) : null}
                                                     </TableCell>
                                                 </TableRow>
                                             ))
