@@ -150,9 +150,9 @@ export function UserDashboard() {
         </div>
       </div>
       
-      {/* {res?.match_persons?.length > 0 && (
+      {res?.match_persons?.length > 0 && (
         <IdentitySync cases={res?.cases} match_persons={res?.match_persons} />
-      )} */}
+      )}
 
       <div className="flex flex-col gap-4 bg-white border border-zinc-200 rounded-lg p-6">
         <div className="flex items-center justify-between">

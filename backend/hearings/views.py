@@ -120,10 +120,25 @@ class HearingView(APIView):
         email = request.query_params.get("email")
 
         if role == "user":
+            case_person = CasePerson.objects.filter(email=email).first()
+
+            complainant_cases = Case.objects.filter(complainants=case_person)
+    
+            respondent_cases = Case.objects.filter(respondents=case_person)
+            
+            user_cases = (complainant_cases | respondent_cases).distinct()
+            # as_complainant = Hearing.objects.filter(case__complainants__email=email)
+    
+            # # 2. Hearings where user is a respondent
+            # as_respondent = Hearing.objects.filter(case__respondents__email=email)
+            
+            # 3. Combine them using the pipe (|) operator and ensure uniqueness
+            hearings = Hearing.objects.filter(case__in=user_cases).distinct().order_by("-hearing_date")
+
             # Direct ORM join — no need to load all Cases into memory
-            hearings = Hearing.objects.filter(
-                case__complainants__email=email
-            )
+            # hearings = Hearing.objects.filter(
+            #     case__complainants__email=email
+            # )
         else:
             hearings = Hearing.objects.all()
 

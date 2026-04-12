@@ -30,9 +30,11 @@ import { useCaseStore } from "@/store/useCaseStore";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useGenerateDocumentStore } from "@/store/useGenerateDocumentStore";
+import useAuthenticationStore from "@/store/useAuthenticationStore";
 
 export function CaseSettingsModal({ role, caseData, hearings}) {
   const {deleteCase, updateCaseInfo} = useCaseStore();
+  const { userInfo } = useAuthenticationStore();
   const { templates, fetchTemplates, generateDocument} = useGenerateDocumentStore();
 
   const [open, setOpen] = useState(false);
@@ -108,6 +110,8 @@ export function CaseSettingsModal({ role, caseData, hearings}) {
       setLoader(false);
   }
 
+  const checkIfComplainant = caseData?.complainants?.find(comp => comp.email === userInfo.email)
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -179,7 +183,7 @@ export function CaseSettingsModal({ role, caseData, hearings}) {
 
           {/* Section 4: Danger Zone (Delete) */}
           
-            { role !== 'admin' && caseData?.case_status == 'approved' && (
+            { role !== 'admin' && checkIfComplainant && caseData?.case_status == 'approved' && (
               <div className="rounded-lg border border-red-200 bg-red-50 p-4">
                 <div className="flex items-center gap-3 mb-4">
                     <div className="p-2 bg-red-100 text-red-600 rounded-full">
@@ -214,7 +218,7 @@ export function CaseSettingsModal({ role, caseData, hearings}) {
               </div>
             )}
 
-            { role !== 'admin' && caseData?.case_status == 'pending_approval' && (
+            { role !== 'admin' && checkIfComplainant && caseData?.case_status == 'pending_approval' && (
               <div className="rounded-lg border border-red-200 bg-red-50 p-4">
                 <div className="flex items-center gap-3 mb-4">
                     <div className="p-2 bg-red-100 text-red-600 rounded-full">

@@ -106,7 +106,7 @@ export function Authentication(){
                 <p className="text-xl text-center">
                     Sign in to continue
                 </p>
-                <p className="text-lg text-center text-zinc-600"> Please enter your details to sign in. {userLinkName}</p>
+                <p className="text-lg text-center text-zinc-600"> Please enter your details to sign in.</p>
             </div>
             <div className="flex flex-col justify-center items-center gap-3 w-full">
                 <div className="flex items-center relative w-full">

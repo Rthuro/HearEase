@@ -53,6 +53,10 @@ export const getCasePersonById = async (id) => {
     const response = await axios.get(`${API_URL}/case-person-details/${id}/`);
     return response.data;
 }
+export const getCasePersonByEmail = async (email) => {
+    const response = await axios.get(`${API_URL}/case-person/${email}/`);
+    return response.data;
+}
 export const updateCasePersonById = async (id, data) => {
     const response = await axios.put(`${API_URL}/case-person-details/${id}/`, data);
     return response.data;
@@ -139,6 +143,17 @@ export const useRetrieveUsersStore = create((set) => ({
     fetchCasePersonById: async (id) => {
         try {
             const data = await getCasePersonById(id);
+            return data;
+        }
+        catch (error) {
+            toast.error(error.message || "Failed to fetch case person details");
+            return null;
+        }
+    },
+
+    fetchCasePersonByEmail: async (email) => {
+        try {
+            const data = await getCasePersonByEmail(email);
             return data;
         }
         catch (error) {

@@ -424,7 +424,12 @@ class CaseListView(APIView):
             cases = Case.objects.all().select_related("case_type", "settlement_type").order_by("-date_filed")
         
         elif not is_admin and case_person:
-            cases = Case.objects.filter(complainants=case_person).order_by("-date_filed")
+            complainant_cases = Case.objects.filter(complainants=case_person)
+    
+            respondent_cases = Case.objects.filter(respondents=case_person)
+
+            cases = (complainant_cases | respondent_cases).distinct().order_by("-date_filed")
+            # cases = Case.objects.filter(complainants=case_person, respondents=case_person).order_by("-date_filed")
 
         else:
             cases = []

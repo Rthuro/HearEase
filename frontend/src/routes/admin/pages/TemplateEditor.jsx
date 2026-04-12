@@ -15,7 +15,7 @@ import { toast } from 'react-hot-toast';
 import { PreviewDocx } from '@/components/PreviewDocx';
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000/api/templates/";
-const API_BASE_CREATE = import.meta.env.VITE_API_URL || "http://localhost:8000/api/document-templates/";
+const API_BASE_CREATE = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
 const PLACEHOLDER_GROUPS = [
   {
@@ -153,7 +153,7 @@ export function TemplateEditor() {
         await axios.put(`${API_BASE}${templateId}/`, formData);
         setStatusMsg({ type: 'success', text: 'Template updated successfully!' });
       } else {
-        await axios.post(API_BASE_CREATE, formData);
+        await axios.post(`${API_BASE_CREATE}/document-templates/`, formData);
         fetchTemplates();
         navigate(`/Admin/Generate-Documents`);
         setStatusMsg({ type: 'success', text: 'Template created!' });
