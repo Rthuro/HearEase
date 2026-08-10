@@ -42,6 +42,7 @@
     "jspdf": "^4.1.0",
     "jspdf-autotable": "^5.0.2",
     "lucide-react": "^0.542.0",
+    "motion": "^13.1.0",
     "nanoid": "^5.1.5",
     "pizzip": "^3.2.0",
     "radix-ui": "^1.4.3",

@@ -13,6 +13,8 @@ from tickets import views as TicketViews
 urlpatterns = [
     # path("test-email/", CaseViews.TestEmailView.as_view(), name="test-email"),  # View not implemented
     
+    path("health", CaseViews.HealthAPIView.as_view(), name="health"),
+    
     path("register/", UserViews.RegisterView.as_view(), name="register"),
     path('auth/google/', UserViews.GoogleLoginView.as_view(), name='google-login'),
     path('auth/google-admin/', UserViews.AdminGoogle.as_view(), name='google-admin'),
