@@ -21,9 +21,24 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.utils.dateparse import parse_date
 from django.db.models import Count, Avg, F, Q
 from django.utils import timezone
+from django.db import connection
 
 User = get_user_model()
 
+class HealthAPIView(APIView):
+    permission_classes = [AllowAny]
+    def get(self, request):
+        db_status = "OK"
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1")
+            db_status = "OK"
+        except:
+            db_status = "Connection Error"
+        return Response({
+            "message": "Backend is Healthy", 
+            "db_status": db_status
+        }, status=status.HTTP_200_OK)
 
 class CaseTypeListView(APIView):
     def post(self, request):

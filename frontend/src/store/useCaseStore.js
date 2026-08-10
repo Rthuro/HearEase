@@ -243,6 +243,17 @@ export const useCaseStore = create((set, get) => ({
         })
     },
 
+    // Health Check
+    healthCheck: async () => {
+        try {
+            const response = await axios.get(`${API_URL}/health`);
+            return response.data;
+        } catch (error) {
+            console.error("Health check failed:", error);
+            return null;
+        }
+    },
+    
     addCaseData: async () => {
         const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
         const data = JSON.parse(stored);

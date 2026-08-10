@@ -1,4 +1,4 @@
-import {HashRouter as Router, Routes, Route } from 'react-router-dom';
+import {BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AdminLayout } from './routes/admin/AdminLayout';
 import { UserLayout } from './routes/user/UserLayout';
 import { Dashboard } from './routes/admin/Dashboard';
@@ -6,9 +6,6 @@ import { Authentication } from './routes/Authentication';
 import { HomePage } from './routes/public/HomePage';
 import { UserDashboard } from './routes/user/UserDashboard';
 import { PublicLayout } from './routes/public/PublicLayout';
-import { About } from './routes/public/About';
-import { Services } from './routes/public/Services';
-import { CaseStatus } from './routes/public/CaseStatus';
 import { Toaster } from "react-hot-toast";
 import { FileCase } from './components/FileCase';
 import { CaseForm } from './components/CaseForm';
@@ -50,9 +47,6 @@ function App() {
             {/* Public Routes */}
             <Route path='/' element={<PublicLayout />}>
               <Route index  element={<HomePage />} />
-              <Route path="/About" element={<About />} />
-              <Route path="/Services" element={<Services />} />
-              <Route path="/Case" element={<CaseStatus />} />
               <Route path="/Login" element={<Authentication />} />
               <Route path="/SignUp" element={<SignUp />} />
             </Route>
