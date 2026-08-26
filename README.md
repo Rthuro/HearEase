@@ -2,10 +2,17 @@
 
 **An AI-driven system employing Deep Neural Networks (DNN) to maximize barangay hearing schedules and forecast case resolution times.**
 
-![Project Status](https://img.shields.io/badge/Status-In%20Development-orange)
+![Project Status](https://img.shields.io/badge/Status-Done-brightgreen)
+![Project Status](https://img.shields.io/badge/Status-Published-blue)
 ![Tech Stack](https://img.shields.io/badge/Stack-Django%20%7C%20React%20%7C%20Supabase-blue)
 
 **🚀 Live Demo:** [https://hearease.me](https://hearease.me)
+
+## 📰 Published
+
+This project has been officially published and presented at an IEEE conference. You can access the full paper here:
+
+**📄 [IEEE Xplore — HearEase: Optimizing Barangay Hearing Scheduling](https://ieeexplore.ieee.org/document/11634173)**
 
 ## 📖 Overview
 
